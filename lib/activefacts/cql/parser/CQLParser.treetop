@@ -1,0 +1,167 @@
+#
+#       ActiveFacts CQL Parser.
+#       Parse rules relating to high-level CQL definitions and constraints.
+#
+# Copyright (c) 2009 Clifford Heath. Read the LICENSE file.
+#
+require 'activefacts/cql/parser/LexicalRules'
+require 'activefacts/cql/parser/Language/English'
+require 'activefacts/cql/parser/Expressions'
+require 'activefacts/cql/parser/Terms'
+require 'activefacts/cql/parser/ObjectTypes'
+require 'activefacts/cql/parser/ValueTypes'
+require 'activefacts/cql/parser/FactTypes'
+require 'activefacts/cql/parser/Context'
+
+module ActiveFacts
+  module CQL
+    grammar CQL
+      include LexicalRules
+      include Expressions
+      include Terms
+      include ObjectTypes
+      include ValueTypes
+      include FactTypes
+      include Context
+
+      rule cql_file
+        s seq:definition*
+        {
+          def definitions
+            seq.elements.map{|e|
+                e.value rescue $stderr.puts "Can't call value() on #{e.inspect}"
+              }
+          end
+        }
+      end
+
+      # Each definition has an ast() method that returns an instance of a subclass of Compiler::Definition
+      rule definition
+	definition_body s
+	{
+	  def ast
+	    definition_body.ast
+	  end
+
+	  def body
+	    definition_body.text_value
+	  end
+	}
+      end
+
+      rule definition_body
+        vocabulary_definition
+        / import_definition
+        / prescan           # Always fails, but its side-effects are needed in the following
+        / constraint
+        / unit_definition   # REVISIT: Move this above the prescan?
+        / object_type
+	/ query
+	/ s ';' s { def ast; nil; end }
+      end
+
+      rule vocabulary_definition
+        s vocabulary S vocabulary_name s ';'
+        {
+	  def ast
+	    Compiler::Vocabulary.new(vocabulary_name.value)
+	  end
+        }
+      end
+
+      rule vocabulary_name
+	id
+	{ def node_type; :vocabulary; end }
+      end
+
+      rule import_definition
+        s import S vocabulary_name alias_list ';'
+        {
+	  def ast
+	    Compiler::Import.new(import.input.parser, vocabulary_name.value, alias_list.value)
+	  end
+        }
+      end
+
+      # REVISIT: Need a way to define equivalent readings for fact types here (and in the metamodel)
+      rule alias_list
+        ( s ',' s alias S aliased_from:alias_term S as S alias_to:alias_term s )*
+        {
+          def value
+            elements.inject({}){|h, e| h[e.aliased_from.value] = e.alias_to; h }
+          end
+        }
+      end
+
+      rule alias_term
+	id
+	{ def node_type; :term; end }
+      end
+
+      rule constraint
+        subset_constraint /
+        equality_constraint /
+        set_constraint /
+        presence_constraint
+        # REVISIT: / value_constraint
+      end
+
+      rule enforcement
+	s '(' s otherwise s action s a:agent? s ')' s
+	  {
+	    def ast; Compiler::Enforcement.new(action.text_value, a.empty? ? nil : a.text_value); end
+	  }
+	/
+	''
+	  {
+	    def ast; nil; end
+	  }
+      end
+
+      # An enforcement action, like SMS, email, log, alarm, etc.
+      rule action
+	id
+      end
+
+      # presence constraint:
+      rule presence_constraint
+	(each_occurs_in_clauses / either_or)
+        {
+	  def ast
+	    Compiler::PresenceConstraint.new c, enforcement.ast, clauses_ast, role_list_ast, quantifier_ast
+	  end
+	}
+      end
+
+      # set (exclusion, mandatory exclusion, complex equality) constraint
+      rule set_constraint
+	(for_each_how_many / either_or_not_both)
+          {
+	    def ast
+	      Compiler::SetExclusionConstraint.new c, enforcement.ast, clauses_ast, role_list_ast, quantifier_ast
+	    end
+	  }
+      end
+
+      rule subset_constraint
+        (a_only_if_b / if_b_then_a)
+        {
+	  def ast
+	    Compiler::SubsetConstraint.new c, enforcement.ast, [clauses.ast, r2.ast]
+	  end
+	}
+      end
+
+      rule equality_constraint
+	if_and_only_if
+        {
+	  def ast
+	    all_clauses = [clauses.ast, *tail.elements.map{|e| e.clauses.ast }]
+	    Compiler::SetEqualityConstraint.new c, enforcement.ast, all_clauses
+	  end
+	}
+      end
+
+    end
+  end
+end

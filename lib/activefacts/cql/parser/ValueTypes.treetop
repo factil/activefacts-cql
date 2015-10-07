@@ -1,0 +1,202 @@
+#
+#       ActiveFacts CQL Parser.
+#       Parse rules relating to ValueType definitions.
+#
+# Copyright (c) 2009 Clifford Heath. Read the LICENSE file.
+#
+module ActiveFacts
+  module CQL
+    grammar ValueTypes
+      rule value_type
+	s each?
+        s term_definition_name
+	m1:mapping_pragmas
+	# REVISIT: ORM2 would allow (subtype_prefix term)?
+        written_as
+	any? s
+        base:(term/implicit_value_type_name) s
+        value_type_parameters
+        u:in_units?
+	a:auto_assignment?
+	c:context_note?
+        r:(value_constraint enforcement)?
+        m2:mapping_pragmas
+	c2:context_note?
+        s ';' s
+        {
+	  def ast
+	    name = term_definition_name.value
+	    params = value_type_parameters.values
+	    value_constraint = nil
+	    unless r.empty? 
+	      value_constraint = Compiler::ValueConstraint.new(r.value_constraint.ast, r.enforcement.ast)
+	    end
+	    units = u.empty? ? [] : u.units.value
+	    auto_assigned_at = a.empty? ? nil : a.auto_assigned_at
+	    pragmas = m1.value+m2.value
+	    context_note = !c.empty? ? c.ast : (!c2.empty? ? c2.ast : nil)
+	    Compiler::ValueType.new name, base.value, params, units, value_constraint, pragmas, context_note, auto_assigned_at
+	  end
+        }
+      end
+
+      rule in_units
+	in S units
+      end
+
+      rule implicit_value_type_name
+	id
+	{
+	  def node_type; :term; end
+	}
+      end
+
+      rule value_type_parameters
+        '(' s tpl:type_parameter_list? ')' s
+          { def values; tpl.empty? ? [] : tpl.values; end }
+        / s
+          { def values; []; end }
+      end
+
+      rule type_parameter_list
+        head:number s tail:( ',' s number s )*
+        {
+          def values
+            [head.value, *tail.elements.map{|i| i.number.value}]
+          end
+        }
+      end
+
+      rule unit_definition
+        u:(
+          s coeff:unit_coefficient? base:units? s o:unit_offset?
+	  conversion
+          singular:unit_name s plural:('/' s p:unit_name s)?
+        /
+          s singular:unit_name s plural:('/' s p:unit_name s)?
+	  conversion
+          coeff:unit_coefficient? base:units? s o:unit_offset?
+        )
+        q:(approximately '' / ephemera s url )? s
+        ';'
+        {
+	  def ast
+            singular = u.singular.text_value
+            plural = u.plural.text_value.empty? ? nil : u.plural.p.text_value 
+	    if u.coeff.empty?
+	      raise "Unit definition requires either a coefficient or an ephemera URL" unless q.respond_to?(:ephemera)
+	      numerator,denominator = 1, 1
+	    else
+	      numerator, denominator = *u.coeff.ast
+	    end
+            offset = u.o.text_value.empty? ? 0 : u.o.value
+	    bases = u.base.empty? ? [] : u.base.value
+	    approximately = q.respond_to?(:approximately) || u.conversion.approximate?
+	    ephemera = q.respond_to?(:ephemera) ? q.url.text_value : nil
+	    Compiler::Unit.new singular, plural, numerator, denominator, offset, bases, approximately, ephemera
+	  end
+        }
+      end
+
+      rule unit_name
+	id
+	{
+	  def node_type; :unit; end
+	}
+      end
+
+
+      rule unit_coefficient
+        numerator:number denominator:(s '/' s number)? s
+        {
+	  def ast
+            [ numerator.text_value,
+              (denominator.text_value.empty? ? "1" : denominator.number.text_value)
+	    ]
+	  end
+        }
+      end
+
+      rule unit_offset
+        sign:[-+] s number s
+        { def value
+            sign.text_value == '-' ? "-"+number.text_value : number.text_value
+          end
+        }
+      end
+
+      # In a unit definition, we may use undefined base units; this is the only way to get fundamental units
+      rule units
+        !non_unit maybe_unit s tail:(!non_unit maybe_unit s)* div:('/' s maybe_unit s tail:(!non_unit maybe_unit s)*)?
+        { def value
+	    tail.elements.inject([maybe_unit.value]) { |a, e| a << e.maybe_unit.value } +
+	      (div.text_value.empty? ? [] : div.tail.elements.inject([div.maybe_unit.inverse]) { |a, e| a << e.maybe_unit.inverse })
+          end
+        }
+      end
+
+      rule non_unit
+        restricted_to / conversion / approximately / ephemera / auto_assignment
+      end
+
+      rule unit
+	maybe_unit &{|s| input.context.unit?(s[0].unit_name.text_value) }
+      end
+
+      rule maybe_unit
+        unit_name pow:('^' '-'? [0-9])?
+        { def value
+            [unit_name.text_value, pow.text_value.empty? ? 1 : Integer(pow.text_value[1..-1])]
+          end
+          def inverse
+            a = value
+            a[1] = -a[1]
+            a
+          end
+        }
+      end
+
+      rule value_constraint
+	restricted_to restricted_values c:context_note?
+        {
+	  def ast
+	    v = restricted_values.values
+	    c[:context_note] = c.ast unless c.empty?
+	    v
+	  end
+        }
+	# REVISIT: "where the possible value/s of that <Term> is/are value (, ...)"
+      end
+
+      rule restricted_values
+	range_list s u:units?
+	{
+	  def values
+	    { :ranges => range_list.ranges,
+	      :units => u.empty? ? nil : u.value
+	    }
+	  end
+	}
+	/
+	regular_expression
+	{
+	  def values
+	    { :regular_expression => contents }
+	  end
+	}
+      end
+
+      rule range_list
+        '{' s
+          head:range s tail:( ',' s range )*
+        '}' s
+        {
+          def ranges
+            [head.value, *tail.elements.map{|e| e.range.value }]
+          end
+        }
+      end
+
+    end
+  end
+end

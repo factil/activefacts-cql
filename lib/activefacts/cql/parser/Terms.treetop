@@ -1,0 +1,183 @@
+#
+#       ActiveFacts CQL Parser.
+#       Parse rules relating to Term names
+#
+# Copyright (c) 2009 Clifford Heath. Read the LICENSE file.
+#
+module ActiveFacts
+  module CQL
+    grammar Terms
+      rule term_definition_name
+        id s t:(!non_term_def id s)*
+	  <Parser::TermDefinitionNameNode>
+      end
+
+      rule non_term_def
+        mapping_pragmas entity_prefix
+        / mapping_pragmas written_as			      # Value type
+        / mapping_pragmas is_where			      # Objectified type
+        / non_phrase
+	/ identified_by					      # as in: "a kind of X identified by..."
+	/ in_units
+	/ auto_assignment
+	/ value_constraint
+      end
+
+      rule entity_prefix
+        is s (independent s )? identified_by
+	/
+	subtype_prefix (independent s )? term_definition_name
+	  &{|e| input.context.object_type(e[2].value, "subtype") }
+      end
+
+      rule prescan
+        s each?
+	s (
+          term_definition_name mapping_pragmas entity_prefix
+		&{|e| input.context.object_type(e[0].value, "entity type") }
+          /
+          t1:term_definition_name mapping_pragmas written_as any? s t2:term_definition_name
+                &{|e|
+		  new_term = e[0].value
+		  input.context.object_type(new_term, "value type")
+		  base_term = e[5].value
+		  input.context.object_type(base_term, "value type")
+		}
+          /
+          term_definition_name s mapping_pragmas is_where
+                &{|e| input.context.object_type(e[0].value, "objectified_fact_type") }
+        )?
+        prescan_rest
+        &{|s|
+	  # Wipe any terminal failures that were added:
+          @terminal_failures = []
+          @max_terminal_failure_index = start_index
+
+          # puts "========== prescan is complete on #{(s.map{|e|e.text_value}*" ").inspect} =========="
+          false
+        }
+      end
+
+      # Do a first-pass mainly lexical analysis, looking for role name definitions and adjectives,
+      # for use in detecting terms later.
+      rule prescan_rest
+        &{|s| input.context.reset_role_names }
+        (
+          context_note                      # Context notes have different lexical conventions
+          / '(' as S term_definition_name s ')' s    # Prepare for a Role Name
+            &{|s| input.context.role_name(s[3].value) }
+	  / new_derived_value		    # Prepare for a derived term
+          / new_adjective_term		    # Prepare for an existing term with new Adjectives
+	# The remaining rules exist to correctly eat up anything that doesn't match the above:
+          / global_term                     # If we see A B - C D, don't recognise B as a new adjective for C D.
+	  / prescan_aggregate
+          / id
+	  # / literal # REVISIT: Literals might contain "(as Foo)" and mess things up
+          / range                           # Covers all numbers and strings
+          / comparator                      # handle two-character operators
+          / S                               # White space and comments, must precede / and *
+          / [-+{}\[\].,:^/%*()]             # All other punctuation and operators
+        )* [?;] s
+      end
+
+      # Not sure this is even needed, but it doesn't seem to hurt:
+      rule prescan_aggregate
+	aggregate_type:id s agg_of s global_term agg_in s &'('
+      end
+
+      rule new_derived_value
+        !global_term id derived_value_continuation? s '='
+	  &{|s|
+	    name = [s[1].text_value] + (s[2].empty? ? [] : s[2].value)
+	    input.context.object_type(name*' ', "derived value type")
+	  }
+	/
+	'=' s !global_term id derived_value_continuation? s (that/who)
+	  &{|s|
+	    name = [s[3].text_value] + (s[4].empty? ? [] : s[4].value)
+	    input.context.object_type(name*' ', "derived value type")
+	  }
+      end
+
+      # Derived values are new terms introduced by an = sign before an expression
+      # This rule handles trailing words of a multi-word derived value
+      rule derived_value_continuation
+        s '-' tail:(s !global_term !(that/who) id)*
+	{
+	  def value
+	    tail.elements.map{|e| e.id.text_value}
+	  end
+	}
+      end
+
+      # Used during the pre-scan, match a term with new adjective(s)
+      rule new_adjective_term
+        !global_term adj:id '-' '-'? lead_intervening s global_term	  # Definitely a new leading adjective for this term
+          &{|s| adj = [s[1].text_value, s[4].value].compact*" "; input.context.new_leading_adjective_term(adj, s[6].text_value) }
+        /
+        global_term s trail_intervening '-' '-'? !global_term adj:id	  # Definitely a new trailing adjective for this term
+          &{|s| adj = [s[2].value, s[6].text_value].compact*" "; input.context.new_trailing_adjective_term(adj, s[0].text_value) }
+      end
+
+      rule lead_intervening	# Words intervening between a new adjective and the term
+	(S !global_term id)*
+	{
+	  def value
+	    elements.size == 0 ? nil : elements.map{|e| e.id.text_value}*" "
+	  end
+	}
+      end
+
+      rule trail_intervening	# Words intervening between a new adjective and the term
+	(!global_term id S)*
+	{
+	  def value
+	    elements.size == 0 ? nil : elements.map{|e| e.id.text_value}*" "
+	  end
+	}
+      end
+
+      # This is the rule to use after the prescan; it only succeeds on a complete term or role reference
+      rule term
+        s head:id x		  &{|s| w = s[1].text_value; input.context.term_starts?(w, s[2]) }
+        tail:(
+	  s '-'? dbl:'-'? s w:id  &{|s| w = s[4].text_value; input.context.term_continues?(w) }
+	)*			  &{|s| input.context.term_complete? }
+	  <Parser::TermNode>
+	/
+	s head:id '-' '-'? s term	&{|s| s[5].ast.leading_adjective == nil }
+	  <Parser::TermLANode>
+      end
+
+      rule x
+	'' <SavedContext>
+      end
+
+      rule global_term
+        # This rule shouldn't be used outside the prescan, it will memoize the wrong things.
+        head:id x    &{|s| input.context.term_starts?(s[0].text_value, s[1]) }
+        tail:(s w:id &{|s| input.context.term_continues?(s[1].text_value) } )*
+        { def value
+            tail.elements.inject(head.value) { |t, e| "#{t} #{e.w.value}" }
+          end
+        }
+      end
+
+      rule non_phrase
+        # These words are illegal in (but maybe ok following) a clause where a phrase is expected:
+        and
+        / but
+        / if
+        / role_list_constraint_followers
+        / only_if
+        / or
+        / quantifier
+        / returning
+        / then
+        / value_constraint
+        / where
+      end
+
+    end
+  end
+end
