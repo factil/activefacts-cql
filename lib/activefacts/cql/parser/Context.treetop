@@ -1,0 +1,48 @@
+#
+#       ActiveFacts CQL Parser.
+#       Parse rules relating to definition context.
+#
+# Copyright (c) 2009 Clifford Heath. Read the LICENSE file.
+#
+module ActiveFacts
+  module CQL
+    grammar Context
+      rule context_note
+        '('
+        s w:who_says? s context_type discussion agreed:(',' a:as_agreed_by)? s
+        ')' s
+        {
+	  def value
+	    [ w.empty? ? nil : w.value, context_type.value, discussion.text_value, agreed.empty? ? [] : agreed.a.value]
+	  end
+	  def ast
+	    who = w.empty? ? nil : w.value
+	    ag = agreed.empty? ? [] : agreed.a.value
+	    Compiler::ContextNote.new context_type.value, discussion.text_value, who, ag
+	  end
+	}
+      end
+
+      rule who_says
+        according_to agents s ','
+        { def value; agents.value; end }
+      end
+
+      rule context_type
+        because s       { def value; 'because'; end } /
+        as_opposed_to   { def value; 'as_opposed_to'; end } /
+        so_that         { def value; 'so_that'; end } /
+        to_avoid        { def value; 'to_avoid'; end }
+      end
+
+      rule discussion
+        (
+	  '(' discussion ')' / (!( [()] / ',' as_agreed_by) .)*
+	)
+	{
+	  def node_type; :linking; end
+	}
+      end
+    end
+  end
+end

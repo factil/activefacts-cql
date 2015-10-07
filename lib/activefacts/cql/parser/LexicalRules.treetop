@@ -1,0 +1,253 @@
+#
+#       ActiveFacts CQL Parser.
+#       Various lexical rules for CQL.
+#
+# Copyright (c) 2009 Clifford Heath. Read the LICENSE file.
+#
+module ActiveFacts
+  module CQL
+    grammar LexicalRules
+
+      rule range
+        (numeric_range / string_range)
+	{
+	  def node_type; :literal; end
+	}
+      end
+
+      rule numeric_range
+        number s tail:( '..' s end:number? s )?
+        {
+          def value
+            if !tail.empty?
+              last = tail.end.value unless tail.end.empty?
+              [ number.value, last ]
+            else
+              number.value
+            end
+          end
+        }
+        / '..' s number s
+        {
+          def value
+            [ nil, number.value ]
+          end
+        }
+      end
+
+      rule string_range
+        string s tail:( '..' s end:string? s )?
+        {
+          # Ranges require the original text of the string, not the content:
+          def value
+            first = string.text_value
+            if !tail.empty?
+              last = tail.end.text_value unless tail.end.empty?
+              [ first, last ]
+            else
+              first
+            end
+          end
+        }
+        / '..' s string s
+        {
+          def value
+            [ nil, string.value ]
+          end
+        }
+      end
+
+      rule url
+	# url_scheme ':' (user ( ':' !(port '/') password )? '@' )? hostname ( ':' port )? '/' path query? fragment?
+	( !(white / ';') .)+
+	{
+	  def node_type; :literal; end
+	}
+      end
+
+      rule literal
+        ( boolean_literal
+        / string
+        / number
+        ) s
+        {
+          def value
+            elements[0].value
+          end
+	  def node_type; :literal; end
+        }
+      end
+
+      rule boolean_literal
+        ( true { def value; true; end }
+        / false { def value; false; end }
+        ) !alphanumeric
+        {
+          def value; elements[0].value end
+        }
+      end
+
+      rule string
+        "'" (string_char)* "'"
+        {
+          def value
+            text_value
+            eval(text_value.sub(/\A'(.*)'\Z/,'"\1"'))
+          end
+        }
+      end
+
+      rule number
+        ( real /
+          fractional_real /
+          hexnumber /
+          octalnumber
+        ) !alphanumeric
+        {
+          def value
+            eval(text_value)
+          end
+	  def node_type; :literal; end
+        }
+      end
+
+      # All purely lexical rules from here down, no-one looks at the structure, just the text_value:
+
+      rule string_char
+        ( '\\' [befntr\\']
+        / '\\' [0-7] [0-7] [0-7]
+	/ '\\' [\r]* [\n] [\r]*
+        / '\\0'
+        / '\\x' [0-9A-Fa-f] [0-9A-Fa-f]
+        / '\\u' [0-9A-Fa-f] [0-9A-Fa-f] [0-9A-Fa-f] [0-9A-Fa-f]
+        / (![\'\\\0-\x07\x0A-\x1F] .)
+        )
+      end
+
+      rule real
+        [-+]? [1-9] [0-9]* fraction? exponent?
+      end
+
+      rule fractional_real
+        [-+]? '0' fraction exponent?
+      end
+
+      rule fraction
+        radix_point [0-9]+
+      end
+
+      rule exponent
+        ( [Ee] [-+]? [0-9]+ )
+      end
+
+      rule hexnumber
+        '0x' [0-9A-Fa-f]+
+      end
+
+      rule octalnumber
+        '0' [0-7]*
+      end
+
+      rule mul_op
+        '/' / '%' / '*'
+      end
+
+      rule id
+        alpha alphanumeric*
+        { def value; text_value; end }
+      end
+
+      rule alpha
+	[[:alpha:]_]
+      end
+
+      rule alphanumeric
+        alpha / [0-9]
+      end
+
+      rule s    # Optional space
+        S?
+      end
+
+      rule S    # Mandatory space
+        (white / comment_to_eol / comment_c_style)+
+      end
+
+      rule white
+        [ \t\n\r]+
+      end
+
+      rule comment_to_eol
+        '//' (!"\n" .)*
+	{
+	  def node_type; :comment; end
+	}
+      end
+
+      rule comment_c_style
+        '/*' (!'*/' . )* '*/'
+	{
+	  def node_type; :comment; end
+	}
+      end
+
+      rule regular_expression
+	'/' !'/' regular_expression_contents '/'
+	{
+	  def contents
+	    regular_expression_contents.text_value
+	  end
+	}
+      end
+
+      rule regular_expression_contents
+	regular_expression_alternate ( '|' regular_expression_alternate )*
+      end
+
+      rule regular_expression_alternate
+	regular_expression_sequence
+      end
+
+      rule regular_expression_sequence
+	regular_expression_atom*
+      end
+
+      rule regular_expression_atom
+	(
+	  '[' character_classes ']'
+	  / regular_expression_group
+	  / ![*+?()|/] string_char
+	) regular_expression_multiplicity?
+      end
+
+      rule character_classes
+	character_class+
+      end
+
+      rule character_class
+	!']' string_char '-' !']' string_char
+	/ '-'
+	/ !']' string_char
+      end
+
+      rule regular_expression_multiplicity
+	'*' / '+' / '?'
+      end
+
+      rule regular_expression_group
+	'('
+	  regular_expression_group_extension?
+	  regular_expression_contents
+	')'
+      end
+
+      rule regular_expression_group_extension
+	'?' (
+	  '<' ( !'>' .)+ '>'	# A tag for a regular expression group
+	# REVISIT: Add more group extensions as needed
+	)
+      end
+
+    end
+  end
+end
