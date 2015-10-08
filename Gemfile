@@ -1,6 +1,5 @@
 source 'https://rubygems.org'
 
-# Specify your gem's dependencies in activefacts-cql.gemspec
 gemspec
 
 if ENV['PWD'] =~ %r{\A/Users/cjh/work/activefacts}

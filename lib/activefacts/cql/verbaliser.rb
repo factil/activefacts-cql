@@ -720,7 +720,7 @@ module ActiveFacts
               if next_step.is_unary_step
                 # Objectified unaries get emitted as unaries, not as objectifications:
                 role = next_step.input_play.role
-                role = role.fact_type.implying_role if role.fact_type.is_a?(LinkFactType)
+                role = role.fact_type.implying_role if role.fact_type.is_a?(ActiveFacts::Metamodel::LinkFactType)
 		next_reading = role.fact_type.preferred_reading(next_step.is_disallowed) || role.fact_type.preferred_reading
                 readings += " and " unless readings.empty?
 		readings += "it is not the case that " if !next_step.is_disallowed != !next_reading.is_negative

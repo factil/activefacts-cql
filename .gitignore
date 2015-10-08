@@ -7,5 +7,10 @@
 /pkg/
 /spec/reports/
 /tmp/
+lib/activefacts/cql/parser/[A-Z]*.rb
 *.swp
 clj
+.DS_Store
+*.rej
+*.orig
+*.diff
