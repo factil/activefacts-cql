@@ -223,7 +223,7 @@ module ActiveFacts
           end
 
           @fact_type = @entity_type.fact_type = fact_type
-          @entity_type.create_implicit_fact_types # REVISIT: Could there be readings for the implicit fact types here?
+          @entity_type.create_link_fact_types # REVISIT: Could there be readings for the implicit fact types here?
           @fact_type
         end
 
@@ -238,58 +238,12 @@ module ActiveFacts
             # By default, the first supertype identifies this entity type
             is_identifying_supertype = !not_identifying && @entity_type.all_type_inheritance_as_subtype.size == 0
 
-            inheritance_fact = @constellation.TypeInheritance(@entity_type, supertype, :concept => :new)
-
 	    assimilation_pragmas = ['absorbed', 'separate', 'partitioned']
             assimilations = @pragmas.select { |p| assimilation_pragmas.include? p}
 	    @pragmas -= assimilation_pragmas
             raise "Conflicting assimilation pragmas #{assimilations*', '}" if assimilations.size > 1
-            inheritance_fact.assimilation = assimilations[0]
 
-            # Create a reading:
-            sub_role = @constellation.Role(inheritance_fact, 0, :object_type => @entity_type, :concept => :new)
-            super_role = @constellation.Role(inheritance_fact, 1, :object_type => supertype, :concept => :new)
-
-            rs = @constellation.RoleSequence(:new)
-            @constellation.RoleRef(rs, 0, :role => sub_role)
-            @constellation.RoleRef(rs, 1, :role => super_role)
-            @constellation.Reading(inheritance_fact, 0, :role_sequence => rs, :text => "{0} is a kind of {1}", :is_negative => false)
-
-            rs2 = @constellation.RoleSequence(:new)
-            @constellation.RoleRef(rs2, 0, :role => super_role)
-            @constellation.RoleRef(rs2, 1, :role => sub_role)
-            # Decide in which order to include is a/is an. Provide both, but in order.
-            n = 'aeioh'.include?(sub_role.object_type.name.downcase[0]) ? 'n' : ''
-            @constellation.Reading(inheritance_fact, 2, :role_sequence => rs2, :text => "{0} is a#{n} {1}", :is_negative => false)
-
-            if is_identifying_supertype
-              inheritance_fact.provides_identification = true
-            end
-
-            # Create uniqueness constraints over the subtyping fact type.
-            p1rs = @constellation.RoleSequence(:new)
-            @constellation.RoleRef(p1rs, 0).role = sub_role
-            pc1 = @constellation.PresenceConstraint(:new, :vocabulary => @vocabulary)
-            pc1.name = "#{@entity_type.name}MustHaveSupertype#{supertype.name}"
-            pc1.role_sequence = p1rs
-            pc1.is_mandatory = true   # A subtype instance must have a supertype instance
-            pc1.min_frequency = 1
-            pc1.max_frequency = 1
-            pc1.is_preferred_identifier = false
-	    trace :constraint, "Made new subtype PC GUID=#{pc1.concept.guid} min=1 max=1 over #{p1rs.describe}"
-
-            p2rs = @constellation.RoleSequence(:new)
-            constellation.RoleRef(p2rs, 0).role = super_role
-            pc2 = constellation.PresenceConstraint(:new, :vocabulary => @vocabulary)
-            pc2.name = "#{supertype.name}MayBeA#{@entity_type.name}"
-            pc2.role_sequence = p2rs
-            pc2.is_mandatory = false
-            pc2.min_frequency = 0
-            pc2.max_frequency = 1
-            # The supertype role often identifies the subtype:
-            pc2.is_preferred_identifier = inheritance_fact.provides_identification
-	    trace :supertype, "identification of #{@entity_type.name} via supertype #{supertype.name} was #{inheritance_fact.provides_identification ? '' : 'not '}added"
-	    trace :constraint, "Made new supertype PC GUID=#{pc2.concept.guid} min=1 max=1 over #{p2rs.describe}"
+	    @entity_type.add_supertype(supertype, is_identifying_supertype, assimilations[0])
           end
         end
 

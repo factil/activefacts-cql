@@ -105,7 +105,7 @@ module ActiveFacts
           # * Objectify the fact type if @name
           #
 
-	  # Prepare to objectify the fact type (so readings for implicit fact types can be created)
+	  # Prepare to objectify the fact type (so readings for link fact types can be created)
           if @name
 	    entity_type = @vocabulary.valid_entity_type_name(@name)
             raise "You can't objectify #{@name}, it already exists" if entity_type
@@ -120,8 +120,8 @@ module ActiveFacts
           return true unless @clauses.size > 0   # Nothing interesting was said.
 
 	  if @entity_type
-	    # Extract readings for implicit fact types
-	    @implicit_readings, @clauses =
+	    # Extract readings for link fact types
+	    @link_fact_type_clauses, @clauses =
 	      @clauses.partition do |clause|
 		clause.refs.size == 2 and clause.refs.detect{|ref| ref.player == @entity_type}
 	      end
@@ -137,7 +137,6 @@ module ActiveFacts
             @fact_type = first_clause.make_fact_type(@vocabulary)
             first_clause.make_reading(@vocabulary, @fact_type)
             first_clause.make_embedded_constraints vocabulary
-            @fact_type.create_implicit_fact_type_for_unary if @fact_type.all_role.size == 1 && !@name
             @existing_clauses = [first_clause]
           elsif (n = @clauses.size - @existing_clauses.size) > 0
 	    raise "Cannot extend a negated fact type" if @existing_clauses.detect {|clause| clause.certainty == false }
@@ -164,8 +163,8 @@ module ActiveFacts
             if @fact_type.entity_type and @name != @fact_type.entity_type.name
               raise "Cannot objectify fact type as #{@name} and as #{@fact_type.entity_type.name}"
             end
-            ifts = @entity_type.create_implicit_fact_types
-	    create_implicit_readings(ifts)
+            ifts = @entity_type.create_link_fact_types
+	    create_link_fact_type_readings(ifts)
             if @pragmas
               @entity_type.is_independent = true if @pragmas.delete('independent')
             end
@@ -193,25 +192,24 @@ module ActiveFacts
           @fact_type
         end
 
-	def create_implicit_readings(ifts)
-	  @implicit_readings.each do |clause|
+	def create_link_fact_type_readings(ifts)
+	  @link_fact_type_clauses.each do |clause|
 	    #next false unless clause.refs.size == 2 and clause.refs.detect{|r| r.role.object_type == @entity_type }
 	    other_ref = clause.refs.detect{|ref| ref.player != @entity_type}
 	    ift = ifts.detect do |ift|
 	      other_ref.binding.refs.map{|r| r.role}.include?(ift.implying_role)
 	    end
-	    next unless ift
-	    # This clause is a reading for the implicit LinkFactType ift
+	    unless ift
+	      raise "Clause #{clause} in unmatched in definition of objectified fact type #{@name}"
+	      next
+	    end
+	    # This clause is a reading for the LinkFactType ift
 	    i = 0
 	    reading_text = clause.phrases.map do |phrase|
 		next phrase if String === phrase
 		"{#{(i += 1)-1}}"
 	      end*' '
-	    ir = ActiveFacts::Metamodel::LinkFactType::ImplicitReading
-	    irrs = ir::ImplicitReadingRoleSequence
-	    irrf = irrs::ImplicitReadingRoleRef
-	    reading = ir.new(ift, reading_text)
-	    ift.add_reading reading
+	    clause.make_reading(@vocabulary, ift)
 	  end
 	end
 
