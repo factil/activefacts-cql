@@ -285,7 +285,7 @@ module ActiveFacts
             epc = ref.embedded_presence_constraint or next
             epc.max_frequency == 1 or next
             next if epc.enforcement
-            trace :constraint, "Converting UC into PI for #{@fact_type.entity_type.name}"
+            trace :constraint, "Converting UC into PI for #{@fact_type.entity_type ? @fact_type.entity_type.name : fact_type.default_reading}"
             epc.is_preferred_identifier = true
             return
           end
