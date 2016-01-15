@@ -28,6 +28,7 @@ module ActiveFacts
         @filename = a.shift || "stdio"
         super *a
         @constellation = ActiveFacts::API::Constellation.new(ActiveFacts::Metamodel)
+	@constellation.loggers << proc{|*k| trace :apilog, k.inspect} if trace(:apilog)
         @language = nil
         trace :file, "Parsing '#{@filename}'"
       end
