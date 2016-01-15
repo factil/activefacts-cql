@@ -292,40 +292,42 @@ module ActiveFacts
 
           # We need to check uniqueness constraints after processing the whole vocabulary
           # raise "Fact type must be named as it has no identifying uniqueness constraint" unless @name || @fact_type.all_role.size == 1
-	  trace :constraint, "Need to check #{@fact_type.default_reading.inspect} for a uniqueness constraint"
-          fact_type.check_and_add_spanning_uniqueness_constraint = proc do
-	    trace :constraint, "Checking #{@fact_type.default_reading.inspect} for a uniqueness constraint"
-	    existing_pc = nil
-            found = @fact_type.all_role.
-		detect do |role|
-                  role.all_role_ref.detect do |rr|
-                    # This RoleSequence, to be relevant, must only reference roles of this fact type
-                    rr.role_sequence.all_role_ref.all? {|rr2| rr2.role.fact_type == @fact_type} and
-                    # The RoleSequence must have at least one uniqueness constraint
-                    rr.role_sequence.all_presence_constraint.detect do |pc|
-		      if pc.max_frequency == 1
-			existing_pc = pc
+	  unless @fact_type.all_role.size == 1
+	    trace :constraint, "Need to check #{@fact_type.default_reading.inspect} for a uniqueness constraint"
+	    fact_type.check_and_add_spanning_uniqueness_constraint = proc do
+	      trace :constraint, "Checking #{@fact_type.default_reading.inspect} for a uniqueness constraint"
+	      existing_pc = nil
+	      found = @fact_type.all_role.
+		  detect do |role|
+		    role.all_role_ref.detect do |rr|
+		      # This RoleSequence, to be relevant, must only reference roles of this fact type
+		      rr.role_sequence.all_role_ref.all? {|rr2| rr2.role.fact_type == @fact_type} and
+		      # The RoleSequence must have at least one uniqueness constraint
+		      rr.role_sequence.all_presence_constraint.detect do |pc|
+			if pc.max_frequency == 1
+			  existing_pc = pc
+			end
 		      end
 		    end
 		  end
-                end
-	    true  # A place for a breakpoint
+	      true  # A place for a breakpoint
 
-            if !found
-	      # There's no existing uniqueness constraint over the roles of this fact type. Add one
-	      pc = @constellation.PresenceConstraint(
-		:new,
-		:vocabulary => @vocabulary,
-		:name => @fact_type.entity_type ? @fact_type.entity_type.name+"PK" : '',
-		:role_sequence => (rs = @fact_type.preferred_reading.role_sequence),
-		:max_frequency => 1,
-		:is_preferred_identifier => true # (prefer || !!@fact_type.entity_type)
-	      )
-	      pc.concept.topic = @fact_type.concept.topic
-	      trace :constraint, "Made new fact type implicit PC GUID=#{pc.concept.guid} #{pc.name} min=nil max=1 over #{rs.describe}"
-	    elsif pc
-	      trace :constraint, "Will rely on existing UC GUID=#{pc.concept.guid} #{pc.name} to be used as PI over #{rs.describe}"
-            end
+	      if !found
+		# There's no existing uniqueness constraint over the roles of this fact type. Add one
+		pc = @constellation.PresenceConstraint(
+		  :concept => [:new, {:implication_rule => "spanning"}],
+		  :vocabulary => @vocabulary,
+		  :name => @fact_type.entity_type ? @fact_type.entity_type.name+"PK" : '',
+		  :role_sequence => (rs = @fact_type.preferred_reading.role_sequence),
+		  :max_frequency => 1,
+		  :is_preferred_identifier => true # (prefer || !!@fact_type.entity_type)
+		)
+		pc.concept.topic = @fact_type.concept.topic
+		trace :constraint, "Made new fact type implicit PC GUID=#{pc.concept.guid} #{pc.name} min=nil max=1 over #{rs.describe}"
+	      elsif pc
+		trace :constraint, "Will rely on existing UC GUID=#{pc.concept.guid} #{pc.name} to be used as PI over #{rs.describe}"
+	      end
+	    end
 	  end
         end
 
