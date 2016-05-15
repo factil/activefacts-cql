@@ -9,16 +9,16 @@ module ActiveFacts
     grammar Context
       rule context_note
         '('
-        s w:who_says? s context_type discussion agreed:(',' a:as_agreed_by)? s
+        s w:who_says? s context_type description agreed:(',' a:as_agreed_by)? s
         ')' s
         {
 	  def value
-	    [ w.empty? ? nil : w.value, context_type.value, discussion.text_value, agreed.empty? ? [] : agreed.a.value]
+	    [ w.empty? ? nil : w.value, context_type.value, description.text_value, agreed.empty? ? [] : agreed.a.value]
 	  end
 	  def ast
 	    who = w.empty? ? nil : w.value
 	    ag = agreed.empty? ? [] : agreed.a.value
-	    Compiler::ContextNote.new context_type.value, discussion.text_value, who, ag
+	    Compiler::ContextNote.new context_type.value, description.text_value, who, ag
 	  end
 	}
       end
@@ -35,9 +35,9 @@ module ActiveFacts
         to_avoid        { def value; 'to_avoid'; end }
       end
 
-      rule discussion
+      rule description
         (
-	  '(' discussion ')' / (!( [()] / ',' as_agreed_by) .)*
+	  '(' description ')' / (!( [()] / ',' as_agreed_by) .)*
 	)
 	{
 	  def node_type; :linking; end
