@@ -19,15 +19,15 @@ if (require 'activefacts/generators/ruby' rescue nil)
     #   require 'activefacts/cql'
     class CQLLoader
       def self.load(file) #:nodoc:
-	trace "Loading #{file}" do
-	  vocabulary = ActiveFacts::Input::CQL.readfile(file)
+        trace "Loading #{file}" do
+          vocabulary = ActiveFacts::Input::CQL.readfile(file)
 
-	  ruby = StringIO.new
-	  @dumper = ActiveFacts::Generators::RUBY.new(vocabulary.constellation)
-	  @dumper.generate(ruby)
-	  ruby.rewind
-	  eval ruby.read, ::TOPLEVEL_BINDING
-	end
+          ruby = StringIO.new
+          @dumper = ActiveFacts::Generators::RUBY.new(vocabulary.constellation)
+          @dumper.generate(ruby)
+          ruby.rewind
+          eval ruby.read, ::TOPLEVEL_BINDING
+        end
       end
     end
 

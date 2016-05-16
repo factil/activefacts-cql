@@ -52,34 +52,34 @@ module ActiveFacts
             # else 'definitely '
             end
           }#{
-	    (
-	      phrases.map do |phrase|
-		case phrase
-		when String
-		  '"' + phrase.to_s + '"'
-		when Reference
-		  phrase.to_s +
-		    if phrase.nested_clauses
-		      ' (in which ' +
-			phrase.nested_clauses.map do |c|
-			  ((j = c.conjunction) ? j+' ' : '') +
-			    c.to_s
-			end*' ' +
-		      ')'
-		    else
-		      ''
-		    end
-		when Operation
-		  phrase.inspect
-		when Literal
-		  phrase.inspect
-		#when FunctionCallChain		# REVISIT: Add something here when I re-add functions
-		#  phrase.inspect
-		else
-		  raise "Unexpected phrase type in clause: #{phrase.class}"
-		end
-	      end * ' '
-	    ).gsub(/" "/, ' ')
+            (
+              phrases.map do |phrase|
+                case phrase
+                when String
+                  '"' + phrase.to_s + '"'
+                when Reference
+                  phrase.to_s +
+                    if phrase.nested_clauses
+                      ' (in which ' +
+                        phrase.nested_clauses.map do |c|
+                          ((j = c.conjunction) ? j+' ' : '') +
+                            c.to_s
+                        end*' ' +
+                      ')'
+                    else
+                      ''
+                    end
+                when Operation
+                  phrase.inspect
+                when Literal
+                  phrase.inspect
+                #when FunctionCallChain         # REVISIT: Add something here when I re-add functions
+                #  phrase.inspect
+                else
+                  raise "Unexpected phrase type in clause: #{phrase.class}"
+                end
+              end * ' '
+            ).gsub(/" "/, ' ')
           }#{
             @context_note && ' ' + @context_note.inspect
           }"
@@ -121,8 +121,8 @@ module ActiveFacts
           end
         end
 
-	# This method is used in matching unary fact types in entity identification
-	# It disregards literals, which are not allowed in this context.
+        # This method is used in matching unary fact types in entity identification
+        # It disregards literals, which are not allowed in this context.
         def phrases_match(phrases)
           @phrases.zip(phrases).each do |mine, theirs|
             return false if mine.is_a?(Reference) != theirs.is_a?(Reference)
@@ -145,20 +145,20 @@ module ActiveFacts
           raise "Cannot match a clause that contains no object types" if refs.size == 0
           raise "Internal error, clause already matched, should not match again" if @fact_type
 
-	  if is_naked_object_type
-	    ref = refs[0]	# "There can be only one"
-	    return true unless ref.nested_clauses
-	    ref.nested_clauses.each do |nested|
-	      ft = nested.match_existing_fact_type(context)
-	      raise "Unrecognised fact type #{nested.display} nested under #{inspect}" unless ft
-	      if (ft.entity_type == ref.player)
-		ref.objectification_of = ft
-		nested.objectified_as = ref
-	      end
-	    end
-	    raise "#{ref.inspect} contains objectification steps that do not objectify it" unless ref.objectification_of
-	    return true
-	  end
+          if is_naked_object_type
+            ref = refs[0]       # "There can be only one"
+            return true unless ref.nested_clauses
+            ref.nested_clauses.each do |nested|
+              ft = nested.match_existing_fact_type(context)
+              raise "Unrecognised fact type #{nested.display} nested under #{inspect}" unless ft
+              if (ft.entity_type == ref.player)
+                ref.objectification_of = ft
+                nested.objectified_as = ref
+              end
+            end
+            raise "#{ref.inspect} contains objectification steps that do not objectify it" unless ref.objectification_of
+            return true
+          end
 
           # If we fail to match, try a left contraction (or save this for a subsequent left contraction):
           left_contract_this_onto = context.left_contractable_clause
@@ -267,9 +267,9 @@ module ActiveFacts
                     next if role.fact_type.is_a?(ActiveFacts::Metamodel::LinkFactType)
                     next if role.fact_type.all_role.size != players.size      # Wrong number of players
 
-		    compatible_readings = role.fact_type.compatible_readings(player_related_types)
-		    next unless compatible_readings.size > 0
-		    trace :matching_fails, "These readings are compatible: #{compatible_readings.map(&:expand).inspect}"
+                    compatible_readings = role.fact_type.compatible_readings(player_related_types)
+                    next unless compatible_readings.size > 0
+                    trace :matching_fails, "These readings are compatible: #{compatible_readings.map(&:expand).inspect}"
                     true
                   end.
                     map{ |role| role.fact_type}
@@ -437,13 +437,13 @@ module ActiveFacts
               if la = role_ref.leading_adjective and !la.empty?
                 # The leading adjectives must match, one way or another
                 la = la.split(/\s+/)
-		if (la[0, intervening_words.size] == intervening_words)		# Exact match
-		  iw = intervening_words
-		else
-		  # We may have hyphenated adjectives. Break them up to check:
-		  iw = intervening_words.map{|w| w.split(/-/)}.flatten
-		  return nil unless la[0,iw.size] == iw
-		end
+                if (la[0, intervening_words.size] == intervening_words)         # Exact match
+                  iw = intervening_words
+                else
+                  # We may have hyphenated adjectives. Break them up to check:
+                  iw = intervening_words.map{|w| w.split(/-/)}.flatten
+                  return nil unless la[0,iw.size] == iw
+                end
 
                 # Any intervening_words matched, see what remains
                 la.slice!(0, iw.size)
@@ -953,8 +953,8 @@ module ActiveFacts
             t = @trailing_adjective
             key = [!l || l.empty? ? nil : l, @term, !t || t.empty? ? nil : t]
           end
-	  key += [:literal, literal.literal] if @literal
-	  key
+          key += [:literal, literal.literal] if @literal
+          key
         end
 
         def bind context
@@ -972,27 +972,27 @@ module ActiveFacts
               role_name = @term
             end
           end
-	  k = key
-	  @binding = context.bindings[k]
-	  if !@binding
-	    if !literal
-	      # Find a binding that has a literal, and bind to it if it's the only one
-	      candidates = context.bindings.map do |binding_key, binding|
-		  binding_key[0...k.size] == k &&
-		    binding_key[-2] == :literal ? binding : nil
-		end.compact
-	      raise "Uncertain binding reference for #{to_s}, could be any of #{candidates.inspect}" if candidates.size > 1
-	      @binding = candidates[0]
-	    else
-	      # New binding has a literal, look for one without:
-	      @binding = context.bindings[k[0...-2]]
-	    end
-	  end
+          k = key
+          @binding = context.bindings[k]
+          if !@binding
+            if !literal
+              # Find a binding that has a literal, and bind to it if it's the only one
+              candidates = context.bindings.map do |binding_key, binding|
+                  binding_key[0...k.size] == k &&
+                    binding_key[-2] == :literal ? binding : nil
+                end.compact
+              raise "Uncertain binding reference for #{to_s}, could be any of #{candidates.inspect}" if candidates.size > 1
+              @binding = candidates[0]
+            else
+              # New binding has a literal, look for one without:
+              @binding = context.bindings[k[0...-2]]
+            end
+          end
 
-	  if !@binding
-	    @binding = Binding.new(@player, role_name)
-	    context.bindings[k] = @binding
-	  end
+          if !@binding
+            @binding = Binding.new(@player, role_name)
+            context.bindings[k] = @binding
+          end
           @binding.add_ref self
           @binding
         end
@@ -1079,11 +1079,11 @@ module ActiveFacts
                   :max_frequency => @quantifier.max,
                   :min_frequency => @quantifier.min
                 )
-	      if @quantifier.pragmas
-		@quantifier.pragmas.each do |p|
-		  constellation.ConceptAnnotation(:concept => constraint.concept, :mapping_annotation => p)
-		end
-	      end
+              if @quantifier.pragmas
+                @quantifier.pragmas.each do |p|
+                  constellation.ConceptAnnotation(:concept => constraint.concept, :mapping_annotation => p)
+                end
+              end
               trace :constraint, "Made new embedded PC GUID=#{constraint.concept.guid} min=#{@quantifier.min.inspect} max=#{@quantifier.max.inspect} over #{(e = fact_type.entity_type) ? e.name : role_sequence.describe} in #{fact_type.describe}"
               @quantifier.enforcement.compile(constellation, constraint) if @quantifier.enforcement
               @embedded_presence_constraint = constraint
@@ -1110,7 +1110,7 @@ module ActiveFacts
           @max = max
           @enforcement = enforcement
           @context_note = context_note
-	  @pragmas = pragmas
+          @pragmas = pragmas
         end
 
         def is_unique

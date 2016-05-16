@@ -286,16 +286,16 @@ module ActiveFacts
                     p.role_refs.map{|rr| rr.role.fact_type.preferred_reading.text}.sort.to_s
                 end.
                 each do |player|
-		  jrname = player.plays.map{|play| play.role_ref && play.role_ref.role.role_name}.compact[0]
-		  rname = (rr = player.role_refs[0]) && rr.role.role_name
-		  if jrname and !rname
-		    # puts "Oops: rolename #{rname.inspect} != #{jrname.inspect}" if jrname != rname
-		    player.variables_by_query.values.each{|jn| jn.role_name = jrname }
-		  else
-		    player.subscript = s+1
-		    s += 1
-		  end
-		end
+                  jrname = player.plays.map{|play| play.role_ref && play.role_ref.role.role_name}.compact[0]
+                  rname = (rr = player.role_refs[0]) && rr.role.role_name
+                  if jrname and !rname
+                    # puts "Oops: rolename #{rname.inspect} != #{jrname.inspect}" if jrname != rname
+                    player.variables_by_query.values.each{|jn| jn.role_name = jrname }
+                  else
+                    player.subscript = s+1
+                    s += 1
+                  end
+                end
             end
           end
       end
@@ -447,20 +447,20 @@ module ActiveFacts
           raise "Need to change this call to expand_reading_text to pass a role->variable hash"
         end
         rrs = role_sequence.all_role_ref_in_order
-	variable_by_role = {}
-	if step
-	  plays = step.all_play
-	  variable_by_role = plays.inject({}) { |h, play| h[play.role] = play.variable; h }
-	end
+        variable_by_role = {}
+        if step
+          plays = step.all_play
+          variable_by_role = plays.inject({}) { |h, play| h[play.role] = play.variable; h }
+        end
         trace :subscript, "expanding '#{text}' with #{role_sequence.describe}" do
           text.gsub(/\{(\d)\}/) do
             role_ref = rrs[$1.to_i]
             # REVISIT: We may need to use the step's role_refs to expand the role players here, not the reading's one (extra adjectives?)
             player = player_by_role[role_ref.role]
-	    variable = variable_by_role[role_ref.role]
+            variable = variable_by_role[role_ref.role]
 
             play_name = variable && variable.role_name
-	    raise hell if player && player.is_a?(ActiveFacts::Metamodel::EntityType) && player.fact_type && !variable
+            raise hell if player && player.is_a?(ActiveFacts::Metamodel::EntityType) && player.fact_type && !variable
             subscripted_player(role_ref, player && player.subscript, play_name, variable && variable.value) +
               objectification_verbalisation(variable)
           end
@@ -479,7 +479,7 @@ module ActiveFacts
             role_ref.trailing_adjective
           ].compact*' '
         ) +
-	  (value ? ' '+value.inspect : '') +
+          (value ? ' '+value.inspect : '') +
           (subscript ? "(#{subscript})" : '')
       end
 
@@ -508,11 +508,11 @@ module ActiveFacts
       def step_completed(step)
         @steps.delete(step)
 
-	step.all_play.each do |play|
-	  var = play.variable
+        step.all_play.each do |play|
+          var = play.variable
           steps = @steps_by_variable[var]
           steps.delete(step)
-	  @steps_by_variable.delete(var) if steps.empty?
+          @steps_by_variable.delete(var) if steps.empty?
         end
       end
 
@@ -589,15 +589,15 @@ module ActiveFacts
       end
 
       def objectification_verbalisation(variable)
-	return '' unless variable
-	raise "Not fully re-implemented, should pass the variable instead of #{variable.inspect}" unless variable.is_a?(ActiveFacts::Metamodel::Variable)
+        return '' unless variable
+        raise "Not fully re-implemented, should pass the variable instead of #{variable.inspect}" unless variable.is_a?(ActiveFacts::Metamodel::Variable)
         objectified_node = nil
-	object_type = variable.object_type
+        object_type = variable.object_type
         return '' unless object_type.is_a?(Metamodel::EntityType) # Not a entity type
-	return '' unless object_type.fact_type			  # Not objectified
+        return '' unless object_type.fact_type                    # Not objectified
 
-	objectification_step = variable.step
-	return '' unless objectification_step
+        objectification_step = variable.step
+        return '' unless objectification_step
 
         steps = [objectification_step]
         step_completed(objectification_step)
@@ -634,9 +634,9 @@ module ActiveFacts
           # Choose a reading that's contractable against the previous step, if possible
           reading = fact_type.all_reading_by_ordinal.
             detect do |reading|
-	      # Only contract a negative reading if we want one
-	      (!next_step.is_disallowed || !reading.is_negative == !next_step.is_disallowed) and
-		reading_starts_with_node(reading, next_var)
+              # Only contract a negative reading if we want one
+              (!next_step.is_disallowed || !reading.is_negative == !next_step.is_disallowed) and
+                reading_starts_with_node(reading, next_var)
             end
         end
         last_is_contractable = false unless reading
@@ -648,26 +648,26 @@ module ActiveFacts
         exit_node = @variables.detect{|jn| jn.all_play.detect{|play| play.role == last_role_ref.role}}
         exit_step = nil
 
-	trace :query, "Stepping over an objectification to #{exit_node.object_type.name} requires eliding the other implied steps" do
-	  count = 0
-	  while other_step =
-	    @steps.
-	      detect{|js|
-		trace :query, "Considering step '#{js.fact_type.default_reading}'"
-		next unless js.is_objectification_step
+        trace :query, "Stepping over an objectification to #{exit_node.object_type.name} requires eliding the other implied steps" do
+          count = 0
+          while other_step =
+            @steps.
+              detect{|js|
+                trace :query, "Considering step '#{js.fact_type.default_reading}'"
+                next unless js.is_objectification_step
 
-		# REVISIT: This test is too weak: We need to ensure that the same variables are involved, not just the same object types:
-		next unless js.input_play.variable.object_type == fact_type.entity_type || js.output_play.variable.object_type == fact_type.entity_type
-		exit_step = js if js.output_play.variable == exit_node
-		true
-	      }
-	    trace :query, "Emitting objectified FT allows deleting #{other_step.describe}"
-	    step_completed(other_step)
+                # REVISIT: This test is too weak: We need to ensure that the same variables are involved, not just the same object types:
+                next unless js.input_play.variable.object_type == fact_type.entity_type || js.output_play.variable.object_type == fact_type.entity_type
+                exit_step = js if js.output_play.variable == exit_node
+                true
+              }
+            trace :query, "Emitting objectified FT allows deleting #{other_step.describe}"
+            step_completed(other_step)
   #          raise "The objectification of '#{fact_type.default_reading}' should not cause the deletion of more than #{fact_type.all_role.size} other steps" if (count += 1) > fact_type.all_role.size
-	  end
-	end
+          end
+        end
 
-	[ reading, exit_step ? exit_step.input_play.variable : exit_node, exit_step, last_is_contractable]
+        [ reading, exit_step ? exit_step.input_play.variable : exit_node, exit_step, last_is_contractable]
       end
 
       def verbalise_query query
@@ -677,18 +677,18 @@ module ActiveFacts
         last_is_contractable = false
 
         trace :query, "Verbalising query" do
-	  if trace(:query)
-	    trace :query, "variables:" do
-	      @variables.each do |var|
-		trace :query, var.describe
-	      end
-	    end
-	    trace :query, "steps:" do
-	      @steps.each do |step|
-		trace :query, step.describe
-	      end
-	    end
-	  end
+          if trace(:query)
+            trace :query, "variables:" do
+              @variables.each do |var|
+                trace :query, var.describe
+              end
+            end
+            trace :query, "steps:" do
+              @steps.each do |step|
+                trace :query, step.describe
+              end
+            end
+          end
 
           until @steps.empty?
             next_reading = nil
@@ -707,8 +707,8 @@ module ActiveFacts
 
               player_by_role =
                 next_step.all_play.inject({}) {|h, play| h[play.role] = @player_by_play[play]; h }
-	      raise "REVISIT: Needed a negated reading here" if !next_reading.is_negative != !next_step.is_disallowed
-	      raise "REVISIT: Need to emit 'maybe' here" if next_step.is_optional
+              raise "REVISIT: Needed a negated reading here" if !next_reading.is_negative != !next_step.is_disallowed
+              raise "REVISIT: Need to emit 'maybe' here" if next_step.is_optional
               readings += expand_contracted_text(next_step, next_reading, player_by_role)
               step_completed(next_step)
             else
@@ -721,10 +721,10 @@ module ActiveFacts
                 # Objectified unaries get emitted as unaries, not as objectifications:
                 role = next_step.input_play.role
                 role = role.fact_type.implying_role if role.fact_type.is_a?(ActiveFacts::Metamodel::LinkFactType)
-		next_reading = role.fact_type.preferred_reading(next_step.is_disallowed) || role.fact_type.preferred_reading
+                next_reading = role.fact_type.preferred_reading(next_step.is_disallowed) || role.fact_type.preferred_reading
                 readings += " and " unless readings.empty?
-		readings += "it is not the case that " if !next_step.is_disallowed != !next_reading.is_negative
-		raise "REVISIT: Need to emit 'maybe' here" if next_step.is_optional
+                readings += "it is not the case that " if !next_step.is_disallowed != !next_reading.is_negative
+                raise "REVISIT: Need to emit 'maybe' here" if next_step.is_optional
                 readings += expand_reading_text(next_step, next_reading.text, next_reading.role_sequence, player_by_role)
                 step_completed(next_step)
               elsif next_step.is_objectification_step
@@ -735,7 +735,7 @@ module ActiveFacts
                 objectified_node = next_step.input_play.variable
                 raise "Assumption violated that the objectification is the input play" unless objectified_node.object_type.fact_type
                 objectified_node.all_step.map do |other_step|
-		  other_step.all_play.map do |play|
+                  other_step.all_play.map do |play|
                     player_by_role[play.role] = @player_by_play[play]
                   end
                 end
@@ -746,16 +746,16 @@ module ActiveFacts
                   readings += objectification_verbalisation(fact_type.entity_type)
                 else
                   # This objectified fact type does not need to be made explicit.
-		  negation = next_step.is_disallowed
+                  negation = next_step.is_disallowed
                   next_reading, next_var, next_step, last_is_contractable =
                     *elided_objectification(next_step, fact_type, last_is_contractable, next_var)
                   if last_is_contractable
-		    raise "REVISIT: Need to emit 'maybe' here" if next_step and next_step.is_optional
+                    raise "REVISIT: Need to emit 'maybe' here" if next_step and next_step.is_optional
                     readings += expand_contracted_text(next_step, next_reading, player_by_role)
                   else
                     readings += " and " unless readings.empty?
-		    readings += "it is not the case that " if !!negation != !!next_reading.is_negative
-		    raise "REVISIT: Need to emit 'maybe' here" if next_step and next_step.is_optional
+                    readings += "it is not the case that " if !!negation != !!next_reading.is_negative
+                    raise "REVISIT: Need to emit 'maybe' here" if next_step and next_step.is_optional
                     readings += expand_reading_text(next_step, next_reading.text, next_reading.role_sequence, player_by_role)
                   end
                   # No need to continue if we just deleted the last step
@@ -767,32 +767,32 @@ module ActiveFacts
                 # Prefer a reading that starts with the player of next_var
                 next_reading = fact_type.all_reading_by_ordinal.
                   detect do |reading|
-		    (!next_step.is_disallowed || !reading.is_negative == !next_step.is_disallowed) and
-		      reading_starts_with_node(reading, next_var)
+                    (!next_step.is_disallowed || !reading.is_negative == !next_step.is_disallowed) and
+                      reading_starts_with_node(reading, next_var)
                   end || fact_type.preferred_reading(next_step.is_disallowed)
                 # REVISIT: If this step and reading has role references with adjectives, we need to expand using those
                 readings += " and " unless readings.empty?
-		readings += "it is not the case that " if !next_step.is_disallowed != !next_reading.is_negative
-		raise "REVISIT: Need to emit 'maybe' here" if next_step and next_step.is_optional
+                readings += "it is not the case that " if !next_step.is_disallowed != !next_reading.is_negative
+                raise "REVISIT: Need to emit 'maybe' here" if next_step and next_step.is_optional
                 readings += expand_reading_text(next_step, next_reading.text, next_reading.role_sequence, player_by_role)
                 step_completed(next_step)
               end
             end
 
-	    if next_step
-	      # Continue from this step with the node having the most steps remaining
-	      input_steps = @steps_by_variable[input_var = next_step.input_play.variable] || []
-	      output_play = next_step.output_plays.last
-	      output_steps = (output_play && (output_var = output_play.variable) && @steps_by_variable[output_var]) || []
+            if next_step
+              # Continue from this step with the node having the most steps remaining
+              input_steps = @steps_by_variable[input_var = next_step.input_play.variable] || []
+              output_play = next_step.output_plays.last
+              output_steps = (output_play && (output_var = output_play.variable) && @steps_by_variable[output_var]) || []
 
-	      next_var = input_steps.size > output_steps.size ? input_var : output_var
-	      # Prepare for possible contraction following:
-	      last_is_contractable = next_reading && node_contractable_against_reading(next_var, next_reading)
-	    else
-	      # This shouldn't happen, but an elided objectification that had missing steps can cause it. Survive:
-	      next_var = (steps[0].input_play || steps[0].output_plays.last).variable
-	      last_is_contractable = false
-	    end
+              next_var = input_steps.size > output_steps.size ? input_var : output_var
+              # Prepare for possible contraction following:
+              last_is_contractable = next_reading && node_contractable_against_reading(next_var, next_reading)
+            else
+              # This shouldn't happen, but an elided objectification that had missing steps can cause it. Survive:
+              next_var = (steps[0].input_play || steps[0].output_plays.last).variable
+              last_is_contractable = false
+            end
 
           end
         end

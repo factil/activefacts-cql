@@ -25,12 +25,12 @@ module ActiveFacts
           @identification = identification
           @pragmas = pragmas
           @clauses = clauses || []
-	  @context_note = context_note
+          @context_note = context_note
         end
 
         def compile
           @entity_type = @vocabulary.valid_entity_type_name(@name) ||
-	    @constellation.EntityType(@vocabulary, @name, :concept => :new)
+            @constellation.EntityType(@vocabulary, @name, :concept => :new)
           @entity_type.is_independent = true if @pragmas.delete('independent')
 
           # REVISIT: CQL needs a way to indicate whether subtype migration can occur.
@@ -38,9 +38,9 @@ module ActiveFacts
           @supertypes.each_with_index do |supertype_name, i|
             add_supertype(supertype_name, @identification || i > 0)
           end
-	  @pragmas.each do |p|
-	    @constellation.ConceptAnnotation(:concept => @entity_type.concept, :mapping_annotation => p)
-	  end if @pragmas
+          @pragmas.each do |p|
+            @constellation.ConceptAnnotation(:concept => @entity_type.concept, :mapping_annotation => p)
+          end if @pragmas
 
           context = CompilationContext.new(@vocabulary)
 
@@ -61,9 +61,9 @@ module ActiveFacts
 
           make_preferred_identifier_over_roles identifying_roles
 
-	  if @context_note
-	    @context_note.compile(@constellation, @entity_type)
-	  end
+          if @context_note
+            @context_note.compile(@constellation, @entity_type)
+          end
 
           @clauses.each do |clause|
             next unless clause.context_note
@@ -138,7 +138,7 @@ module ActiveFacts
                 #:is_mandatory => true,
                 #:min_frequency => 1,
               )
-	    trace :constraint, "Made new preferred PC GUID=#{pc.concept.guid} min=nil max=1 over #{role_sequence.describe}"
+            trace :constraint, "Made new preferred PC GUID=#{pc.concept.guid} min=nil max=1 over #{role_sequence.describe}"
           end
         end
 
@@ -165,9 +165,9 @@ module ActiveFacts
 
             fact_type = create_identifying_fact_type(context, clauses)
             fact_types << fact_type if fact_type
-	    unless fact_type.all_role.detect{|r| r.object_type == @entity_type}
-	      objectify_existing_fact_type(fact_type)
-	    end
+            unless fact_type.all_role.detect{|r| r.object_type == @entity_type}
+              objectify_existing_fact_type(fact_type)
+            end
           end
           fact_types
         end
@@ -175,9 +175,9 @@ module ActiveFacts
         def create_identifying_fact_type context, clauses
           # See if any fact type already exists (this ET cannot be a player, but might objectify it)
           existing_clauses = clauses.select{ |clause| clause.match_existing_fact_type context }
-	  if negation = existing_clauses.detect{|c| c.certainty == false }
-	    raise "#{@name} cannot be identified by negated fact type #{negation.inspect}"
-	  end
+          if negation = existing_clauses.detect{|c| c.certainty == false }
+            raise "#{@name} cannot be identified by negated fact type #{negation.inspect}"
+          end
           any_matched = existing_clauses.size > 0
 
           operation = any_matched ? 'Objectifying' : 'Creating'
@@ -205,9 +205,9 @@ module ActiveFacts
 
         def objectify_existing_fact_type fact_type
           raise "#{@name} cannot objectify fact type '#{fact_type.entity_type.name}' that's already objectified" if fact_type.entity_type
-	  if @fact_type
-	    raise "#{@name} cannot objectify '#{fact_type.default_reading}', it already objectifies '#{@fact_type.default_reading}'"
-	  end
+          if @fact_type
+            raise "#{@name} cannot objectify '#{fact_type.default_reading}', it already objectifies '#{@fact_type.default_reading}'"
+          end
 
           if fact_type.internal_presence_constraints.select{|pc| pc.max_frequency == 1}.size == 0
             # If there's no existing uniqueness constraint over this fact type, make a spanning one.
@@ -219,7 +219,7 @@ module ActiveFacts
               :is_preferred_identifier => false,  # We only get here when there is a reference mode on the entity type
               :max_frequency => 1
             )
-	    trace :constraint, "Made new objectification PC GUID=#{pc.concept.guid} min=nil max=1 over #{fact_type.preferred_reading.role_sequence.describe}"
+            trace :constraint, "Made new objectification PC GUID=#{pc.concept.guid} min=nil max=1 over #{fact_type.preferred_reading.role_sequence.describe}"
           end
 
           @fact_type = @entity_type.fact_type = fact_type
@@ -230,7 +230,7 @@ module ActiveFacts
         def add_supertype(supertype_name, not_identifying)
           trace :supertype, "Adding #{not_identifying ? '' : 'identifying '}supertype #{supertype_name} to #{@entity_type.name}" do
             supertype = @vocabulary.valid_entity_type_name(supertype_name) ||
-	      @constellation.EntityType(@vocabulary, supertype_name, :concept => :new) # Should always already exist
+              @constellation.EntityType(@vocabulary, supertype_name, :concept => :new) # Should always already exist
 
             # Did we already know about this supertyping?
             return if @entity_type.all_type_inheritance_as_subtype.detect{|ti| ti.supertype == supertype}
@@ -238,12 +238,12 @@ module ActiveFacts
             # By default, the first supertype identifies this entity type
             is_identifying_supertype = !not_identifying && @entity_type.all_type_inheritance_as_subtype.size == 0
 
-	    assimilation_pragmas = ['absorbed', 'separate', 'partitioned']
+            assimilation_pragmas = ['absorbed', 'separate', 'partitioned']
             assimilations = @pragmas.select { |p| assimilation_pragmas.include? p}
-	    @pragmas -= assimilation_pragmas
+            @pragmas -= assimilation_pragmas
             raise "Conflicting assimilation pragmas #{assimilations*', '}" if assimilations.size > 1
 
-	    @entity_type.add_supertype(supertype, is_identifying_supertype, assimilations[0])
+            @entity_type.add_supertype(supertype, is_identifying_supertype, assimilations[0])
           end
         end
 
@@ -252,11 +252,11 @@ module ActiveFacts
           vt = nil
           trace :entity, "Preparing value type #{vt_name} for reference mode" do
             # Find an existing ValueType called 'vt_name' or 'name vtname'
-	    # or find/create the supertype '#{mode}' and the subtype
+            # or find/create the supertype '#{mode}' and the subtype
             unless vt = @vocabulary.valid_object_type_name(vt_name) or
-		   vt = @vocabulary.valid_object_type_name(vt_name = "#{name} #{mode}")
+                   vt = @vocabulary.valid_object_type_name(vt_name = "#{name} #{mode}")
               base_vt = @vocabulary.valid_value_type_name(mode) ||
-		  @constellation.ValueType(@vocabulary, mode, :concept => :new)
+                  @constellation.ValueType(@vocabulary, mode, :concept => :new)
               vt = @constellation.ValueType(@vocabulary, vt_name, :supertype => base_vt, :concept => :new)
               if parameters
                 length, scale = *parameters
@@ -358,7 +358,7 @@ module ActiveFacts
               :is_preferred_identifier => false,
               :is_mandatory => true
             )
-	    trace :constraint, "Made new refmode PC GUID=#{constraint.concept.guid} min=1 max=1 over #{rs0.describe}"
+            trace :constraint, "Made new refmode PC GUID=#{constraint.concept.guid} min=1 max=1 over #{rs0.describe}"
           else
             trace :mode, "Using existing EntityType PresenceConstraint"
           end
@@ -386,7 +386,7 @@ module ActiveFacts
               :is_preferred_identifier => true,
               :is_mandatory => false
             )
-	    trace :constraint, "Made new refmode ValueType PC GUID=#{constraint.concept.guid} min=0 max=1 over #{rs1.describe}"
+            trace :constraint, "Made new refmode ValueType PC GUID=#{constraint.concept.guid} min=0 max=1 over #{rs1.describe}"
           else
             trace :mode, "Marking existing ValueType PresenceConstraint as preferred"
             rs1.all_presence_constraint.single.is_preferred_identifier = true

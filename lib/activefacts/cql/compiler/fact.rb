@@ -10,17 +10,17 @@ module ActiveFacts
 
         def compile
           @population = @constellation.Population[[@vocabulary.identifying_role_values, @population_name]] ||
-	      @constellation.Population(@vocabulary, @population_name, :concept => :new)
+              @constellation.Population(@vocabulary, @population_name, :concept => :new)
 
           @context = CompilationContext.new(@vocabulary)
           @context.bind @clauses
           @context.left_contraction_allowed = true
           @clauses.each do |clause|
-	    ft = clause.match_existing_fact_type @context
-	    if clause.certainty == false
-	      raise "Negated fact #{clause.inspect} is not supported"
-	    end
-	  end
+            ft = clause.match_existing_fact_type @context
+            if clause.certainty == false
+              raise "Negated fact #{clause.inspect} is not supported"
+            end
+          end
 
           # Figure out the simple existential facts and find fact types:
           @bound_facts = []
@@ -84,16 +84,16 @@ module ActiveFacts
           # Find the roles of this clause that do not yet have an instance
           bare_roles = clause.refs.
             select do |ref|
-	      if !ref.binding.instance and ref.literal
+              if !ref.binding.instance and ref.literal
                 ref.binding.instance = instance_identified_by_literal(ref.binding.player, ref.literal)
-	      end
+              end
 
               next false if ref.binding.instance
               true
             end
 
-	  trace :instance_detail, "Considering '#{clause.display}' with "+
-	    (bare_roles.empty? ? "no bare roles" : "bare roles: #{bare_roles.map{|ref| ref.player.name}*", "}") do
+          trace :instance_detail, "Considering '#{clause.display}' with "+
+            (bare_roles.empty? ? "no bare roles" : "bare roles: #{bare_roles.map{|ref| ref.player.name}*", "}") do
 
             # If all the roles are in place, we can bind the rest of this clause:
             return true if bare_roles.size == 0 && bind_complete_fact(clause)
@@ -149,7 +149,7 @@ module ActiveFacts
             fact = clause.refs[0].binding.instance.fact
           else
             # Check that this fact doesn't already exist
-	    trace :instance_detail, "Searching for existing fact instance"
+            trace :instance_detail, "Searching for existing fact instance"
 
             fact = clause.fact_type.all_fact.detect do |f|
 
@@ -207,7 +207,7 @@ module ActiveFacts
           return false unless identifying_binding # This happens when we have a bare objectification
           identifying_instance = identifying_binding.instance
           preferred_identifier = entity_type.preferred_identifier
-	  role_count = preferred_identifier.role_sequence.all_role_ref.size 
+          role_count = preferred_identifier.role_sequence.all_role_ref.size 
 
           trace :instance, "A #{binding.player.name} is #{role_count > 1 ? 'partly ':''}identified in #{clause.inspect}"
 
@@ -251,21 +251,21 @@ module ActiveFacts
             return false
           end
 
-	  instance = @constellation.Instance(:new, :object_type => entity_type, :population => @population)
-	  binding.instance = instance
-	  @bound_facts << instance
-	  identifiers.each do |rr, identifying_clause, identifying_binding, identifying_instance|
-	    # This clause provides the identifying literal for the entity_type
-	    id_fact =
-	      identifying_clause.fact =
-	      @constellation.Fact(:new, :fact_type => rr.role.fact_type, :population => @population)
-	    @bound_facts << id_fact
-	    role = (rr.role.fact_type.all_role.to_a-[rr.role])[0]
-	    @constellation.RoleValue(:instance => instance, :fact => id_fact, :population => @population, :role => role)
-	    @constellation.RoleValue(:instance => identifying_instance, :fact => id_fact, :role => rr.role, :population => @population)
-	    trace :instance, "Assert #{id_fact.verbalise.inspect} (existential) #{@population.name.size>0 ? " in "+@population.name.inspect : ''}"
-	  end
-	  trace :instance, "Assert #{instance.verbalise.inspect} #{@population.name.size>0 ? " in "+@population.name.inspect : ''}"
+          instance = @constellation.Instance(:new, :object_type => entity_type, :population => @population)
+          binding.instance = instance
+          @bound_facts << instance
+          identifiers.each do |rr, identifying_clause, identifying_binding, identifying_instance|
+            # This clause provides the identifying literal for the entity_type
+            id_fact =
+              identifying_clause.fact =
+              @constellation.Fact(:new, :fact_type => rr.role.fact_type, :population => @population)
+            @bound_facts << id_fact
+            role = (rr.role.fact_type.all_role.to_a-[rr.role])[0]
+            @constellation.RoleValue(:instance => instance, :fact => id_fact, :population => @population, :role => role)
+            @constellation.RoleValue(:instance => identifying_instance, :fact => id_fact, :role => rr.role, :population => @population)
+            trace :instance, "Assert #{id_fact.verbalise.inspect} (existential) #{@population.name.size>0 ? " in "+@population.name.inspect : ''}"
+          end
+          trace :instance, "Assert #{instance.verbalise.inspect} #{@population.name.size>0 ? " in "+@population.name.inspect : ''}"
 
           true  # Done with this clause
         end
@@ -276,11 +276,11 @@ module ActiveFacts
           else
             trace :instance_detail, "Assert Value #{object_type.name} #{literal.inspect}" do
               is_literal_string = literal.literal.is_a?(String)
-	      # REVISIT: Check for subtypes and supertypes also, and promote type if necessary
-	      instance = object_type.all_instance.detect do |i|
+              # REVISIT: Check for subtypes and supertypes also, and promote type if necessary
+              instance = object_type.all_instance.detect do |i|
               #instance = @constellation.Instance.detect do |key, i|
                   # REVISIT: And same unit
-		  trace :instance_detail2, "Comparing #{i.value.literal.inspect} to #{literal.literal.to_s.inspect}"
+                  trace :instance_detail2, "Comparing #{i.value.literal.inspect} to #{literal.literal.to_s.inspect}"
                   i.population == @population &&
                     i.value &&
                     i.value.literal.inspect == literal.literal.to_s.inspect &&
@@ -289,14 +289,14 @@ module ActiveFacts
               #instance = object_type.all_instance.detect { |instance|
               #  instance.population == @population && instance.value == literal
               #}
-	      if instance
-		trace :instance, "Instance already known: #{instance.verbalise.inspect}"
+              if instance
+                trace :instance, "Instance already known: #{instance.verbalise.inspect}"
               else
                 instance = @constellation.Instance(:new)
                 instance.object_type = object_type
                 instance.population = @population
                 instance.value = [literal.to_s, is_literal_string, nil]
-		trace :instance, "Assert #{instance.verbalise.inspect} #{@population.name.size>0 ? " in "+@population.name.inspect : ''}"
+                trace :instance, "Assert #{instance.verbalise.inspect} #{@population.name.size>0 ? " in "+@population.name.inspect : ''}"
                 @bound_facts << instance
               end
               instance
@@ -323,20 +323,20 @@ module ActiveFacts
             }
             if instance_rv
               instance = existing_instance
-	      trace :instance, "Already known: #{instance.verbalise.inspect}"
+              trace :instance, "Already known: #{instance.verbalise.inspect}"
             else
               # This fact has no clause.
-	      trace :instance_detail, "Creating implicit existential fact #{role.fact_type.default_reading}"
+              trace :instance_detail, "Creating implicit existential fact #{role.fact_type.default_reading}"
               fact = @constellation.Fact(:new, :fact_type => role.fact_type, :population => @population)
               @bound_facts << fact
               # This instance will be associated with its binding by our caller
               instance = @constellation.Instance(:new, :object_type => object_type, :population => @population)
-	      trace :instance_detail, "Creating Entity #{object_type.name} identified by '#{literal}' #{@population.name.size>0 ? " in "+@population.name.inspect : ''}"
+              trace :instance_detail, "Creating Entity #{object_type.name} identified by '#{literal}' #{@population.name.size>0 ? " in "+@population.name.inspect : ''}"
               @bound_facts << instance
               # The identifying fact type has two roles; create both role instances:
               @constellation.RoleValue(:instance => identifying_instance, :fact => fact, :population => @population, :role => role)
               @constellation.RoleValue(:instance => instance, :fact => fact, :population => @population, :role => (role.fact_type.all_role-[role])[0])
-	      trace :instance, "Assert #{instance.verbalise.inspect}"
+              trace :instance, "Assert #{instance.verbalise.inspect}"
             end
             instance
           end

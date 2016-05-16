@@ -28,7 +28,7 @@ module ActiveFacts
         def trailing_adjective; nil; end
         def value_constraint; nil; end
         def literal; nil; end
-	def side_effects; nil; end
+        def side_effects; nil; end
         attr_accessor :player     # What ObjectType does the Binding denote
         attr_accessor :binding    # What Binding for that ObjectType
         attr_accessor :clause     # What clause does the result participate in?
@@ -48,9 +48,9 @@ module ActiveFacts
         attr_reader :fact_type
         def objectified_as; self; end   # The Reference which objectified this fact type
 
-	def initialize
-	  @certainty = true	  # Assume it's definite
-	end
+        def initialize
+          @certainty = true       # Assume it's definite
+        end
 
         def operands context = nil
           raise "REVISIT: Implement operand enumeration in the operator subclass #{self.class.name}"
@@ -92,8 +92,8 @@ module ActiveFacts
         def result_value_type(context, name)
           vocabulary = context.vocabulary
           constellation = vocabulary.constellation
-	  vocabulary.valid_value_type_name(name) ||
-	    constellation.ValueType(vocabulary, name, :concept => :new)
+          vocabulary.valid_value_type_name(name) ||
+            constellation.ValueType(vocabulary, name, :concept => :new)
         end
 
         def is_naked_object_type
@@ -117,9 +117,9 @@ module ActiveFacts
           # REVISIT: We should auto-create steps from Entity Types to an identifying ValueType
           # REVISIT: We should traverse up the supertype of ValueTypes to find a DataType
           @fact_type = clause_ast.match_existing_fact_type(context, :exact_type => true)
-	  if clause.certainty == false
-	    raise "Negated fact types in expressions are not yet supported: #{clause.inspect}"
-	  end
+          if clause.certainty == false
+            raise "Negated fact types in expressions are not yet supported: #{clause.inspect}"
+          end
           return @fact_type if @fact_type
 
           @fact_type = clause_ast.make_fact_type context.vocabulary
@@ -130,9 +130,9 @@ module ActiveFacts
           opnds.each do |opnd|
             next unless opnd.is_a?(Operation)
             opnd.match_existing_fact_type context
-	    if opnd.certainty == false
-	      raise "Negated fact types in expressions are not yet supported: #{opnd.inspect}"
-	    end
+            if opnd.certainty == false
+              raise "Negated fact types in expressions are not yet supported: #{opnd.inspect}"
+            end
           end
           @fact_type
         end
@@ -189,8 +189,8 @@ module ActiveFacts
             end
             v = context.vocabulary
             @boolean ||=
-	      v.constellation.ValueType[[[v.name], 'Boolean']] ||
-	      v.constellation.ValueType(v, 'Boolean', :concept => :new)
+              v.constellation.ValueType[[[v.name], 'Boolean']] ||
+              v.constellation.ValueType(v, 'Boolean', :concept => :new)
             @player = @boolean
           end
         end
@@ -207,20 +207,20 @@ module ActiveFacts
 
         def to_s
           "COMPARE#{
-	    operator
-	  }(#{
-	    case @certainty
-	    when nil; 'maybe '
-	    when false; 'negated '
-	    # else 'definitely '
-	    end
+            operator
+          }(#{
+            case @certainty
+            when nil; 'maybe '
+            when false; 'negated '
+            # else 'definitely '
+            end
           }#{
-	    e1.to_s
-	  } WITH #{
-	    e2.to_s
-	  }#{
-	    @qualifiers.empty? ? '' : ', ['+@qualifiers*', '+']'
-	  })"
+            e1.to_s
+          } WITH #{
+            e2.to_s
+          }#{
+            @qualifiers.empty? ? '' : ', ['+@qualifiers*', '+']'
+          })"
         end
       end
 

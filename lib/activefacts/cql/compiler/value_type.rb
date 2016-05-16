@@ -94,8 +94,8 @@ module ActiveFacts
           @unit = unit
           @value_constraint = value_constraint
           @pragmas = pragmas
-	  @context_note = context_note
-	  @auto_assigned_at = auto_assigned_at
+          @context_note = context_note
+          @auto_assigned_at = auto_assigned_at
         end
 
         def compile
@@ -104,19 +104,19 @@ module ActiveFacts
           # Create the base type unless it already exists:
           base_type = nil
           if (@base_type_name != @name)
-	    unless base_type = @vocabulary.valid_value_type_name(@base_type_name)
+            unless base_type = @vocabulary.valid_value_type_name(@base_type_name)
               base_type = @constellation.ValueType(@vocabulary, @base_type_name, :concept => :new)
               return base_type if @base_type_name == @name
             end
           end
 
           # Create and initialise the ValueType:
-	  vt = @vocabulary.valid_value_type_name(@name) ||
-	    @constellation.ValueType(@vocabulary, @name, :concept => :new)
+          vt = @vocabulary.valid_value_type_name(@name) ||
+            @constellation.ValueType(@vocabulary, @name, :concept => :new)
           vt.is_independent = true if @pragmas.delete('independent')
-	  @pragmas.each do |p|
-	    @constellation.ConceptAnnotation(:concept => vt.concept, :mapping_annotation => p)
-	  end if @pragmas
+          @pragmas.each do |p|
+            @constellation.ConceptAnnotation(:concept => vt.concept, :mapping_annotation => p)
+          end if @pragmas
           vt.supertype = base_type if base_type
           vt.length = length if length
           vt.scale = scale if scale
@@ -148,9 +148,9 @@ module ActiveFacts
             vt.value_constraint = @value_constraint.compile
           end
 
-	  if @context_note
-	    @context_note.compile(@constellation, vt)
-	  end
+          if @context_note
+            @context_note.compile(@constellation, vt)
+          end
 
           vt
         end
