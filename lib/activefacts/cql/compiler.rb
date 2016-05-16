@@ -13,6 +13,7 @@ require 'activefacts/cql/compiler/expression'
 require 'activefacts/cql/compiler/fact'
 require 'activefacts/cql/compiler/constraint'
 require 'activefacts/cql/compiler/query'
+require 'activefacts/cql/compiler/informal'
 
 module ActiveFacts
   module CQL
@@ -28,7 +29,7 @@ module ActiveFacts
         @filename = a.shift || "stdio"
         super *a
         @constellation = ActiveFacts::API::Constellation.new(ActiveFacts::Metamodel)
-	@constellation.loggers << proc{|*k| trace :apilog, k.inspect} if trace(:apilog)
+        @constellation.loggers << proc{|*k| trace :apilog, k.inspect} if trace(:apilog)
         @language = nil
         trace :file, "Parsing '#{@filename}'"
       end
@@ -59,11 +60,11 @@ module ActiveFacts
 
       # Mark any new Concepts as belonging to this topic
       def topic_flood
-	@constellation.Concept.each do |key, concept|
-	  next if concept.topic
-	  trace :topic, "Colouring #{concept.describe} with #{@topic.topic_name}"
-	  concept.topic = @topic
-	end
+        @constellation.Concept.each do |key, concept|
+          next if concept.topic
+          trace :topic, "Colouring #{concept.describe} with #{@topic.topic_name}"
+          concept.topic = @topic
+        end
       end
 
       def compile input
@@ -75,7 +76,7 @@ module ActiveFacts
         # parse_all returns an array of the block's non-nil return values.
         ok = parse_all(@string, :definition) do |node|
           trace :parse, "Parsed '#{node.text_value.gsub(/\s+/,' ').strip}'" do
-	    trace :lex, (proc { node.inspect })
+            trace :lex, (proc { node.inspect })
             begin
               ast = node.ast
               next unless ast
@@ -85,14 +86,14 @@ module ActiveFacts
               ast.vocabulary = @vocabulary
               value = compile_definition ast
               trace :definition, "Compiled to #{value.is_a?(Array) ? value.map{|v| v.verbalise}*', ' : value.verbalise}" if value
-	      if value.is_a?(ActiveFacts::Metamodel::Topic)
-		topic_flood if @topic
-		@topic = value
-	      elsif ast.is_a?(Compiler::Vocabulary)
-		topic_flood if @topic
-		@vocabulary = value
-		@topic = @constellation.Topic(@vocabulary.name)
-	      end
+              if value.is_a?(ActiveFacts::Metamodel::Topic)
+                topic_flood if @topic
+                @topic = value
+              elsif ast.is_a?(Compiler::Vocabulary)
+                topic_flood if @topic
+                @vocabulary = value
+                @topic = @constellation.Topic(@vocabulary.name)
+              end
             rescue => e
               # Augment the exception message, but preserve the backtrace
               start_line = @string.line_of(node.interval.first)
@@ -103,7 +104,7 @@ module ActiveFacts
               raise ne
             end
           end
-	  topic_flood if @topic
+          topic_flood if @topic
         end
         raise failure_reason unless ok
         vocabulary
@@ -120,12 +121,12 @@ module ActiveFacts
 
         # REVISIT: Save and use another @vocabulary for this file?
         File.open(@filename) do |f|
-	  topic_flood if @topic
-	  @topic = @constellation.Topic(File.basename(@filename, '.cql'))
-	  trace :import, "Importing #{@filename} as #{@topic.topic_name}" do
-	    ok = parse_all(f.read, nil, &@block)
-	  end
-	  @topic = saved_topic
+          topic_flood if @topic
+          @topic = @constellation.Topic(File.basename(@filename, '.cql'))
+          trace :import, "Importing #{@filename} as #{@topic.topic_name}" do
+            ok = parse_all(f.read, nil, &@block)
+          end
+          @topic = saved_topic
         end
 
       rescue => e

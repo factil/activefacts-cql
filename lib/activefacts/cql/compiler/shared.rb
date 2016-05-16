@@ -36,18 +36,18 @@ module ActiveFacts
           key <=> other.key
         end
         
-	def variable= v
-	  @variable = v	  # A place for a breakpoint :)
-	end
+        def variable= v
+          @variable = v   # A place for a breakpoint :)
+        end
 
-	def add_ref ref
-	  @refs << ref
-	  ref
-	end
+        def add_ref ref
+          @refs << ref
+          ref
+        end
 
-	def delete_ref ref
-	  @refs.delete ref
-	end
+        def delete_ref ref
+          @refs.delete ref
+        end
       end
 
       class CompilationContext
@@ -77,7 +77,7 @@ module ActiveFacts
           player ||= @player_by_role_name[name]
 
           if !player && @allowed_forward_terms.include?(name)
-	    @vocabulary.valid_entity_type_name(name)  # No need for the result here, just no exceptional condition
+            @vocabulary.valid_entity_type_name(name)  # No need for the result here, just no exceptional condition
             player = constellation.EntityType(@vocabulary, name, :concept => :new)
           end
 
@@ -117,10 +117,10 @@ module ActiveFacts
 
         def compile
           if @constellation.Vocabulary.size > 0
-	    @constellation.Topic @name
-	  else
-	    @constellation.Vocabulary @name
-	  end
+            @constellation.Topic @name
+          else
+            @constellation.Vocabulary @name
+          end
         end
 
         def to_s

@@ -49,14 +49,14 @@ module ActiveFacts
         def initialize context_note, enforcement, clauses_lists = []
           if context_note.is_a?(Treetop::Runtime::SyntaxNode) && !context_note.empty?
             context_note = context_note.empty? ? nil : context_note.ast
-	  else
-	    context_note = nil	# Perhaps a context note got attached to one of the clauses. Steal it.
-	    clauses_lists.detect do |clauses_list|
-	      if c = clauses_list.last.context_note
-		context_note = c
-		clauses_list.last.context_note = nil
-	      end
-	    end
+          else
+            context_note = nil  # Perhaps a context note got attached to one of the clauses. Steal it.
+            clauses_lists.detect do |clauses_list|
+              if c = clauses_list.last.context_note
+                context_note = c
+                clauses_list.last.context_note = nil
+              end
+            end
           end
           @context_note = context_note
           @enforcement = enforcement
@@ -233,13 +233,13 @@ module ActiveFacts
               :is_preferred_identifier => false,
               :is_mandatory => @quantifier.min && @quantifier.min > 0
             )
-	  if @quantifier.pragmas
-	    @quantifier.pragmas.each do |p|
-	      @constellation.ConceptAnnotation(:concept => @constraint.concept, :mapping_annotation => p)
-	    end
-	  end
+          if @quantifier.pragmas
+            @quantifier.pragmas.each do |p|
+              @constellation.ConceptAnnotation(:concept => @constraint.concept, :mapping_annotation => p)
+            end
+          end
           @enforcement.compile(@constellation, @constraint) if @enforcement
-	  trace :constraint, "Made new PC GUID=#{@constraint.concept.guid} min=#{@quantifier.min.inspect} max=#{@quantifier.max.inspect} over #{role_sequence.describe}"
+          trace :constraint, "Made new PC GUID=#{@constraint.concept.guid} min=#{@quantifier.min.inspect} max=#{@quantifier.max.inspect} over #{role_sequence.describe}"
           super
         end
 
@@ -285,9 +285,9 @@ module ActiveFacts
             # Does this clauses_list involve a query?
             if clauses_list.size > 1 or
               clauses_list.detect do |clause|
-		clause.refs.detect{|ref| ref.nested_clauses } or
-		clause.includes_literals
-	      end
+                clause.refs.detect{|ref| ref.nested_clauses } or
+                clause.includes_literals
+              end
 
               trace :query, "Building query for #{clauses_list.inspect}" do
                 trace :query, "Constrained bindings are #{@common_bindings.inspect}"
@@ -390,11 +390,11 @@ module ActiveFacts
             :vocabulary => @vocabulary,
             :is_mandatory => @quantifier.min == 1
           )
-	  if @quantifier.pragmas
-	    @quantifier.pragmas.each do |p|
-	      @constellation.ConceptAnnotation(:concept => @constraint.concept, :mapping_annotation => p)
-	    end
-	  end
+          if @quantifier.pragmas
+            @quantifier.pragmas.each do |p|
+              @constellation.ConceptAnnotation(:concept => @constraint.concept, :mapping_annotation => p)
+            end
+          end
           @enforcement.compile(@constellation, @constraint) if @enforcement
           role_sequences.each_with_index do |role_sequence, i|
             @constellation.SetComparisonRoles(@constraint, i, :role_sequence => role_sequence)
@@ -518,35 +518,35 @@ module ActiveFacts
           @regular_expression = ast[:regular_expression]
         end
 
-	def assert_value(val)
-	  if val.is_a?(String)
-	    @constellation.Value(eval(val), true, nil)
-	  elsif val
-	    @constellation.Value(val.to_s, false , nil)
-	  else
-	    nil
-	  end
-	end
+        def assert_value(val)
+          if val.is_a?(String)
+            @constellation.Value(eval(val), true, nil)
+          elsif val
+            @constellation.Value(val.to_s, false , nil)
+          else
+            nil
+          end
+        end
 
         def compile
           @constraint = @constellation.ValueConstraint(:new)
           raise "Units on value constraints are not yet processed (at line #{'REVISIT'})" if @units
               # @string.line_of(node.interval.first)
 
-	  if @value_ranges
-	    @value_ranges.each do |range|
-	      min, max = Array === range ? range : [range, range]
-	      v_range = @constellation.ValueRange(
-		min && @constellation.Bound(:value => assert_value(min), :is_inclusive => true),
-		max && @constellation.Bound(:value => assert_value(max), :is_inclusive => true))
-	      ar = @constellation.AllowedRange(@constraint, v_range)
-	    end
-	  else
-	    @constraint.regular_expression = @regular_expression
-	  end
-	  @enforcement.compile(@constellation, @constraint) if @enforcement
-	  super
-	end
+          if @value_ranges
+            @value_ranges.each do |range|
+              min, max = Array === range ? range : [range, range]
+              v_range = @constellation.ValueRange(
+                min && @constellation.Bound(:value => assert_value(min), :is_inclusive => true),
+                max && @constellation.Bound(:value => assert_value(max), :is_inclusive => true))
+              ar = @constellation.AllowedRange(@constraint, v_range)
+            end
+          else
+            @constraint.regular_expression = @regular_expression
+          end
+          @enforcement.compile(@constellation, @constraint) if @enforcement
+          super
+        end
 
         def vrto_s vr
           if Array === vr
@@ -568,10 +568,10 @@ module ActiveFacts
 
         def to_s
           "#{super} to " +
-	  (@value_ranges ?
-	    "(#{@value_ranges.map{|vr| vrto_s(vr) }.inspect })#{ @units ? " in #{@units.inspect}" : ''}" :
-	    @regular_expression
-	  )
+          (@value_ranges ?
+            "(#{@value_ranges.map{|vr| vrto_s(vr) }.inspect })#{ @units ? " in #{@units.inspect}" : ''}" :
+            @regular_expression
+          )
         end
       end
 

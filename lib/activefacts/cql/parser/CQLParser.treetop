@@ -56,6 +56,7 @@ module ActiveFacts
         / constraint
         / unit_definition   # REVISIT: Move this above the prescan?
         / object_type
+	/ informal_description
 	/ query
 	/ s ';' s { def ast; nil; end }
       end
@@ -98,6 +99,25 @@ module ActiveFacts
 	{ def node_type; :term; end }
       end
 
+      rule informal_description
+        informally s ',' s
+	  subject:(
+	    signifier:each S term         # Informal definition of an object type
+            /
+	    signifier:when S reading:phrase+ s ','       # or a fact type
+          ) s
+          text:(!(!. / '.' [ \t]* [\n]) (string / .))*  # Allow . inside a string
+          (!. / '.' [ \t]* [\n])          # The description terminates in a fullstop at the end of a line, or EOF
+        {
+          def ast
+	    kind = subject.signifier.text_value.to_sym
+	    subject_name = (kind == :each ? subject.term.text_value : subject.reading.text_value)
+	    phrases = subject.reading.elements.map(&:ast) if kind == :when
+            Compiler::InformalDefinition.new(kind, subject_name, phrases, text.text_value)
+          end
+        }
+      end
+
       rule constraint
         subset_constraint /
         equality_constraint /
@@ -106,8 +126,13 @@ module ActiveFacts
         # REVISIT: / value_constraint
       end
 
+      # Adding enforcement to a constraint makes it deontic
       rule enforcement
-	s '(' s otherwise s action s a:agent? s ')' s
+	s '(' s
+	  otherwise s
+	  action:id s	# An enforcement action, like SMS, email, log, alarm, etc.
+	  a:agent? s
+	')' s
 	  {
 	    def ast; Compiler::Enforcement.new(action.text_value, a.empty? ? nil : a.text_value); end
 	  }
@@ -116,11 +141,6 @@ module ActiveFacts
 	  {
 	    def ast; nil; end
 	  }
-      end
-
-      # An enforcement action, like SMS, email, log, alarm, etc.
-      rule action
-	id
       end
 
       # presence constraint:
