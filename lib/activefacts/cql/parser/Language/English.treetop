@@ -221,8 +221,8 @@ module ActiveFacts
 	s it s is s not s the s case s that s
       end
 
-      rule agg_of of end 
-      rule agg_in in end 
+      rule agg_of of end
+      rule agg_in in end
       rule restricted_to 'restricted' s 'to' s !alphanumeric end
       # any is optionally used in an identifying role_list
       rule any one / a end
@@ -232,12 +232,12 @@ module ActiveFacts
       rule all 'all' !alphanumeric end
       rule ascending 'ascending' !alphanumeric end
       rule at 'at' !alphanumeric end
-      rule both 'both' !alphanumeric end 
-      rule converts 'converts' !alphanumeric end 
+      rule both 'both' !alphanumeric end
+      rule converts 'converts' !alphanumeric end
       rule descending 'descending' !alphanumeric end
-      rule each 'each' !alphanumeric end 
-      rule either 'either' !alphanumeric end 
-      rule entity 'entity' !alphanumeric end 
+      rule each 'each' !alphanumeric end
+      rule either 'either' !alphanumeric end
+      rule entity 'entity' !alphanumeric end
       rule exactly 'exactly' !alphanumeric end
       rule from  'from' !alphanumeric end
       rule includes 'includes' !alphanumeric end
@@ -254,61 +254,63 @@ module ActiveFacts
       # >>>>>>>>>>>>>>>>>>>> External vocabulary <<<<<<<<<<<<<<<<<<<<
       rule according_to 'according' S to end
       rule acyclic 'acyclic' !alphanumeric end
-      rule alias 'alias' !alphanumeric end 
+      rule alias 'alias' !alphanumeric end
       rule and 'and' !alphanumeric end
       rule antisymmetric 'antisymmetric' !alphanumeric end
       rule approximately 'approximately' !alphanumeric end
       rule as 'as' !alphanumeric end
-      rule as_opposed_to as s 'opposed' S to end 
+      rule as_opposed_to as s 'opposed' S to end
       rule asymmetric 'asymmetric' !alphanumeric end
       rule because 'because' !alphanumeric end
-      rule but 'but' !alphanumeric end 
+      rule but 'but' !alphanumeric end
       rule by 'by' !alphanumeric end			      # fix? Used in 'returning' for ordering
-      rule case 'case' !alphanumeric end 
+      rule case 'case' !alphanumeric end
       rule definitely 'definitely' !alphanumeric end
-      rule ephemera 'ephemera' !alphanumeric end 
-      rule false 'false' !alphanumeric end 
-      rule feminine 'feminine' !alphanumeric end 
-      rule identified ('known'/'identified') !alphanumeric end 
+      rule ephemera 'ephemera' !alphanumeric end
+      rule false 'false' !alphanumeric end
+      rule feminine 'feminine' !alphanumeric end
+      rule identified ('known'/'identified') !alphanumeric end
       rule if 'if' !alphanumeric end
       rule in 'in' !alphanumeric end
       rule import 'import' !alphanumeric end
-      rule independent 'independent' !alphanumeric end 
+      rule independent 'independent' !alphanumeric end
       rule stronglyintransitive 'strongly' s 'intransitive' !alphanumeric end
+      rule informally [Ii] 'nformally' !alphanumeric end
       rule intransitive 'intransitive' !alphanumeric end
       rule irreflexive 'irreflexive' !alphanumeric end
-      rule is 'is' !alphanumeric end 
+      rule is 'is' !alphanumeric end
       rule it 'it' !alphanumeric end
       rule its 'its' !alphanumeric end
-      rule masculine 'masculine' !alphanumeric end 
+      rule masculine 'masculine' !alphanumeric end
       rule maybe 'maybe' !alphanumeric end
       rule only 'only' !alphanumeric end
-      rule or 'or' !alphanumeric end 
-      rule of 'of' !alphanumeric end 
+      rule or 'or' !alphanumeric end
+      rule of 'of' !alphanumeric end
       rule ordering_prefix by s (ascending/descending)? s end
-      rule otherwise 'otherwise' !alphanumeric end 
-      rule partitioned 'partitioned' !alphanumeric end 
-      rule personal 'personal' !alphanumeric end 
+      rule otherwise 'otherwise' !alphanumeric end
+      rule partitioned 'partitioned' !alphanumeric end
+      rule personal 'personal' !alphanumeric end
       rule radix_point '.' end
       rule reflexive 'reflexive' !alphanumeric end
       rule returning 'returning' !alphanumeric end
-      rule separate 'separate' !alphanumeric end 
+      rule separate 'separate' !alphanumeric end
       rule so_that 'so' S that end
       rule static 'static' !alphanumeric end
       rule symmetric 'symmetric' !alphanumeric end
       rule that 'that' !alphanumeric end
-      rule the 'the' !alphanumeric end 
+      rule the 'the' !alphanumeric end
       rule then 'then' !alphanumeric end
       rule to 'to' !alphanumeric end
       rule to_avoid to s 'avoid' !alphanumeric end
       rule transient 'transient' !alphanumeric end
       rule transitive 'transitive' !alphanumeric end
-      rule true 'true' !alphanumeric end 
-      rule vocabulary 'vocabulary' !alphanumeric end 
-      rule where 'where' !alphanumeric end 
-      rule which 'which' !alphanumeric end 
-      rule was 'was' !alphanumeric end 
-      rule who 'who' !alphanumeric end 
+      rule true 'true' !alphanumeric end
+      rule vocabulary 'vocabulary' !alphanumeric end
+      rule when 'when' !alphanumeric end
+      rule where 'where' !alphanumeric end
+      rule which 'which' !alphanumeric end
+      rule was 'was' !alphanumeric end
+      rule who 'who' !alphanumeric end
 
     end
   end

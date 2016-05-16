@@ -13,6 +13,7 @@ require 'activefacts/cql/compiler/expression'
 require 'activefacts/cql/compiler/fact'
 require 'activefacts/cql/compiler/constraint'
 require 'activefacts/cql/compiler/query'
+require 'activefacts/cql/compiler/informal'
 
 module ActiveFacts
   module CQL
