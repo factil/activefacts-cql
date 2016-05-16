@@ -14,10 +14,10 @@ module ActiveFacts
       end
 
       class ContextNote
-        attr_reader :context_kind, :discussion, :who, :agreed_date, :agreed_agents
+        attr_reader :context_kind, :description, :who, :agreed_date, :agreed_agents
 
-        def initialize context_kind, discussion, who, agreed
-          @context_kind, @discussion, @who, @agreed = context_kind, discussion, who, agreed
+        def initialize context_kind, description, who, agreed
+          @context_kind, @description, @who, @agreed = context_kind, description, who, agreed
           @agreed_date, @agreed_agents = *agreed
         end
 
@@ -26,7 +26,7 @@ module ActiveFacts
             constellation.ContextNote(
               :new,
               :context_note_kind => @context_kind,
-              :discussion => @discussion
+              :description => @description
             )
           context_note.relevant_concept = target.concept
           if @agreed_date || @agreed_agents

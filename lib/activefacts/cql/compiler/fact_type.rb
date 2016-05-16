@@ -12,17 +12,17 @@ module ActiveFacts
           @returning = returning || []
         end
 
-	def to_s
-	  inspect
-	end
+        def to_s
+          inspect
+        end
 
         def inspect
           "Query: " +
-	    if @conditions.empty?
-	      ''
-	    else
-	      'where ' + @conditions.map{|c| ((j=c.conjunction) ? j+' ' : '') + c.inspect}*' '
-	    end
+            if @conditions.empty?
+              ''
+            else
+              'where ' + @conditions.map{|c| ((j=c.conjunction) ? j+' ' : '') + c.inspect}*' '
+            end
           # REVISIT: @returning = returning
         end
 
@@ -55,10 +55,10 @@ module ActiveFacts
 
         def match_condition_fact_types
           @conditions.each do |condition|
-	    trace :projection, "matching condition fact_type #{condition.inspect}" do
-	      fact_type = condition.match_existing_fact_type @context
-	      raise "Unrecognised fact type #{condition.inspect} in #{self.class}" unless fact_type
-	    end
+            trace :projection, "matching condition fact_type #{condition.inspect}" do
+              fact_type = condition.match_existing_fact_type @context
+              raise "Unrecognised fact type #{condition.inspect} in #{self.class}" unless fact_type
+            end
           end
         end
 
@@ -105,12 +105,12 @@ module ActiveFacts
           # * Objectify the fact type if @name
           #
 
-	  # Prepare to objectify the fact type (so readings for link fact types can be created)
+          # Prepare to objectify the fact type (so readings for link fact types can be created)
           if @name
-	    entity_type = @vocabulary.valid_entity_type_name(@name)
+            entity_type = @vocabulary.valid_entity_type_name(@name)
             raise "You can't objectify #{@name}, it already exists" if entity_type
             @entity_type = @constellation.EntityType(@vocabulary, @name, :fact_type => @fact_type, :concept => :new)
-	  end
+          end
 
           prepare_roles @clauses
 
@@ -119,13 +119,13 @@ module ActiveFacts
 
           return true unless @clauses.size > 0   # Nothing interesting was said.
 
-	  if @entity_type
-	    # Extract readings for link fact types
-	    @link_fact_type_clauses, @clauses =
-	      @clauses.partition do |clause|
-		clause.refs.size == 2 and clause.refs.detect{|ref| ref.player == @entity_type}
-	      end
-	  end
+          if @entity_type
+            # Extract readings for link fact types
+            @link_fact_type_clauses, @clauses =
+              @clauses.partition do |clause|
+                clause.refs.size == 2 and clause.refs.detect{|ref| ref.player == @entity_type}
+              end
+          end
 
           # See if any existing fact type is being invoked (presumably to objectify or extend it)
           @fact_type = check_compatibility_of_matched_clauses
@@ -139,7 +139,7 @@ module ActiveFacts
             first_clause.make_embedded_constraints vocabulary
             @existing_clauses = [first_clause]
           elsif (n = @clauses.size - @existing_clauses.size) > 0
-	    raise "Cannot extend a negated fact type" if @existing_clauses.detect {|clause| clause.certainty == false }
+            raise "Cannot extend a negated fact type" if @existing_clauses.detect {|clause| clause.certainty == false }
             trace :binding, "Extending existing fact type with #{n} new readings"
           end
 
@@ -158,20 +158,20 @@ module ActiveFacts
           end
 
           if @name
-	    # Objectify the fact type:
+            # Objectify the fact type:
             @entity_type.fact_type = @fact_type
             if @fact_type.entity_type and @name != @fact_type.entity_type.name
               raise "Cannot objectify fact type as #{@name} and as #{@fact_type.entity_type.name}"
             end
             ifts = @entity_type.create_link_fact_types
-	    create_link_fact_type_readings(ifts)
+            create_link_fact_type_readings(ifts)
             if @pragmas
               @entity_type.is_independent = true if @pragmas.delete('independent')
             end
           end
-	  @pragmas.each do |p|
-	    @constellation.ConceptAnnotation(:concept => (@entity_type||@fact_type).concept, :mapping_annotation => p)
-	  end if @pragmas
+          @pragmas.each do |p|
+            @constellation.ConceptAnnotation(:concept => (@entity_type||@fact_type).concept, :mapping_annotation => p)
+          end if @pragmas
 
           @clauses.each do |clause|
             next unless clause.context_note
@@ -192,26 +192,26 @@ module ActiveFacts
           @fact_type
         end
 
-	def create_link_fact_type_readings(ifts)
-	  @link_fact_type_clauses.each do |clause|
-	    #next false unless clause.refs.size == 2 and clause.refs.detect{|r| r.role.object_type == @entity_type }
-	    other_ref = clause.refs.detect{|ref| ref.player != @entity_type}
-	    ift = ifts.detect do |ift|
-	      other_ref.binding.refs.map{|r| r.role}.include?(ift.implying_role)
-	    end
-	    unless ift
-	      raise "Clause #{clause} in unmatched in definition of objectified fact type #{@name}"
-	      next
-	    end
-	    # This clause is a reading for the LinkFactType ift
-	    i = 0
-	    reading_text = clause.phrases.map do |phrase|
-		next phrase if String === phrase
-		"{#{(i += 1)-1}}"
-	      end*' '
-	    clause.make_reading(@vocabulary, ift)
-	  end
-	end
+        def create_link_fact_type_readings(ifts)
+          @link_fact_type_clauses.each do |clause|
+            #next false unless clause.refs.size == 2 and clause.refs.detect{|r| r.role.object_type == @entity_type }
+            other_ref = clause.refs.detect{|ref| ref.player != @entity_type}
+            ift = ifts.detect do |ift|
+              other_ref.binding.refs.map{|r| r.role}.include?(ift.implying_role)
+            end
+            unless ift
+              raise "Clause #{clause} in unmatched in definition of objectified fact type #{@name}"
+              next
+            end
+            # This clause is a reading for the LinkFactType ift
+            i = 0
+            reading_text = clause.phrases.map do |phrase|
+                next phrase if String === phrase
+                "{#{(i += 1)-1}}"
+              end*' '
+            clause.make_reading(@vocabulary, ift)
+          end
+        end
 
         def project_clause_roles(clause)
           # Attach the clause's role references to the projected roles of the query
@@ -292,43 +292,43 @@ module ActiveFacts
 
           # We need to check uniqueness constraints after processing the whole vocabulary
           # raise "Fact type must be named as it has no identifying uniqueness constraint" unless @name || @fact_type.all_role.size == 1
-	  unless @fact_type.all_role.size == 1
-	    trace :constraint, "Need to check #{@fact_type.default_reading.inspect} for a uniqueness constraint"
-	    fact_type.check_and_add_spanning_uniqueness_constraint = proc do
-	      trace :constraint, "Checking #{@fact_type.default_reading.inspect} for a uniqueness constraint"
-	      existing_pc = nil
-	      found = @fact_type.all_role.
-		  detect do |role|
-		    role.all_role_ref.detect do |rr|
-		      # This RoleSequence, to be relevant, must only reference roles of this fact type
-		      rr.role_sequence.all_role_ref.all? {|rr2| rr2.role.fact_type == @fact_type} and
-		      # The RoleSequence must have at least one uniqueness constraint
-		      rr.role_sequence.all_presence_constraint.detect do |pc|
-			if pc.max_frequency == 1
-			  existing_pc = pc
-			end
-		      end
-		    end
-		  end
-	      true  # A place for a breakpoint
+          unless @fact_type.all_role.size == 1
+            trace :constraint, "Need to check #{@fact_type.default_reading.inspect} for a uniqueness constraint"
+            fact_type.check_and_add_spanning_uniqueness_constraint = proc do
+              trace :constraint, "Checking #{@fact_type.default_reading.inspect} for a uniqueness constraint"
+              existing_pc = nil
+              found = @fact_type.all_role.
+                  detect do |role|
+                    role.all_role_ref.detect do |rr|
+                      # This RoleSequence, to be relevant, must only reference roles of this fact type
+                      rr.role_sequence.all_role_ref.all? {|rr2| rr2.role.fact_type == @fact_type} and
+                      # The RoleSequence must have at least one uniqueness constraint
+                      rr.role_sequence.all_presence_constraint.detect do |pc|
+                        if pc.max_frequency == 1
+                          existing_pc = pc
+                        end
+                      end
+                    end
+                  end
+              true  # A place for a breakpoint
 
-	      if !found
-		# There's no existing uniqueness constraint over the roles of this fact type. Add one
-		pc = @constellation.PresenceConstraint(
-		  :concept => [:new, {:implication_rule => "spanning"}],
-		  :vocabulary => @vocabulary,
-		  :name => @fact_type.entity_type ? @fact_type.entity_type.name+"PK" : '',
-		  :role_sequence => (rs = @fact_type.preferred_reading.role_sequence),
-		  :max_frequency => 1,
-		  :is_preferred_identifier => true # (prefer || !!@fact_type.entity_type)
-		)
-		pc.concept.topic = @fact_type.concept.topic
-		trace :constraint, "Made new fact type implicit PC GUID=#{pc.concept.guid} #{pc.name} min=nil max=1 over #{rs.describe}"
-	      elsif pc
-		trace :constraint, "Will rely on existing UC GUID=#{pc.concept.guid} #{pc.name} to be used as PI over #{rs.describe}"
-	      end
-	    end
-	  end
+              if !found
+                # There's no existing uniqueness constraint over the roles of this fact type. Add one
+                pc = @constellation.PresenceConstraint(
+                  :concept => [:new, {:implication_rule => "spanning"}],
+                  :vocabulary => @vocabulary,
+                  :name => @fact_type.entity_type ? @fact_type.entity_type.name+"PK" : '',
+                  :role_sequence => (rs = @fact_type.preferred_reading.role_sequence),
+                  :max_frequency => 1,
+                  :is_preferred_identifier => true # (prefer || !!@fact_type.entity_type)
+                )
+                pc.concept.topic = @fact_type.concept.topic
+                trace :constraint, "Made new fact type implicit PC GUID=#{pc.concept.guid} #{pc.name} min=nil max=1 over #{rs.describe}"
+              elsif pc
+                trace :constraint, "Will rely on existing UC GUID=#{pc.concept.guid} #{pc.name} to be used as PI over #{rs.describe}"
+              end
+            end
+          end
         end
 
         def has_more_adjectives(less, more)
@@ -409,7 +409,7 @@ module ActiveFacts
         end
 
         def inspect
-	  s = super
+          s = super
           "FactType: #{@conditions.size > 0 ? super+' ' : '' }#{@clauses.inspect}" +
             (@pragmas && @pragmas.size > 0 ? ", pragmas [#{@pragmas.flatten.sort*','}]" : '')
 
