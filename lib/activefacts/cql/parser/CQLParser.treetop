@@ -37,16 +37,16 @@ module ActiveFacts
 
       # Each definition has an ast() method that returns an instance of a subclass of Compiler::Definition
       rule definition
-	definition_body s
-	{
-	  def ast
-	    definition_body.ast
-	  end
+        definition_body s
+        {
+          def ast
+            definition_body.ast
+          end
 
-	  def body
-	    definition_body.text_value
-	  end
-	}
+          def body
+            definition_body.text_value
+          end
+        }
       end
 
       rule definition_body
@@ -56,31 +56,31 @@ module ActiveFacts
         / constraint
         / unit_definition   # REVISIT: Move this above the prescan?
         / object_type
-	/ informal_description
-	/ query
-	/ s ';' s { def ast; nil; end }
+        / informal_description
+        / query
+        / s ';' s { def ast; nil; end }
       end
 
       rule vocabulary_definition
         s vocabulary S vocabulary_name s ';'
         {
-	  def ast
-	    Compiler::Vocabulary.new(vocabulary_name.value)
-	  end
+          def ast
+            Compiler::Vocabulary.new(vocabulary_name.value)
+          end
         }
       end
 
       rule vocabulary_name
-	id
-	{ def node_type; :vocabulary; end }
+        id
+        { def node_type; :vocabulary; end }
       end
 
       rule import_definition
         s import S vocabulary_name alias_list ';'
         {
-	  def ast
-	    Compiler::Import.new(import.input.parser, vocabulary_name.value, alias_list.value)
-	  end
+          def ast
+            Compiler::Import.new(import.input.parser, vocabulary_name.value, alias_list.value)
+          end
         }
       end
 
@@ -95,24 +95,24 @@ module ActiveFacts
       end
 
       rule alias_term
-	id
-	{ def node_type; :term; end }
+        id
+        { def node_type; :term; end }
       end
 
       rule informal_description
         informally s ',' s
-	  subject:(
-	    signifier:each S term         # Informal definition of an object type
+          subject:(
+            signifier:each S term         # Informal definition of an object type
             /
-	    signifier:when S reading:phrase+ s ','       # or a fact type
+            signifier:when S reading:phrase+ s ','       # or a fact type
           ) s
-          text:(!(!. / '.' [ \t]* [\n]) (string / .))*  # Allow . inside a string
-          (!. / '.' [ \t]* [\n])          # The description terminates in a fullstop at the end of a line, or EOF
+          text:(!(!. / '.' [ \t\r]* "\n") (string / .))*  # Allow . inside a string
+          (!. / '.' [ \t\r]* "\n")          # The description terminates in a fullstop at the end of a line, or EOF
         {
           def ast
-	    kind = subject.signifier.text_value.to_sym
-	    subject_name = (kind == :each ? subject.term.text_value : subject.reading.text_value)
-	    phrases = subject.reading.elements.map(&:ast) if kind == :when
+            kind = subject.signifier.text_value.to_sym
+            subject_name = (kind == :each ? subject.term.text_value : subject.reading.text_value)
+            phrases = subject.reading.elements.map(&:ast) if kind == :when
             Compiler::InformalDefinition.new(kind, subject_name, phrases, text.text_value)
           end
         }
@@ -128,58 +128,58 @@ module ActiveFacts
 
       # Adding enforcement to a constraint makes it deontic
       rule enforcement
-	s '(' s
-	  otherwise s
-	  action:id s	# An enforcement action, like SMS, email, log, alarm, etc.
-	  a:agent? s
-	')' s
-	  {
-	    def ast; Compiler::Enforcement.new(action.text_value, a.empty? ? nil : a.text_value); end
-	  }
-	/
-	''
-	  {
-	    def ast; nil; end
-	  }
+        s '(' s
+          otherwise s
+          action:id s   # An enforcement action, like SMS, email, log, alarm, etc.
+          a:agent? s
+        ')' s
+          {
+            def ast; Compiler::Enforcement.new(action.text_value, a.empty? ? nil : a.text_value); end
+          }
+        /
+        ''
+          {
+            def ast; nil; end
+          }
       end
 
       # presence constraint:
       rule presence_constraint
-	(each_occurs_in_clauses / either_or)
+        (each_occurs_in_clauses / either_or)
         {
-	  def ast
-	    Compiler::PresenceConstraint.new c, enforcement.ast, clauses_ast, role_list_ast, quantifier_ast
-	  end
-	}
+          def ast
+            Compiler::PresenceConstraint.new c, enforcement.ast, clauses_ast, role_list_ast, quantifier_ast
+          end
+        }
       end
 
       # set (exclusion, mandatory exclusion, complex equality) constraint
       rule set_constraint
-	(for_each_how_many / either_or_not_both)
+        (for_each_how_many / either_or_not_both)
           {
-	    def ast
-	      Compiler::SetExclusionConstraint.new c, enforcement.ast, clauses_ast, role_list_ast, quantifier_ast
-	    end
-	  }
+            def ast
+              Compiler::SetExclusionConstraint.new c, enforcement.ast, clauses_ast, role_list_ast, quantifier_ast
+            end
+          }
       end
 
       rule subset_constraint
         (a_only_if_b / if_b_then_a)
         {
-	  def ast
-	    Compiler::SubsetConstraint.new c, enforcement.ast, [clauses.ast, r2.ast]
-	  end
-	}
+          def ast
+            Compiler::SubsetConstraint.new c, enforcement.ast, [clauses.ast, r2.ast]
+          end
+        }
       end
 
       rule equality_constraint
-	if_and_only_if
+        if_and_only_if
         {
-	  def ast
-	    all_clauses = [clauses.ast, *tail.elements.map{|e| e.clauses.ast }]
-	    Compiler::SetEqualityConstraint.new c, enforcement.ast, all_clauses
-	  end
-	}
+          def ast
+            all_clauses = [clauses.ast, *tail.elements.map{|e| e.clauses.ast }]
+            Compiler::SetEqualityConstraint.new c, enforcement.ast, all_clauses
+          end
+        }
       end
 
     end
