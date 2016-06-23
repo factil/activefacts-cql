@@ -36,9 +36,7 @@ module ActiveFacts
       end
 
       rule description
-        (
-	  '(' description ')' / (!( [()] / ',' as_agreed_by) .)*
-	)
+	'(' description ')' / (!( [()] / ',' as_agreed_by) .)*
 	{
 	  def node_type; :linking; end
 	}
