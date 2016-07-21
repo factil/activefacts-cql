@@ -235,7 +235,7 @@ module ActiveFacts
         def check_compatibility_of_matched_clauses
           # REVISIT: If we have conditions, we must match all given clauses exactly (no side-effects)
           @existing_clauses = @clauses.
-            select{ |clause| clause.match_existing_fact_type @context }.
+            select{ |clause| clause.match_existing_fact_type(@context, exact_type: true) }.
             # subtyping match is not allowed for fact type extension:
             reject{ |clause| clause.side_effects.role_side_effects.detect{|se| se.common_supertype } }.
             sort_by{ |clause| clause.side_effects.cost }
