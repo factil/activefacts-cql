@@ -8,47 +8,47 @@ module ActiveFacts
   module CQL
     grammar ValueTypes
       rule value_type
-	s each?
+        s each?
         s term_definition_name
-	m1:mapping_pragmas
-	# REVISIT: ORM2 would allow (subtype_prefix term)?
+        m1:mapping_pragmas
+        # REVISIT: ORM2 would allow (subtype_prefix term)?
         written_as
-	any? s
+        any? s
         base:(term/implicit_value_type_name) s
         value_type_parameters
         u:in_units?
-	a:auto_assignment?
-	c:context_note?
+        a:auto_assignment?
+        c:context_note?
         r:(value_constraint enforcement)?
         m2:mapping_pragmas
-	c2:context_note?
+        c2:context_note?
         s ';' s
         {
-	  def ast
-	    name = term_definition_name.value
-	    params = value_type_parameters.values
-	    value_constraint = nil
-	    unless r.empty? 
-	      value_constraint = Compiler::ValueConstraint.new(r.value_constraint.ast, r.enforcement.ast)
-	    end
-	    units = u.empty? ? [] : u.units.value
-	    auto_assigned_at = a.empty? ? nil : a.auto_assigned_at
-	    pragmas = m1.value+m2.value
-	    context_note = !c.empty? ? c.ast : (!c2.empty? ? c2.ast : nil)
-	    Compiler::ValueType.new name, base.value, params, units, value_constraint, pragmas, context_note, auto_assigned_at
-	  end
+          def ast
+            name = term_definition_name.value
+            params = value_type_parameters.values
+            value_constraint = nil
+            unless r.empty? 
+              value_constraint = Compiler::ValueConstraint.new(r.value_constraint.ast, r.enforcement.ast)
+            end
+            units = u.empty? ? [] : u.units.value
+            auto_assigned_at = a.empty? ? nil : a.auto_assigned_at
+            pragmas = m1.value+m2.value
+            context_note = !c.empty? ? c.ast : (!c2.empty? ? c2.ast : nil)
+            Compiler::ValueType.new name, base.value, params, units, value_constraint, pragmas, context_note, auto_assigned_at
+          end
         }
       end
 
       rule in_units
-	in S units
+        in S units
       end
 
       rule implicit_value_type_name
-	id
-	{
-	  def node_type; :term; end
-	}
+        id
+        {
+          def node_type; :term; end
+        }
       end
 
       rule value_type_parameters
@@ -70,50 +70,50 @@ module ActiveFacts
       rule unit_definition
         u:(
           s coeff:unit_coefficient? base:units? s o:unit_offset?
-	  conversion
+          conversion
           singular:unit_name s plural:('/' s p:unit_name s)?
         /
           s singular:unit_name s plural:('/' s p:unit_name s)?
-	  conversion
+          conversion
           coeff:unit_coefficient? base:units? s o:unit_offset?
         )
         q:(approximately '' / ephemera s url )? s
         ';'
         {
-	  def ast
+          def ast
             singular = u.singular.text_value
             plural = u.plural.text_value.empty? ? nil : u.plural.p.text_value 
-	    if u.coeff.empty?
-	      raise "Unit definition requires either a coefficient or an ephemera URL" unless q.respond_to?(:ephemera)
-	      numerator,denominator = 1, 1
-	    else
-	      numerator, denominator = *u.coeff.ast
-	    end
+            if u.coeff.empty?
+              raise "Unit definition requires either a coefficient or an ephemera URL" unless q.respond_to?(:ephemera)
+              numerator,denominator = 1, 1
+            else
+              numerator, denominator = *u.coeff.ast
+            end
             offset = u.o.text_value.empty? ? 0 : u.o.value
-	    bases = u.base.empty? ? [] : u.base.value
-	    approximately = q.respond_to?(:approximately) || u.conversion.approximate?
-	    ephemera = q.respond_to?(:ephemera) ? q.url.text_value : nil
-	    Compiler::Unit.new singular, plural, numerator, denominator, offset, bases, approximately, ephemera
-	  end
+            bases = u.base.empty? ? [] : u.base.value
+            approximately = q.respond_to?(:approximately) || u.conversion.approximate?
+            ephemera = q.respond_to?(:ephemera) ? q.url.text_value : nil
+            Compiler::Unit.new singular, plural, numerator, denominator, offset, bases, approximately, ephemera
+          end
         }
       end
 
       rule unit_name
-	id
-	{
-	  def node_type; :unit; end
-	}
+        id
+        {
+          def node_type; :unit; end
+        }
       end
 
 
       rule unit_coefficient
         numerator:number denominator:(s '/' s number)? s
         {
-	  def ast
+          def ast
             [ numerator.text_value,
               (denominator.text_value.empty? ? "1" : denominator.number.text_value)
-	    ]
-	  end
+            ]
+          end
         }
       end
 
@@ -129,8 +129,8 @@ module ActiveFacts
       rule units
         !non_unit maybe_unit s tail:(!non_unit maybe_unit s)* div:('/' s maybe_unit s tail:(!non_unit maybe_unit s)*)?
         { def value
-	    tail.elements.inject([maybe_unit.value]) { |a, e| a << e.maybe_unit.value } +
-	      (div.text_value.empty? ? [] : div.tail.elements.inject([div.maybe_unit.inverse]) { |a, e| a << e.maybe_unit.inverse })
+            tail.elements.inject([maybe_unit.value]) { |a, e| a << e.maybe_unit.value } +
+              (div.text_value.empty? ? [] : div.tail.elements.inject([div.maybe_unit.inverse]) { |a, e| a << e.maybe_unit.inverse })
           end
         }
       end
@@ -140,7 +140,7 @@ module ActiveFacts
       end
 
       rule unit
-	maybe_unit &{|s| input.context.unit?(s[0].unit_name.text_value) }
+        maybe_unit &{|s| input.context.unit?(s[0].unit_name.text_value) }
       end
 
       rule maybe_unit
@@ -157,33 +157,33 @@ module ActiveFacts
       end
 
       rule value_constraint
-	restricted_to restricted_values c:context_note?
+        restricted_to restricted_values c:context_note?
         {
-	  def ast
-	    v = restricted_values.values
-	    c[:context_note] = c.ast unless c.empty?
-	    v
-	  end
+          def ast
+            v = restricted_values.values
+            c[:context_note] = c.ast unless c.empty?
+            v
+          end
         }
-	# REVISIT: "where the possible value/s of that <Term> is/are value (, ...)"
+        # REVISIT: "where the possible value/s of that <Term> is/are value (, ...)"
       end
 
       rule restricted_values
-	range_list s u:units?
-	{
-	  def values
-	    { :ranges => range_list.ranges,
-	      :units => u.empty? ? nil : u.value
-	    }
-	  end
-	}
-	/
-	regular_expression
-	{
-	  def values
-	    { :regular_expression => contents }
-	  end
-	}
+        range_list s u:units?
+        {
+          def values
+            { :ranges => range_list.ranges,
+              :units => u.empty? ? nil : u.value
+            }
+          end
+        }
+        /
+        regular_expression
+        {
+          def values
+            { :regular_expression => contents }
+          end
+        }
       end
 
       rule range_list

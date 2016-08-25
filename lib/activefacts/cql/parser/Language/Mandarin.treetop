@@ -16,7 +16,7 @@ module ActiveFacts
 
       # The pattern to introduce an Entity Type
       rule identified_by
-	'identifié' s 'par' s
+        'identifié' s 'par' s
       end
 
       rule basetype_expression
@@ -34,147 +34,147 @@ module ActiveFacts
 
       # The pattern to introduce an objectified fact type with implicit identification
       rule is_where
-	existe s i:(independent s)? si
-	{ def independent; !i.empty?; end }
+        existe s i:(independent s)? si
+        { def independent; !i.empty?; end }
       end
 
-      rule in_which	# Introduce an objectification step
-	where /	        # Old syntax
-	dans s laquel   # preferred syntax
+      rule in_which     # Introduce an objectification step
+        where /         # Old syntax
+        dans s laquel   # preferred syntax
       end
 
       # Units conversion keyword
       rule conversion
-	converts s a:(approximately s)? to s
-	{
-	  def approximate?
-	    !a.empty?
-	  end
-	}
+        converts s a:(approximately s)? to s
+        {
+          def approximate?
+            !a.empty?
+          end
+        }
       end
 
       # >>>>>>>>>>>>>>>>>>>> Constraints <<<<<<<<<<<<<<<<<<<<
       # External presence constraint syntax:
       rule each_occurs_in_clauses
-	s chaque s ('combinaison' S)? role_list s existe s quantifier 'fois' S
-	  'parmis' S ce S 'qui' S 'suit' s ':' s
-	  clauses_list s c:context_note? ';'
-	{
-	  def role_list_ast
-	    role_list.ast
-	  end
-	  def quantifier_ast
-	    quantifier.ast
-	  end
-	  def clauses_ast
-	    clauses_list.ast
-	  end
-	}
+        s chaque s ('combinaison' S)? role_list s existe s quantifier 'fois' S
+          'parmis' S ce S 'qui' S 'suit' s ':' s
+          clauses_list s c:context_note? ';'
+        {
+          def role_list_ast
+            role_list.ast
+          end
+          def quantifier_ast
+            quantifier.ast
+          end
+          def clauses_ast
+            clauses_list.ast
+          end
+        }
       end
 
       rule either_or
       s soit s r1:clauses s 'ou' S r2:clauses
-	s c:context_note? enforcement ';'
+        s c:context_note? enforcement ';'
       {
-	  def role_list_ast
-	    nil
-	  end
-	  def quantifier_ast
-	    Compiler::Quantifier.new(1, nil)
-	  end
-	  def clauses_ast
-	    [r1.ast, r2.ast]
-	  end
-	}
+          def role_list_ast
+            nil
+          end
+          def quantifier_ast
+            Compiler::Quantifier.new(1, nil)
+          end
+          def clauses_ast
+            [r1.ast, r2.ast]
+          end
+        }
       end
 
       # Used for exclusion (at most one) and mandatory exclusion (exactly one)
       rule for_each_how_many
-	'pour' S 'chaque' S role_list s
-	  quantifier s 'des' S 'suivants' S 's\'applique' s ':' s
-	  clauses_list s c:context_note? ';'
-	{
-	  def role_list_ast
-	    role_list.ast
-	  end
-	  def quantifier_ast
-	    quantifier.ast
-	  end
-	  def clauses_ast
-	    clauses_list.ast
-	  end
-	}
+        'pour' S 'chaque' S role_list s
+          quantifier s 'des' S 'suivants' S 's\'applique' s ':' s
+          clauses_list s c:context_note? ';'
+        {
+          def role_list_ast
+            role_list.ast
+          end
+          def quantifier_ast
+            quantifier.ast
+          end
+          def clauses_ast
+            clauses_list.ast
+          end
+        }
       end
 
       rule either_or_not_both
-	s soit s r1:clauses s 'ou' S r2:clauses 'mais' S 'pas' S 'les' S 'deux'
-	  s c:context_note? enforcement ';'
-	{
-	  def role_list_ast
-	    nil
-	  end
-	  def quantifier_ast
-	    Compiler::Quantifier.new(1, 1)
-	  end
-	  def clauses_ast
-	    [r1.ast, r2.ast]
-	  end
-	}
+        s soit s r1:clauses s 'ou' S r2:clauses 'mais' S 'pas' S 'les' S 'deux'
+          s c:context_note? enforcement ';'
+        {
+          def role_list_ast
+            nil
+          end
+          def quantifier_ast
+            Compiler::Quantifier.new(1, 1)
+          end
+          def clauses_ast
+            [r1.ast, r2.ast]
+          end
+        }
       end
 
       rule a_only_if_b
-	s clauses s only_if r2:clauses s c:context_note? enforcement ';'
+        s clauses s only_if r2:clauses s c:context_note? enforcement ';'
       end
 
       rule only_if
-	que s si s
+        que s si s
       end
 
       rule if_b_then_a
-	s 'si' S clauses s 'puis' S r2:clauses s c:context_note? enforcement ';'
+        s 'si' S clauses s 'puis' S r2:clauses s c:context_note? enforcement ';'
       end
 
       rule if_and_only_if
         s clauses s tail:( 'si' S 'et' S ('seulement'/'uniquement'/'que') S 'si' S clauses s)+
-	  c:context_note? enforcement ';'
+          c:context_note? enforcement ';'
       end
 
       # During the prescan we need to know where terms in a role list finish.
       # This rule matches any non-term expressions that may follow a role list.
       rule role_list_constraint_followers
-	existe
+        existe
       end
 
       # >>>>>>>>>>>>>>>>>>>> Quantifiers <<<<<<<<<<<<<<<<<<<<
       rule quantifier
-	(
-	  ( chaque s					# "each"
-	    { def value; [1, nil]; end }
-	  / un s 'certain' 'e'? ) s			# "some"
-	    { def value; nil; end }
-	  / ce s					# "that"
-	    { def value; nil; end }
-	  / un s					# "one"; masculine or feminine
-	    { def value; [1, 1]; end }
-	  / 'pas' s 'de' s				# REVISIT: Example: "Personne n'a pas de Casier-judiciaire"
-	    { def value; [0, 0]; end }
-	  / exactement s quantity
-	    { def value; q = quantity.value; [q, q]; end }
-	  / au s moins s quantity most:( et s au s plus q:quantity )? # At least (or at most)
-	    { def value; [ quantity.value, most.empty? ? nil : most.q.value ]; end }
-	  / au s plus s quantity			# At most
-	    { def value; [ nil, quantity.value ]; end }
-	  / entre s numeric_range s			# within numeric_range
-	    { def value; numeric_range.value; end }
-	  / soit s tous s soit s aucun			# either all or none
-	    { def value; [ -1, 1 ]; end }
-	)
-	{
-	  def ast
-	    v = value
-	    Compiler::Quantifier.new(v[0], v[1])
-	  end
-	}
+        (
+          ( chaque s                                    # "each"
+            { def value; [1, nil]; end }
+          / un s 'certain' 'e'? ) s                     # "some"
+            { def value; nil; end }
+          / ce s                                        # "that"
+            { def value; nil; end }
+          / un s                                        # "one"; masculine or feminine
+            { def value; [1, 1]; end }
+          / 'pas' s 'de' s                              # REVISIT: Example: "Personne n'a pas de Casier-judiciaire"
+            { def value; [0, 0]; end }
+          / exactement s quantity
+            { def value; q = quantity.value; [q, q]; end }
+          / au s moins s quantity most:( et s au s plus q:quantity )? # At least (or at most)
+            { def value; [ quantity.value, most.empty? ? nil : most.q.value ]; end }
+          / au s plus s quantity                        # At most
+            { def value; [ nil, quantity.value ]; end }
+          / entre s numeric_range s                     # within numeric_range
+            { def value; numeric_range.value; end }
+          / soit s tous s soit s aucun                  # either all or none
+            { def value; [ -1, 1 ]; end }
+        )
+        {
+          def ast
+            v = value
+            Compiler::Quantifier.new(v[0], v[1])
+          end
+        }
       end
 
       rule quantity
@@ -184,7 +184,7 @@ module ActiveFacts
 
       # >>>>>>>>>>>>>>>>>>>> Context Notes <<<<<<<<<<<<<<<<<<<<
       rule as_agreed_by
-	s 'comme' S 'convenu' S d:('le' s date s)? 'par' S agents
+        s 'comme' S 'convenu' S d:('le' s date s)? 'par' S agents
         { def value; [ d.empty? ? nil : d.date.value, agents.value ]; end }
       end
 
@@ -196,9 +196,9 @@ module ActiveFacts
       rule agents
         s h:agent s t:(',' s !context_type agent s)*
         {
-	  def value; [h.text_value] + t.elements.map{|e| e.agent.text_value }; end
-	  def node_type; :linking; end
-	}
+          def value; [h.text_value] + t.elements.map{|e| e.agent.text_value }; end
+          def node_type; :linking; end
+        }
       end
 
       rule agent
@@ -206,7 +206,7 @@ module ActiveFacts
       end
 
       rule negative_prefix
-	s 'ce' S "n'est" s 'pas' s 'le' s 'cas' s 'que'
+        s 'ce' S "n'est" s 'pas' s 'le' s 'cas' s 'que'
       end
 
       rule agg_of de end 
@@ -218,7 +218,7 @@ module ActiveFacts
       rule all 'tous' !alphanumeric end
       rule at 'a' !alphanumeric end
       rule both 'les deux' !alphanumeric end 
-      rule ce ('cette'/'cet'/'ce') !alphanumeric end	# ce is masculine, cette feminine, cet is ce before a noun
+      rule ce ('cette'/'cet'/'ce') !alphanumeric end    # ce is masculine, cette feminine, cet is ce before a noun
       rule chaque 'chaque' !alphanumeric end
       rule converts 'convertit' !alphanumeric end 
       rule de 'de' !alphanumeric end
@@ -231,15 +231,15 @@ module ActiveFacts
       rule est 'est' !alphanumeric end 
       rule exactement 'exactement' !alphanumeric end
       rule existe 'existe' !alphanumeric end
-      rule from 'à partir de' !alphanumeric end		# REVISIT: google translate
+      rule from 'à partir de' !alphanumeric end         # REVISIT: google translate
       rule includes 'comprend' !alphanumeric end
       rule matches 'matches' !alphanumeric end
       rule moins 'moins' !alphanumeric end
       rule none 'aucun' !alphanumeric end
-      rule not 'not' !alphanumeric end			# REVISIT: Used in constraints
+      rule not 'not' !alphanumeric end                  # REVISIT: Used in constraints
       rule plus 'plus' !alphanumeric end
       rule some 'quelques' !alphanumeric end
-      rule un 'un' 'e'? !alphanumeric end	# un is masculine, une is feminine
+      rule un 'un' 'e'? !alphanumeric end       # un is masculine, une is feminine
       rule que 'que' !alphanumeric end
 
       # >>>>>>>>>>>>>>>>>>>> External vocabulary <<<<<<<<<<<<<<<<<<<<
@@ -248,7 +248,7 @@ module ActiveFacts
       rule alias 'alias' !alphanumeric end 
       rule and 'et' !alphanumeric end
       rule antisymmetric 'antisymmetric' !alphanumeric end
-      rule approximately 'environ' !alphanumeric end		# REVISIT: google translate
+      rule approximately 'environ' !alphanumeric end            # REVISIT: google translate
       rule as 'comme' !alphanumeric end
       rule as_opposed_to 'au' S 'lieu' S 'de' !alphanumeric end
       rule asymmetric 'asymétrique' !alphanumeric end
@@ -264,16 +264,16 @@ module ActiveFacts
       rule feminine 'féminin' !alphanumeric end 
       rule identified ('identifié') !alphanumeric end 
       rule if 'si' !alphanumeric end
-      rule import 'import' !alphanumeric end			# REVISIT: translation?
+      rule import 'import' !alphanumeric end                    # REVISIT: translation?
       rule independent 'indépendant' !alphanumeric end
       rule stronglyintransitive 'stronglyintransitif' !alphanumeric end
       rule intransitive 'intransitif' !alphanumeric end
       rule irreflexive 'irréflexive' !alphanumeric end
-      rule is est end			# Called from ObjectTypes.treetop in "is identified by"
+      rule is est end                   # Called from ObjectTypes.treetop in "is identified by"
       rule its ('sa' / 'son') !alphanumeric end
       rule masculine 'masculin' !alphanumeric end 
-      rule maybe 'peut-être' !alphanumeric end			# REVISIT: eventuellement = possibly?
-      rule only 'que' !alphanumeric end			# REVISIT: Used in constraints
+      rule maybe 'peut-être' !alphanumeric end                  # REVISIT: eventuellement = possibly?
+      rule only 'que' !alphanumeric end                 # REVISIT: Used in constraints
       rule or 'ou' !alphanumeric end 
       rule ordering_prefix by s (ascending/descending)? s end
       rule otherwise 'sinon' !alphanumeric end

@@ -15,165 +15,165 @@ module ActiveFacts
       end
 
       rule entity_type
-	s each?
+        s each?
         s term_definition_name
-	m1:mapping_pragmas
-	c:context_note?
+        m1:mapping_pragmas
+        c:context_note?
         sup:(basetype / subtype)
-	  &{|s|
-	    # There's an implicit type when we use an identification mode, register it:
-	    mode = s[6].identification_mode
-	    if mode
-	      input.context.object_type(s[3].value+mode, "identification mode type")
-	      input.context.object_type(s[3].value+' '+mode, "identification mode type")
-	    end
-	    true
-	  }
+          &{|s|
+            # There's an implicit type when we use an identification mode, register it:
+            mode = s[6].identification_mode
+            if mode
+              input.context.object_type(s[3].value+mode, "identification mode type")
+              input.context.object_type(s[3].value+' '+mode, "identification mode type")
+            end
+            true
+          }
         m2:mapping_pragmas
-	c2:context_note?
+        c2:context_note?
         ec:entity_clauses?
         ';'
         {
-	  def ast
-	    name = term_definition_name.value
-	    clauses_ast = ec.empty? ? [] : ec.ast
-	    pragmas = m1.value+m2.value
-	    pragmas << 'independent' if sup.independent
-	    context_note = !c.empty? ? c.ast : (!c2.empty? ? c2.ast : nil)
-	    Compiler::EntityType.new name, sup.supers, sup.ast, pragmas, clauses_ast, context_note
-	  end
+          def ast
+            name = term_definition_name.value
+            clauses_ast = ec.empty? ? [] : ec.ast
+            pragmas = m1.value+m2.value
+            pragmas << 'independent' if sup.independent
+            context_note = !c.empty? ? c.ast : (!c2.empty? ? c2.ast : nil)
+            Compiler::EntityType.new name, sup.supers, sup.ast, pragmas, clauses_ast, context_note
+          end
         }
       end
 
       rule basetype
-	basetype_expression
+        basetype_expression
         {
-	  def ast; identification.ast; end
-	  def supers; []; end
+          def ast; identification.ast; end
+          def supers; []; end
           def identification_mode; identification.mode; end
-	  def independent; !i.empty?; end
+          def independent; !i.empty?; end
         }
       end
 
       rule subtype
-	subtype_expression
+        subtype_expression
         {
-	  def ast; ident.empty? ? nil : ident.ast; end
+          def ast; ident.empty? ? nil : ident.ast; end
           def supers; supertype_list.value; end
           def identification_mode; ident.empty? ? nil : ident.mode; end
-	  def independent; !i.empty?; end
+          def independent; !i.empty?; end
         }
       end
 
       rule supertype_list
         primary:term s alternate_supertypes:( (','/'and' !alpha) s !identified_by name:term s )*
         {
-	  def value
-	    [primary.value, *alternate_supertypes.elements.map { |sup| sup.name.value } ]
-	  end
-	}
+          def value
+            [primary.value, *alternate_supertypes.elements.map { |sup| sup.name.value } ]
+          end
+        }
       end
 
       rule identification
         # REVISIT: Consider distinguishing "-Id" from just "Id", and not prepending the entity type name if no "-"
         identified_by its s i:(term/implicit_value_type_name) value_type_parameters
-	r:(value_constraint enforcement)?          # Reference Mode; value_constraint may be needed for the ValueType
+        r:(value_constraint enforcement)?          # Reference Mode; value_constraint may be needed for the ValueType
           {
-	    def ast
-	      if r.empty?
-		value_constraint = nil
-	      else
-		value_constraint = Compiler::ValueConstraint.new(r.value_constraint.ast, r.enforcement.ast)
-	      end
-	      Compiler::ReferenceMode.new(i.value, value_constraint, value_type_parameters.values)
-	    end
+            def ast
+              if r.empty?
+                value_constraint = nil
+              else
+                value_constraint = Compiler::ValueConstraint.new(r.value_constraint.ast, r.enforcement.ast)
+              end
+              Compiler::ReferenceMode.new(i.value, value_constraint, value_type_parameters.values)
+            end
 
-	    def mode
-	      i.value
-	    end
-	  }
+            def mode
+              i.value
+            end
+          }
         /
         identified_by role_list
-	  &{|s|
-	    role_list = s[-1]
-	    forwards = role_list.ast.
-	      map do |role|
-		next nil if role.is_a?(Compiler::Clause) # Can't forward-reference unaries
-		next nil if role.leading_adjective or role.trailing_adjective
-		role.term
-	      end.
-	      compact
-	    input.context.allowed_forward_terms(forwards)
-	    true
-	  }
+          &{|s|
+            role_list = s[-1]
+            forwards = role_list.ast.
+              map do |role|
+                next nil if role.is_a?(Compiler::Clause) # Can't forward-reference unaries
+                next nil if role.leading_adjective or role.trailing_adjective
+                role.term
+              end.
+              compact
+            input.context.allowed_forward_terms(forwards)
+            true
+          }
           {
-	    def ast
-	      role_list.ast
-	    end
+            def ast
+              role_list.ast
+            end
 
-	    def mode
-	      nil
-	    end
-	  }
+            def mode
+              nil
+            end
+          }
       end
 
       # Identified by roles... also used for constraints, beware
       rule role_list 
-	a:any? s
+        a:any? s
         head:term_or_unary s
-	tail:(
-	  ( and S / ',' s )
-	  any? s
-	  term_or_unary s
-	)*
+        tail:(
+          ( and S / ',' s )
+          any? s
+          term_or_unary s
+        )*
         {
-	  def ast
-	    [head.ast, *tail.elements.map{|e| e.term_or_unary.ast}]
-	  end
+          def ast
+            [head.ast, *tail.elements.map{|e| e.term_or_unary.ast}]
+          end
         }
       end
 
       rule unary_text
-	(s !any !non_phrase !term id)*
-	{
-	  def node_type; :linking; end
-	}
+        (s !any !non_phrase !term id)*
+        {
+          def node_type; :linking; end
+        }
       end
 
       rule term_or_unary
-	pre_text:unary_text s term post_text:unary_text s ss:subscript?
-	  {
-	    def ast
-	      t = term.ast
-	      t.role_name = ss.value if !ss.empty?
-	      if pre_text.elements.size == 0 && post_text.elements.size == 0
-		t
-	      else
-		pre_words = pre_text.elements.map{|w| w.id.text_value}
-		post_words = post_text.elements.map{|w| w.id.text_value}
-		Compiler::Clause.new(pre_words + [t] + post_words, [], nil)
-	      end
-	    end
-	  }
-	/
-	s !non_phrase id s &non_phrase s ss:subscript?
-	  { # A forward-referenced entity type
-	    # REVISIT: A change in this rule might allow forward-referencing a multi-word term
-	    def ast
-	      Compiler::Reference.new(id.text_value, nil, nil, nil, nil, ss.empty? ? nil : ss.value)
-	    end
-	  }
+        pre_text:unary_text s term post_text:unary_text s ss:subscript?
+          {
+            def ast
+              t = term.ast
+              t.role_name = ss.value if !ss.empty?
+              if pre_text.elements.size == 0 && post_text.elements.size == 0
+                t
+              else
+                pre_words = pre_text.elements.map{|w| w.id.text_value}
+                post_words = post_text.elements.map{|w| w.id.text_value}
+                Compiler::Clause.new(pre_words + [t] + post_words, [], nil)
+              end
+            end
+          }
+        /
+        s !non_phrase id s &non_phrase s ss:subscript?
+          { # A forward-referenced entity type
+            # REVISIT: A change in this rule might allow forward-referencing a multi-word term
+            def ast
+              Compiler::Reference.new(id.text_value, nil, nil, nil, nil, ss.empty? ? nil : ss.value)
+            end
+          }
       end
 
       rule mapping_pragmas
         '[' s h:mapping_pragma t:(s ',' s mapping_pragma)* s ']' s
           {
-	    def value
-	      t.elements.inject([h.value*' ']) do |a, e|
-		a << e.mapping_pragma.value*' '
-	      end
-	    end
-	  }
+            def value
+              t.elements.inject([h.value*' ']) do |a, e|
+                a << e.mapping_pragma.value*' '
+              end
+            end
+          }
         /
         s
           { def value; []; end }
@@ -181,27 +181,27 @@ module ActiveFacts
 
       # Each mapping_pragma returns an array of words
       rule mapping_pragma
-	was s names:(id s)+
-	{   # Old or previous name of an object type:
-	  def value
-	    [ was.text_value ] + names.elements.map{|n|n.text_value}
-	  end
-	}
-	/
-	head:id tail:(s id)*
-	{   # A sequence of one or more words denoting a pragma:
-	  def value
-	    ([head]+tail.elements.map(&:id)).map(&:text_value)
-	  end
-	}
+        was s names:(id s)+
+        {   # Old or previous name of an object type:
+          def value
+            [ was.text_value ] + names.elements.map{|n|n.text_value}
+          end
+        }
+        /
+        head:id tail:(s id)*
+        {   # A sequence of one or more words denoting a pragma:
+          def value
+            ([head]+tail.elements.map(&:id)).map(&:text_value)
+          end
+        }
       end
 
       rule entity_clauses
         (':' / where) s query_clauses
         {
-	  def ast
+          def ast
             query_clauses.ast
-	  end
+          end
         }
       end
 
