@@ -233,6 +233,9 @@ module ActiveFacts
         end
 
         def check_compatibility_of_matched_clauses
+          # A single clause is always a new fact type:
+          return nil if @clauses.size == 1
+
           # REVISIT: If we have conditions, we must match all given clauses exactly (no side-effects)
           @existing_clauses = @clauses.
             select{ |clause| clause.match_existing_fact_type(@context, exact_type: true) }.

@@ -933,7 +933,9 @@ module ActiveFacts
         def identify_player context
           @player || begin
             @player = context.object_type @term
-            raise "ObjectType #{@term} unrecognised" unless @player
+            unless @player
+              raise "ObjectType #{@term} unrecognised"
+            end
             context.player_by_role_name[@role_name] = player if @role_name
             @player
           end
