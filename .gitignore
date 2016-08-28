@@ -8,6 +8,7 @@
 /spec/reports/
 /tmp/
 lib/activefacts/cql/parser/[A-Z]*.rb
+lib/activefacts/cql/parser/Language/[A-Z]*.rb
 *.swp
 clj
 .DS_Store
