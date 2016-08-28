@@ -182,11 +182,15 @@ module ActiveFacts
           make_default_identifier_for_fact_type if @conditions.empty?
 
           # Compile the conditions:
-          super
+          query = super
           unless @conditions.empty?
             @clauses.each do |clause|
               project_clause_roles(clause)
             end
+
+            # Add the head to complete the derived fact type
+            query.derived_fact_type = @fact_type unless query.nil?
+
           end
 
           @fact_type
