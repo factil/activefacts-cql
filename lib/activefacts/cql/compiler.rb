@@ -117,7 +117,7 @@ module ActiveFacts
         saved_input_length = @input_length
         saved_topic = @topic
         old_filename = @filename
-        @filename = File.dirname(old_filename)+'/'+file+'.cql'
+        @filename = import_filename(old_filename, file)
 
         # REVISIT: Save and use another @vocabulary for this file?
         File.open(@filename) do |f|
@@ -140,6 +140,11 @@ module ActiveFacts
         @string = saved_string
         @filename = old_filename
         nil
+      end
+
+      # import_filename may be redefined in subclass
+      def import_filename(old_filename, file)
+        File.dirname(old_filename)+'/'+file+'.cql'
       end
 
       def compile_definition ast
