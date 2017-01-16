@@ -115,19 +115,10 @@ module ActiveFacts
         saved_block = @block
         saved_string = @string
         saved_input_length = @input_length
-        saved_topic = @topic
         old_filename = @filename
-        @filename = import_filename(old_filename, file)
+        @filename = import_filepath(old_filename, file)
 
-        # REVISIT: Save and use another @vocabulary for this file?
-        File.open(@filename) do |f|
-          topic_flood if @topic
-          @topic = @constellation.Topic(File.basename(@filename, '.cql'))
-          trace :import, "Importing #{@filename} as #{@topic.topic_name}" do
-            ok = parse_all(f.read, nil, &@block)
-          end
-          @topic = saved_topic
-        end
+        compile_import_file @filename
 
       rescue => e
         ne = StandardError.new("In #{@filename} #{e.message.strip}")
@@ -143,8 +134,30 @@ module ActiveFacts
       end
 
       # import_filename may be redefined in subclass
-      def import_filename(old_filename, file)
+      def import_filepath(old_filename, file)
         File.dirname(old_filename)+'/'+file+'.cql'
+      end
+
+      def compile_import_file filename
+        # REVISIT: Save and use another @vocabulary for this file?
+        File.open(filename) do |f|
+          compile_import_input f.read
+        end
+      end
+
+      def compile_import_input input
+        saved_topic = @topic
+        topic_flood if @topic
+        @topic = @constellation.Topic(File.basename(@filename, '.cql'))
+
+        trace :import, "Topic #{saved_topic.topic_name} imports #{@topic.topic_name}"
+
+        import = @constellation.Import(topic: saved_topic, precursor_topic: @topic)
+
+        trace :import, "Importing #{@filename} as #{@topic.topic_name}" do
+          ok = parse_all(input, nil, &@block)
+        end
+        @topic = saved_topic
       end
 
       def compile_definition ast
