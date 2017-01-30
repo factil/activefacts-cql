@@ -286,6 +286,7 @@ module ActiveFacts
       rule its 'its' !alphanumeric end
       rule masculine 'masculine' !alphanumeric end
       rule maybe 'maybe' !alphanumeric end
+      rule model 'model' !alphanumeric end
       rule only 'only' !alphanumeric end
       rule or 'or' !alphanumeric end
       rule of 'of' !alphanumeric end
@@ -305,6 +306,8 @@ module ActiveFacts
       rule then 'then' !alphanumeric end
       rule to 'to' !alphanumeric end
       rule to_avoid to s 'avoid' !alphanumeric end
+      rule topic 'topic' !alphanumeric end
+      rule transform 'transform' !alphanumeric end
       rule transient 'transient' !alphanumeric end
       rule transitive 'transitive' !alphanumeric end
       rule true 'true' !alphanumeric end

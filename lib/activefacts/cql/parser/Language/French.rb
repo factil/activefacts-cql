@@ -6483,6 +6483,54 @@ module ActiveFacts
         r0
       end
 
+      module Model0
+      end
+
+      def _nt_model
+        start_index = index
+        if node_cache[:model].has_key?(index)
+          cached = node_cache[:model][index]
+          if cached
+            node_cache[:model][index] = cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
+            @index = cached.interval.end
+          end
+          return cached
+        end
+
+        i0, s0 = index, []
+        if (match_len = has_terminal?('model', false, index))
+          r1 = instantiate_node(SyntaxNode,input, index...(index + match_len))
+          @index += match_len
+        else
+          terminal_parse_failure('\'model\'')
+          r1 = nil
+        end
+        s0 << r1
+        if r1
+          i2 = index
+          r3 = _nt_alphanumeric
+          if r3
+            @index = i2
+            r2 = nil
+          else
+            @index = i2
+            r2 = instantiate_node(SyntaxNode,input, index...index)
+          end
+          s0 << r2
+        end
+        if s0.last
+          r0 = instantiate_node(SyntaxNode,input, i0...index, s0)
+          r0.extend(Model0)
+        else
+          @index = i0
+          r0 = nil
+        end
+
+        node_cache[:model][start_index] = r0
+
+        r0
+      end
+
       module Only0
       end
 
@@ -7495,6 +7543,102 @@ module ActiveFacts
         end
 
         node_cache[:to_avoid][start_index] = r0
+
+        r0
+      end
+
+      module Topic0
+      end
+
+      def _nt_topic
+        start_index = index
+        if node_cache[:topic].has_key?(index)
+          cached = node_cache[:topic][index]
+          if cached
+            node_cache[:topic][index] = cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
+            @index = cached.interval.end
+          end
+          return cached
+        end
+
+        i0, s0 = index, []
+        if (match_len = has_terminal?('sujet', false, index))
+          r1 = instantiate_node(SyntaxNode,input, index...(index + match_len))
+          @index += match_len
+        else
+          terminal_parse_failure('\'sujet\'')
+          r1 = nil
+        end
+        s0 << r1
+        if r1
+          i2 = index
+          r3 = _nt_alphanumeric
+          if r3
+            @index = i2
+            r2 = nil
+          else
+            @index = i2
+            r2 = instantiate_node(SyntaxNode,input, index...index)
+          end
+          s0 << r2
+        end
+        if s0.last
+          r0 = instantiate_node(SyntaxNode,input, i0...index, s0)
+          r0.extend(Topic0)
+        else
+          @index = i0
+          r0 = nil
+        end
+
+        node_cache[:topic][start_index] = r0
+
+        r0
+      end
+
+      module Transform0
+      end
+
+      def _nt_transform
+        start_index = index
+        if node_cache[:transform].has_key?(index)
+          cached = node_cache[:transform][index]
+          if cached
+            node_cache[:transform][index] = cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
+            @index = cached.interval.end
+          end
+          return cached
+        end
+
+        i0, s0 = index, []
+        if (match_len = has_terminal?('transform', false, index))
+          r1 = instantiate_node(SyntaxNode,input, index...(index + match_len))
+          @index += match_len
+        else
+          terminal_parse_failure('\'transform\'')
+          r1 = nil
+        end
+        s0 << r1
+        if r1
+          i2 = index
+          r3 = _nt_alphanumeric
+          if r3
+            @index = i2
+            r2 = nil
+          else
+            @index = i2
+            r2 = instantiate_node(SyntaxNode,input, index...index)
+          end
+          s0 << r2
+        end
+        if s0.last
+          r0 = instantiate_node(SyntaxNode,input, i0...index, s0)
+          r0.extend(Transform0)
+        else
+          @index = i0
+          r0 = nil
+        end
+
+        node_cache[:transform][start_index] = r0
 
         r0
       end

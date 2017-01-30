@@ -111,8 +111,9 @@ module ActiveFacts
       end
 
       class Vocabulary < Definition
-        def initialize name
+        def initialize name, is_transform
           @name = name
+          @is_transform = is_transform
         end
 
         def compile
@@ -129,9 +130,10 @@ module ActiveFacts
       end
 
       class Import < Definition
-        def initialize parser, name, alias_hash
+        def initialize parser, name, import_role, alias_hash
           @parser = parser
           @name = name
+          @import_role = import_role
           @alias_hash = alias_hash
         end
 
@@ -140,7 +142,7 @@ module ActiveFacts
         end
 
         def compile
-          @parser.compile_import(@name, @alias_hash)
+          @parser.compile_import(@name, @import_role, @alias_hash)
         end
       end
 

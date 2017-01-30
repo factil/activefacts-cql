@@ -262,13 +262,41 @@ module ActiveFacts
         r0
       end
 
-      module VocabularyDefinition0
-        def s1
-          elements[0]
+      def _nt_vocabulary_definition
+        start_index = index
+        if node_cache[:vocabulary_definition].has_key?(index)
+          cached = node_cache[:vocabulary_definition][index]
+          if cached
+            node_cache[:vocabulary_definition][index] = cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
+            @index = cached.interval.end
+          end
+          return cached
         end
 
-        def vocabulary
-          elements[1]
+        i0 = index
+        r1 = _nt_model_definition
+        if r1
+          r1 = SyntaxNode.new(input, (index-1)...index) if r1 == true
+          r0 = r1
+        else
+          r2 = _nt_transform_definition
+          if r2
+            r2 = SyntaxNode.new(input, (index-1)...index) if r2 == true
+            r0 = r2
+          else
+            @index = i0
+            r0 = nil
+          end
+        end
+
+        node_cache[:vocabulary_definition][start_index] = r0
+
+        r0
+      end
+
+      module ModelDefinition0
+        def s1
+          elements[0]
         end
 
         def S
@@ -285,18 +313,18 @@ module ActiveFacts
 
       end
 
-      module VocabularyDefinition1
+      module ModelDefinition1
         def ast
-          Compiler::Vocabulary.new(vocabulary_name.value)
+          Compiler::Vocabulary.new(vocabulary_name.value, false)
         end
       end
 
-      def _nt_vocabulary_definition
+      def _nt_model_definition
         start_index = index
-        if node_cache[:vocabulary_definition].has_key?(index)
-          cached = node_cache[:vocabulary_definition][index]
+        if node_cache[:model_definition].has_key?(index)
+          cached = node_cache[:model_definition][index]
           if cached
-            node_cache[:vocabulary_definition][index] = cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
+            node_cache[:model_definition][index] = cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
             @index = cached.interval.end
           end
           return cached
@@ -306,26 +334,46 @@ module ActiveFacts
         r1 = _nt_s
         s0 << r1
         if r1
-          r2 = _nt_vocabulary
+          i2 = index
+          r3 = _nt_model
+          if r3
+            r3 = SyntaxNode.new(input, (index-1)...index) if r3 == true
+            r2 = r3
+          else
+            r4 = _nt_topic
+            if r4
+              r4 = SyntaxNode.new(input, (index-1)...index) if r4 == true
+              r2 = r4
+            else
+              r5 = _nt_vocabulary
+              if r5
+                r5 = SyntaxNode.new(input, (index-1)...index) if r5 == true
+                r2 = r5
+              else
+                @index = i2
+                r2 = nil
+              end
+            end
+          end
           s0 << r2
           if r2
-            r3 = _nt_S
-            s0 << r3
-            if r3
-              r4 = _nt_vocabulary_name
-              s0 << r4
-              if r4
-                r5 = _nt_s
-                s0 << r5
-                if r5
+            r6 = _nt_S
+            s0 << r6
+            if r6
+              r7 = _nt_vocabulary_name
+              s0 << r7
+              if r7
+                r8 = _nt_s
+                s0 << r8
+                if r8
                   if (match_len = has_terminal?(';', false, index))
-                    r6 = true
+                    r9 = true
                     @index += match_len
                   else
                     terminal_parse_failure('\';\'')
-                    r6 = nil
+                    r9 = nil
                   end
-                  s0 << r6
+                  s0 << r9
                 end
               end
             end
@@ -333,14 +381,14 @@ module ActiveFacts
         end
         if s0.last
           r0 = instantiate_node(SyntaxNode,input, i0...index, s0)
-          r0.extend(VocabularyDefinition0)
-          r0.extend(VocabularyDefinition1)
+          r0.extend(ModelDefinition0)
+          r0.extend(ModelDefinition1)
         else
           @index = i0
           r0 = nil
         end
 
-        node_cache[:vocabulary_definition][start_index] = r0
+        node_cache[:model_definition][start_index] = r0
 
         r0
       end
@@ -369,6 +417,89 @@ module ActiveFacts
         r0
       end
 
+      module TransformDefinition0
+        def s1
+          elements[0]
+        end
+
+        def transform
+          elements[1]
+        end
+
+        def S
+          elements[2]
+        end
+
+        def vocabulary_name
+          elements[3]
+        end
+
+        def s2
+          elements[4]
+        end
+
+      end
+
+      module TransformDefinition1
+        def ast
+          Compiler::Vocabulary.new(vocabulary_name.value, true)
+        end
+      end
+
+      def _nt_transform_definition
+        start_index = index
+        if node_cache[:transform_definition].has_key?(index)
+          cached = node_cache[:transform_definition][index]
+          if cached
+            node_cache[:transform_definition][index] = cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
+            @index = cached.interval.end
+          end
+          return cached
+        end
+
+        i0, s0 = index, []
+        r1 = _nt_s
+        s0 << r1
+        if r1
+          r2 = _nt_transform
+          s0 << r2
+          if r2
+            r3 = _nt_S
+            s0 << r3
+            if r3
+              r4 = _nt_vocabulary_name
+              s0 << r4
+              if r4
+                r5 = _nt_s
+                s0 << r5
+                if r5
+                  if (match_len = has_terminal?(';', false, index))
+                    r6 = true
+                    @index += match_len
+                  else
+                    terminal_parse_failure('\';\'')
+                    r6 = nil
+                  end
+                  s0 << r6
+                end
+              end
+            end
+          end
+        end
+        if s0.last
+          r0 = instantiate_node(SyntaxNode,input, i0...index, s0)
+          r0.extend(TransformDefinition0)
+          r0.extend(TransformDefinition1)
+        else
+          @index = i0
+          r0 = nil
+        end
+
+        node_cache[:transform_definition][start_index] = r0
+
+        r0
+      end
+
       module ImportDefinition0
         def s
           elements[0]
@@ -386,15 +517,21 @@ module ActiveFacts
           elements[3]
         end
 
-        def alias_list
+        def import_role
           elements[4]
+        end
+
+        def alias_list
+          elements[5]
         end
 
       end
 
       module ImportDefinition1
         def ast
-          Compiler::Import.new(import.input.parser, vocabulary_name.value, alias_list.value)
+          Compiler::Import.new(
+            import.input.parser, vocabulary_name.value, import_role.value, alias_list.value
+          )
         end
       end
 
@@ -422,17 +559,21 @@ module ActiveFacts
               r4 = _nt_vocabulary_name
               s0 << r4
               if r4
-                r5 = _nt_alias_list
+                r5 = _nt_import_role
                 s0 << r5
                 if r5
-                  if (match_len = has_terminal?(';', false, index))
-                    r6 = true
-                    @index += match_len
-                  else
-                    terminal_parse_failure('\';\'')
-                    r6 = nil
-                  end
+                  r6 = _nt_alias_list
                   s0 << r6
+                  if r6
+                    if (match_len = has_terminal?(';', false, index))
+                      r7 = true
+                      @index += match_len
+                    else
+                      terminal_parse_failure('\';\'')
+                      r7 = nil
+                    end
+                    s0 << r7
+                  end
                 end
               end
             end
@@ -448,6 +589,93 @@ module ActiveFacts
         end
 
         node_cache[:import_definition][start_index] = r0
+
+        r0
+      end
+
+      module ImportRole0
+        def s
+          elements[0]
+        end
+
+        def as
+          elements[1]
+        end
+
+        def S
+          elements[2]
+        end
+
+        def vocabulary_name
+          elements[3]
+        end
+      end
+
+      module ImportRole1
+        def value; vocabulary_name.value; end
+      end
+
+      module ImportRole2
+        def value; nil; end
+      end
+
+      def _nt_import_role
+        start_index = index
+        if node_cache[:import_role].has_key?(index)
+          cached = node_cache[:import_role][index]
+          if cached
+            node_cache[:import_role][index] = cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
+            @index = cached.interval.end
+          end
+          return cached
+        end
+
+        i0 = index
+        i1, s1 = index, []
+        r2 = _nt_s
+        s1 << r2
+        if r2
+          r3 = _nt_as
+          s1 << r3
+          if r3
+            r4 = _nt_S
+            s1 << r4
+            if r4
+              r5 = _nt_vocabulary_name
+              s1 << r5
+            end
+          end
+        end
+        if s1.last
+          r1 = instantiate_node(SyntaxNode,input, i1...index, s1)
+          r1.extend(ImportRole0)
+          r1.extend(ImportRole1)
+        else
+          @index = i1
+          r1 = nil
+        end
+        if r1
+          r1 = SyntaxNode.new(input, (index-1)...index) if r1 == true
+          r0 = r1
+        else
+          if (match_len = has_terminal?('', false, index))
+            r6 = instantiate_node(SyntaxNode,input, index...(index + match_len))
+            r6.extend(ImportRole2)
+            @index += match_len
+          else
+            terminal_parse_failure('\'\'')
+            r6 = nil
+          end
+          if r6
+            r6 = SyntaxNode.new(input, (index-1)...index) if r6 == true
+            r0 = r6
+          else
+            @index = i0
+            r0 = nil
+          end
+        end
+
+        node_cache[:import_role][start_index] = r0
 
         r0
       end

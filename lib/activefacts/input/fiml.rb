@@ -14,7 +14,7 @@ module ActiveFacts
     class CQL
       # Read the specified file
       def self.readfile(filename)
-        if File.basename(filename, '.cql') == "-"
+        if File.basename(filename, '.fiml') == "-"
           read(STDIN, "<standard input>")
         else
           File.open(filename) {|file|
@@ -35,7 +35,7 @@ module ActiveFacts
 
       # Read the specified input string
       def self.readstring(str, filename = "string")
-        compiler = ActiveFacts::CQL::Compiler.new(filename, "cql")
+        compiler = ActiveFacts::CQL::Compiler.new(filename, "fiml")
         compiler.compile(str)
       end 
     end
