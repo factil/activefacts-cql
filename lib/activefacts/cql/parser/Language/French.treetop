@@ -283,6 +283,7 @@ module ActiveFacts
       rule its ('sa' / 'son') !alphanumeric end
       rule masculine 'masculin' !alphanumeric end 
       rule maybe 'peut-être' !alphanumeric end                  # REVISIT: eventuellement = possibly?
+      rule model 'model' !alphanumeric end
       rule only 'que' !alphanumeric end                 # REVISIT: Used in constraints
       rule or 'ou' !alphanumeric end 
       rule ordering_prefix by s (ascending/descending)? s end
@@ -302,6 +303,8 @@ module ActiveFacts
       rule then 'puis' !alphanumeric end
       rule to 'à' !alphanumeric end
       rule to_avoid ('pour' s 'empecher' s 'de' / 'pour' s 'ne' s 'pas') !alphanumeric end
+      rule topic 'sujet' !alphanumeric end
+      rule transform 'transform' !alphanumeric end
       rule transient 'transitoires' !alphanumeric end
       rule transitive 'transitif' !alphanumeric end
       rule true 'vrai' !alphanumeric end 

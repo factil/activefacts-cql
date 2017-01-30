@@ -25,8 +25,9 @@ module ActiveFacts
       }
       attr_reader :vocabulary
 
-      def initialize *a
-        @filename = a.shift || "stdio"
+      def initialize filename, extension, *a
+        @filename = filename
+        @extension = extension
         super *a
         @constellation = ActiveFacts::API::Constellation.new(ActiveFacts::Metamodel)
         @constellation.loggers << proc{|*k| trace :apilog, k.inspect} if trace(:apilog)
@@ -110,7 +111,7 @@ module ActiveFacts
         vocabulary
       end
 
-      def compile_import file, aliases
+      def compile_import file, import_role, aliases
         saved_index = @index
         saved_block = @block
         saved_string = @string
@@ -118,7 +119,7 @@ module ActiveFacts
         old_filename = @filename
         @filename = import_filepath(old_filename, file)
 
-        compile_import_file @filename
+        compile_import_file(@filename, import_role)
 
       rescue => e
         ne = StandardError.new("In #{@filename} #{e.message.strip}")
@@ -135,26 +136,26 @@ module ActiveFacts
 
       # import_filename may be redefined in subclass
       def import_filepath(old_filename, file)
-        File.dirname(old_filename)+'/'+file+'.cql'
+        File.dirname(old_filename)+'/'+file+".#{@extension}"
       end
 
-      def compile_import_file filename
+      def compile_import_file filename, import_role
         # REVISIT: Save and use another @vocabulary for this file?
         File.open(filename) do |f|
-          compile_import_input f.read
+          compile_import_input(f.read, import_role)
         end
       end
 
-      def compile_import_input input
+      def compile_import_input input, import_role
         saved_topic = @topic
         topic_flood if @topic
-        @topic = @constellation.Topic(File.basename(@filename, '.cql'))
+        @topic = @constellation.Topic(File.basename(@filename, '.fiml'))
 
-        trace :import, "Topic #{saved_topic.topic_name} imports #{@topic.topic_name}"
+        trace :import, "Topic #{saved_topic.topic_name} imports #{@topic.topic_name} as #{import_role}"
 
-        import = @constellation.Import(topic: saved_topic, precursor_topic: @topic)
+        import = @constellation.Import(topic: saved_topic, precursor_topic: @topic, import_role: import_role)
 
-        trace :import, "Importing #{@filename} as #{@topic.topic_name}" do
+        trace :import, "Importing #{@filename} into #{@topic.topic_name}" do
           ok = parse_all(input, nil, &@block)
         end
         @topic = saved_topic

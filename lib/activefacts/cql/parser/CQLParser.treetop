@@ -62,10 +62,15 @@ module ActiveFacts
       end
 
       rule vocabulary_definition
-        s vocabulary S vocabulary_name s ';'
+        model_definition /
+        transform_definition
+      end
+
+      rule model_definition
+        s ( model / topic / vocabulary ) S vocabulary_name s ';'
         {
           def ast
-            Compiler::Vocabulary.new(vocabulary_name.value)
+            Compiler::Vocabulary.new(vocabulary_name.value, false)
           end
         }
       end
@@ -75,15 +80,34 @@ module ActiveFacts
         { def node_type; :vocabulary; end }
       end
 
-      rule import_definition
-        s import S vocabulary_name alias_list ';'
+      rule transform_definition
+        s transform S vocabulary_name s ';'
         {
           def ast
-            Compiler::Import.new(import.input.parser, vocabulary_name.value, alias_list.value)
+            Compiler::Vocabulary.new(vocabulary_name.value, true)
           end
         }
       end
 
+      rule import_definition
+        s import S vocabulary_name import_role alias_list ';'
+        {
+          def ast
+            Compiler::Import.new(
+              import.input.parser, vocabulary_name.value, import_role.value, alias_list.value
+            )
+          end
+        }
+      end
+
+      rule import_role
+        s as S vocabulary_name
+        { def value; vocabulary_name.value; end }
+        /
+        ''
+        { def value; nil; end }
+      end
+      
       # REVISIT: Need a way to define equivalent readings for fact types here (and in the metamodel)
       rule alias_list
         ( s ',' s alias S aliased_from:alias_term S as S alias_to:alias_term s )*
