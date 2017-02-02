@@ -126,7 +126,7 @@ describe "When compiling a query, " do
       Boy is of Age;
       Boy is going out with Girl, Girl is going out with Boy;
     }
-    @compiler = ActiveFacts::CQL::Compiler.new('Test', 'cql')
+    @compiler = ActiveFacts::CQL::Compiler.new('Test')
     @compiler.compile(prefix)
     @constellation = @compiler.vocabulary.constellation
 

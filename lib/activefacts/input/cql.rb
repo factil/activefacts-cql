@@ -12,9 +12,10 @@ module ActiveFacts
     # Invoke as
     #   afgen --<generator> <file>.cql
     class CQL
+      EXTENSIONS = ['fiml', 'fidl', 'fiql', 'cql']
       # Read the specified file
       def self.readfile(filename)
-        if File.basename(filename, '.cql') == "-"
+        if EXTENSIONS.detect { |extension| File.basename(filename, extension) == "-" }
           read(STDIN, "<standard input>")
         else
           File.open(filename) {|file|
@@ -35,7 +36,7 @@ module ActiveFacts
 
       # Read the specified input string
       def self.readstring(str, filename = "string")
-        compiler = ActiveFacts::CQL::Compiler.new(filename, "cql")
+        compiler = ActiveFacts::CQL::Compiler.new(filename)
         compiler.compile(str)
       end 
     end

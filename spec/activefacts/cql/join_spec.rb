@@ -24,7 +24,7 @@ describe "query construction from CQL" do
     Purchase Order Item matches Sales Order Item;
   }
   before :each do
-    @compiler = ActiveFacts::CQL::Compiler.new('Test', 'cql')
+    @compiler = ActiveFacts::CQL::Compiler.new('Test')
   end
 
   QueryTests = [

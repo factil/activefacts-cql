@@ -20,7 +20,7 @@ describe "a query" do
         Company is identified by its Name;
         Directorship is where Person directs Company;
       }
-      @compiler = ActiveFacts::CQL::Compiler.new('Test', 'cql')
+      @compiler = ActiveFacts::CQL::Compiler.new('Test')
       @compiler.compile(prefix)
       @constellation = @compiler.vocabulary.constellation
 
