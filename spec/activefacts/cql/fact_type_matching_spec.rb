@@ -13,7 +13,7 @@ describe "When matching a reading" do
       Boy is written as String;
       Girl is written as Integer;
     }
-    @compiler = ActiveFacts::CQL::Compiler.new('Test')
+    @compiler = ActiveFacts::CQL::Compiler.new('Test', 'cql')
     @compiler.compile(prefix)
     @compiler.vocabulary.finalise
     @constellation = @compiler.vocabulary.constellation

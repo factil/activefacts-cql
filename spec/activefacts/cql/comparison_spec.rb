@@ -19,7 +19,7 @@ describe "When matching a reading with an existing fact type" do
       // Company is identified by its Name;
       // Directorship is where Person directs Company;
     }
-    @compiler = ActiveFacts::CQL::Compiler.new('Test')
+    @compiler = ActiveFacts::CQL::Compiler.new('Test', 'cql')
     @compiler.compile(prefix)
     @constellation = @compiler.vocabulary.constellation
 

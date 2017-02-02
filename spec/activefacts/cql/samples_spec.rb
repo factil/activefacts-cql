@@ -8,7 +8,7 @@ require 'set'
 
 describe "Sample data" do
   before :each do
-    @compiler = ActiveFacts::CQL::Compiler.new('Test')
+    @compiler = ActiveFacts::CQL::Compiler.new('Test', 'cql')
   end
 
   def compile_to_vocabulary text

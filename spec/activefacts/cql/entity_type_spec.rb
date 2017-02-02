@@ -284,7 +284,7 @@ describe "When compiling an entity type, " do
     EntityIdentificationTests
 
   before :each do
-    @compiler = ActiveFacts::CQL::Compiler.new('Test')
+    @compiler = ActiveFacts::CQL::Compiler.new('Test', 'cql')
   end
 
   AllTests.each do |tests|

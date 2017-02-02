@@ -13,7 +13,7 @@ describe "When comparing roles of a reading with an existing reading" do
       Boy is written as String;
       Girl is written as Integer;
     }
-    @compiler = ActiveFacts::CQL::Compiler.new('Test')
+    @compiler = ActiveFacts::CQL::Compiler.new('Test', 'cql')
     @compiler.compile(prefix)
     @constellation = @compiler.vocabulary.constellation
 

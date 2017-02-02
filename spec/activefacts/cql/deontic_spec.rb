@@ -56,7 +56,7 @@ describe "Deontic Constraints" do
   ]
 
   before :each do
-    @compiler = ActiveFacts::CQL::Compiler.new('Test')
+    @compiler = ActiveFacts::CQL::Compiler.new('Test', 'cql')
   end
 
   Cases.each do |c|

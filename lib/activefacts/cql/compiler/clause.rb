@@ -306,7 +306,7 @@ module ActiveFacts
 
                   if equal_best.size > 1 and equal_best.detect{|k,m| !m.fact_type.is_a?(Metamodel::TypeInheritance)}
                     # Complain if there's more than one equivalent cost match (unless all are TypeInheritance):
-                    raise "#{@phrases.inspect} could match any of the following:\n\t"+
+                    trace :matching_fails, "#{@phrases.inspect} could match any of the following:\n\t"+
                       best_matches.map { |reading| reading.expand + " with " + matches[reading].describe } * "\n\t"
                   end
                 end

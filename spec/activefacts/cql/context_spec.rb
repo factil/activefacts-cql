@@ -60,7 +60,7 @@ describe "Business Context Notes" do
   ]
 
   before :each do
-    @compiler = ActiveFacts::CQL::Compiler.new('Test')
+    @compiler = ActiveFacts::CQL::Compiler.new('Test', 'cql')
   end
 
   Notes.each do |c|
