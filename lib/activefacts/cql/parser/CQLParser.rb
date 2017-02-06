@@ -509,15 +509,15 @@ module ActiveFacts
           elements[1]
         end
 
-        def S
+        def import_role
           elements[2]
         end
 
-        def vocabulary_name
+        def S
           elements[3]
         end
 
-        def import_role
+        def vocabulary_name
           elements[4]
         end
 
@@ -553,13 +553,13 @@ module ActiveFacts
           r2 = _nt_import
           s0 << r2
           if r2
-            r3 = _nt_S
+            r3 = _nt_import_role
             s0 << r3
             if r3
-              r4 = _nt_vocabulary_name
+              r4 = _nt_S
               s0 << r4
               if r4
-                r5 = _nt_import_role
+                r5 = _nt_vocabulary_name
                 s0 << r5
                 if r5
                   r6 = _nt_alias_list
@@ -594,20 +594,12 @@ module ActiveFacts
       end
 
       module ImportRole0
-        def s
+        def S
           elements[0]
         end
 
-        def as
-          elements[1]
-        end
-
-        def S
-          elements[2]
-        end
-
         def vocabulary_name
-          elements[3]
+          elements[1]
         end
       end
 
@@ -632,19 +624,11 @@ module ActiveFacts
 
         i0 = index
         i1, s1 = index, []
-        r2 = _nt_s
+        r2 = _nt_S
         s1 << r2
         if r2
-          r3 = _nt_as
+          r3 = _nt_vocabulary_name
           s1 << r3
-          if r3
-            r4 = _nt_S
-            s1 << r4
-            if r4
-              r5 = _nt_vocabulary_name
-              s1 << r5
-            end
-          end
         end
         if s1.last
           r1 = instantiate_node(SyntaxNode,input, i1...index, s1)
@@ -659,16 +643,16 @@ module ActiveFacts
           r0 = r1
         else
           if (match_len = has_terminal?('', false, index))
-            r6 = instantiate_node(SyntaxNode,input, index...(index + match_len))
-            r6.extend(ImportRole2)
+            r4 = instantiate_node(SyntaxNode,input, index...(index + match_len))
+            r4.extend(ImportRole2)
             @index += match_len
           else
             terminal_parse_failure('\'\'')
-            r6 = nil
+            r4 = nil
           end
-          if r6
-            r6 = SyntaxNode.new(input, (index-1)...index) if r6 == true
-            r0 = r6
+          if r4
+            r4 = SyntaxNode.new(input, (index-1)...index) if r4 == true
+            r0 = r4
           else
             @index = i0
             r0 = nil

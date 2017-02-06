@@ -90,7 +90,7 @@ module ActiveFacts
       end
 
       rule import_definition
-        s import S vocabulary_name import_role alias_list ';'
+        s import import_role S vocabulary_name alias_list ';'
         {
           def ast
             Compiler::Import.new(
@@ -101,7 +101,7 @@ module ActiveFacts
       end
 
       rule import_role
-        s as S vocabulary_name
+        S vocabulary_name
         { def value; vocabulary_name.value; end }
         /
         ''
