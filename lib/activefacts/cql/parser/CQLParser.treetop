@@ -90,11 +90,11 @@ module ActiveFacts
       end
 
       rule import_definition
-        s import import_role S vocabulary_name alias_list ';'
+        s import i:import_role? S vocabulary_name alias_list ';'
         {
           def ast
             Compiler::Import.new(
-              import.input.parser, vocabulary_name.value, import_role.value, alias_list.value
+              import.input.parser, vocabulary_name.value, i.empty? ? "topic" : i.value, alias_list.value
             )
           end
         }
@@ -102,10 +102,9 @@ module ActiveFacts
 
       rule import_role
         S vocabulary_name
-        { def value; vocabulary_name.value; end }
-        /
-        ''
-        { def value; nil; end }
+        {
+          def value; vocabulary_name.value; end
+        }
       end
       
       # REVISIT: Need a way to define equivalent readings for fact types here (and in the metamodel)

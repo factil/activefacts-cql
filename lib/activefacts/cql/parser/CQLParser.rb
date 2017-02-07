@@ -509,7 +509,7 @@ module ActiveFacts
           elements[1]
         end
 
-        def import_role
+        def i
           elements[2]
         end
 
@@ -530,7 +530,7 @@ module ActiveFacts
       module ImportDefinition1
         def ast
           Compiler::Import.new(
-            import.input.parser, vocabulary_name.value, import_role.value, alias_list.value
+            import.input.parser, vocabulary_name.value, i.empty? ? "topic" : i.value, alias_list.value
           )
         end
       end
@@ -553,26 +553,31 @@ module ActiveFacts
           r2 = _nt_import
           s0 << r2
           if r2
-            r3 = _nt_import_role
+            r4 = _nt_import_role
+            if r4
+              r3 = r4
+            else
+              r3 = instantiate_node(SyntaxNode,input, index...index)
+            end
             s0 << r3
             if r3
-              r4 = _nt_S
-              s0 << r4
-              if r4
-                r5 = _nt_vocabulary_name
-                s0 << r5
-                if r5
-                  r6 = _nt_alias_list
-                  s0 << r6
-                  if r6
+              r5 = _nt_S
+              s0 << r5
+              if r5
+                r6 = _nt_vocabulary_name
+                s0 << r6
+                if r6
+                  r7 = _nt_alias_list
+                  s0 << r7
+                  if r7
                     if (match_len = has_terminal?(';', false, index))
-                      r7 = true
+                      r8 = true
                       @index += match_len
                     else
                       terminal_parse_failure('\';\'')
-                      r7 = nil
+                      r8 = nil
                     end
-                    s0 << r7
+                    s0 << r8
                   end
                 end
               end
@@ -607,10 +612,6 @@ module ActiveFacts
         def value; vocabulary_name.value; end
       end
 
-      module ImportRole2
-        def value; nil; end
-      end
-
       def _nt_import_role
         start_index = index
         if node_cache[:import_role].has_key?(index)
@@ -622,41 +623,20 @@ module ActiveFacts
           return cached
         end
 
-        i0 = index
-        i1, s1 = index, []
-        r2 = _nt_S
-        s1 << r2
-        if r2
-          r3 = _nt_vocabulary_name
-          s1 << r3
-        end
-        if s1.last
-          r1 = instantiate_node(SyntaxNode,input, i1...index, s1)
-          r1.extend(ImportRole0)
-          r1.extend(ImportRole1)
-        else
-          @index = i1
-          r1 = nil
-        end
+        i0, s0 = index, []
+        r1 = _nt_S
+        s0 << r1
         if r1
-          r1 = SyntaxNode.new(input, (index-1)...index) if r1 == true
-          r0 = r1
+          r2 = _nt_vocabulary_name
+          s0 << r2
+        end
+        if s0.last
+          r0 = instantiate_node(SyntaxNode,input, i0...index, s0)
+          r0.extend(ImportRole0)
+          r0.extend(ImportRole1)
         else
-          if (match_len = has_terminal?('', false, index))
-            r4 = instantiate_node(SyntaxNode,input, index...(index + match_len))
-            r4.extend(ImportRole2)
-            @index += match_len
-          else
-            terminal_parse_failure('\'\'')
-            r4 = nil
-          end
-          if r4
-            r4 = SyntaxNode.new(input, (index-1)...index) if r4 == true
-            r0 = r4
-          else
-            @index = i0
-            r0 = nil
-          end
+          @index = i0
+          r0 = nil
         end
 
         node_cache[:import_role][start_index] = r0

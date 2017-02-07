@@ -89,10 +89,10 @@ module ActiveFacts
               value = compile_definition ast
               trace :definition, "Compiled to #{value.is_a?(Array) ? value.map{|v| v.verbalise}*', ' : value.verbalise}" if value
               if value.is_a?(ActiveFacts::Metamodel::Topic)
-                topic_flood if @topic
+                topic_flood() if @topic
                 @topic = value
               elsif ast.is_a?(Compiler::Vocabulary)
-                topic_flood if @topic
+                topic_flood() if @topic
                 @vocabulary = value
                 @topic = @constellation.Topic(@vocabulary.name)
               end
@@ -106,7 +106,7 @@ module ActiveFacts
               raise ne
             end
           end
-          topic_flood if @topic
+          topic_flood() if @topic
         end
         raise failure_reason unless ok
         vocabulary
@@ -154,18 +154,27 @@ module ActiveFacts
       end
 
       def compile_import_input input, import_role
-        saved_topic = @topic
-        topic_flood if @topic
-        @topic = @constellation.Topic(File.basename(@filename, '.fiml'))
+        topic_external_name = File.basename(@filename, '.fiml')
+        
+        if existing_topic = @constellation.Topic[[topic_external_name]]
+          # topic has already been loaded, just build import
+          import = @constellation.Import(topic: @topic, precursor_topic: existing_topic, import_role: import_role)
+        else
+          # topic has not been loaded previously, import topic
+          saved_topic = @topic
+          topic_flood() if @topic
+        
+          @topic = @constellation.Topic(File.basename(@filename, '.fiml'))
 
-        trace :import, "Topic #{saved_topic.topic_name} imports #{@topic.topic_name} as #{import_role}"
+          trace :import, "Topic #{saved_topic.topic_name} imports #{@topic.topic_name} as #{import_role}"
 
-        import = @constellation.Import(topic: saved_topic, precursor_topic: @topic, import_role: import_role)
+          import = @constellation.Import(topic: saved_topic, precursor_topic: @topic, import_role: import_role)
 
-        trace :import, "Importing #{@filename} into #{@topic.topic_name}" do
-          ok = parse_all(input, nil, &@block)
+          trace :import, "Importing #{@filename} into #{@topic.topic_name}" do
+            ok = parse_all(input, nil, &@block)
+          end
+          @topic = saved_topic
         end
-        @topic = saved_topic
       end
 
       def compile_definition ast
