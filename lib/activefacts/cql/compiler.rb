@@ -50,7 +50,7 @@ module ActiveFacts
 
       # Load the appropriate natural language module
       def detect_language
-        @filename =~ /.*\.(..)\.cql$/i
+        @filepath =~ /.*\.(..)\.cql$/i
         language_code = $1
         @language = LANGUAGES[language_code] || 'English'
       end
@@ -184,7 +184,7 @@ module ActiveFacts
           @pending_import_topic = saved_topic
           @pending_import_role = import_role
 
-          trace :import, "Importing #{@filename} into #{@topic.topic_name}" do
+          trace :import, "Importing #{@filepath} into #{@topic.topic_name}" do
             ok = parse_all(input, nil, &@block)
           end
           @topic = saved_topic
