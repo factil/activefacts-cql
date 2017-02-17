@@ -35,6 +35,7 @@ module ActiveFacts
         @language = nil
         @pending_import_topic = nil
         @pending_import_role = ''
+        @pending_import_file_name = ''
         trace :file, "Parsing '#{@filename}'"
       end
 
@@ -73,14 +74,18 @@ module ActiveFacts
 
       def create_import_if_pending new_topic
         if @pending_import_topic
-          trace :import, "Topic #{@pending_import_topic.topic_name} imports #{new_topic.topic_name} as #{@pending_import_role}"
+          trace :import, "Topic #{@pending_import_topic.topic_name} imports #{new_topic.topic_name} as #{@pending_import_role} from file #{@pending_import_file_name}"
 
           @constellation.Import(
-            topic: @pending_import_topic, precursor_topic: new_topic, import_role: @pending_import_role
+            topic: @pending_import_topic,
+            precursor_topic: new_topic,
+            import_role: @pending_import_role,
+            file_name: @pending_import_file_name
           )
 
           @pending_import_topic = nil
           @pending_import_role = ''
+          @pending_import_file_name = ''
         end
       end
 
@@ -175,7 +180,10 @@ module ActiveFacts
 
         if existing_topic = @constellation.Topic[[topic_external_name]]
           # topic has already been loaded, just build import
-          import = @constellation.Import(topic: @topic, precursor_topic: existing_topic, import_role: import_role)
+          import = @constellation.Import(
+            topic: @topic, precursor_topic: existing_topic, 
+            import_role: import_role, file_name: topic_external_name
+          )
         else
           # topic has not been loaded previously, import topic
           saved_topic = @topic
@@ -183,6 +191,7 @@ module ActiveFacts
 
           @pending_import_topic = saved_topic
           @pending_import_role = import_role
+          @pending_import_file_name = topic_external_name
 
           trace :import, "Importing #{@filepath} into #{@topic.topic_name}" do
             ok = parse_all(input, nil, &@block)
