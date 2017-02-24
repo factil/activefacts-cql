@@ -8,10 +8,10 @@ module ActiveFacts
             query = @constellation.Query(:new)
             all_bindings_in_clauses(clauses_list).
               each do |binding|
-                role_name = (r = binding.refs.first) ? r.to_s : ''
-                trace :query, "Creating variable #{query.all_variable.size} for #{binding.inspect} with role_name #{role_name}"
+                var_name = (r = binding.refs.select{|r| r.is_a?(Reference)}.first) ? r.var_name : nil
+                trace :query, "Creating variable #{query.all_variable.size} for #{binding.inspect} with role_name #{var_name}"
                 binding.variable = @constellation.Variable(
-                  query, query.all_variable.size, :object_type => binding.player, role_name: role_name
+                  query, query.all_variable.size, :object_type => binding.player, role_name: var_name
                 )
                 if literal = binding.refs.detect{|r| r.literal}
                   if literal.kind_of?(ActiveFacts::CQL::Compiler::Reference)

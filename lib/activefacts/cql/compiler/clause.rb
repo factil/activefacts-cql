@@ -921,6 +921,22 @@ module ActiveFacts
           }}"
         end
 
+        def var_name
+          if @role_name && !@role_name.is_a?(Integer)
+            @role_name
+          else
+            "#{
+              @leading_adjective && @leading_adjective.split.map(&:capitalize).join(' ') + ' '
+            }#{
+              @term
+            }#{
+              @trailing_adjective && ' ' + @trailing_adjective.split.map(&:capitalize).join(' ')
+            }#{
+              @role_name && "(#{@role_name})"
+            }"
+          end
+        end
+
         def <=>(other)
           ( 4*(@term <=> other.term) +
             2*((@leading_adjective||'') <=> (other.leading_adjective||'')) +
