@@ -13,7 +13,7 @@ module ActiveFacts
       class Binding
         attr_reader :player             # The ObjectType (object type)
         attr_reader :refs               # an array of the References
-        attr_reader :role_name
+        attr_accessor :role_name
         attr_accessor :rebound_to       # Loose binding may set this to another binding
         attr_reader :variable
         attr_accessor :instance         # When binding fact instances, the instance goes here

@@ -44,7 +44,7 @@ module ActiveFacts
           unless @conditions.empty? and @returning.empty?
             trace :query, "building query for derived fact type (returning #{@returning}) with #{@conditions.size} conditions: (#{@conditions.map{|c|c.inspect}*', '})" do
               @query = build_variables(@conditions.flatten)
-              @roles_by_binding = build_all_steps(@conditions)
+              @roles_by_binding = build_all_steps(@query, @conditions)
               @query.validate
               @query
             end

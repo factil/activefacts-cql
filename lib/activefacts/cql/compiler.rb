@@ -180,6 +180,7 @@ module ActiveFacts
 
         if existing_topic = @constellation.Topic[[topic_external_name]]
           # topic has already been loaded, just build import
+          trace :import, "Topic #{@topic.topic_name} has already been loaded, skip reload"
           import = @constellation.Import(
             topic: @topic, precursor_topic: existing_topic, 
             import_role: import_role, file_name: topic_external_name
