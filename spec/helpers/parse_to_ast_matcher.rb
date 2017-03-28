@@ -40,7 +40,7 @@ RSpec::Matchers.define :parse_to_ast do |*expected_asts|
     @canonical_form == canonicalise(expected_asts)
   end
 
-  failure_message_for_should do
+  failure_message do
     if !@result
       @parser.failure_reason
     else
@@ -58,15 +58,15 @@ RSpec::Matchers.define :fail_to_parse do |*error_regexp|
     rescue => e
       @exception = e.message
     end
-    @result.should be_nil
+    expect(@result).to be_nil
     if @re = error_regexp[0]
-      @parser.failure_reason.should =~ @re
+      expect(@parser.failure_reason).to match @re
     else
       throw :pending_declared_in_example, actual.inspect+' fails, please add message pattern to match '+@parser.failure_reason.inspect
     end
   end
 
-  failure_message_for_should do
+  failure_message do
     if @result
       @canonical_form = @result.map{|d| canonicalise(d.ast)}
       "Expected not to succeed in parsing #{actual.inspect}\nbut got #{@canonical_form.inspect}"

@@ -71,11 +71,11 @@ describe "Entity Types" do
       result = @parser.parse_all(source, :definition)
 
       puts @parser.failure_reason unless result
-      result.should_not be_nil
+      expect(result).to_not be_nil
 
       canonical_form = result.map{|d| d.ast.to_s}
       if ast
-        canonical_form.should == ast
+        expect(canonical_form).to eq ast
       else
         pending "#{source.inspect} should compile to\n" +
           "\t#{canonical_form}"

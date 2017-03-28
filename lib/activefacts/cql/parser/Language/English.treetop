@@ -308,7 +308,7 @@ module ActiveFacts
       rule transient 'transient' !alphanumeric end
       rule transitive 'transitive' !alphanumeric end
       rule true 'true' !alphanumeric end
-      rule vocabulary 'vocabulary' !alphanumeric end
+      rule vocabulary ('vocabulary' / 'schema') !alphanumeric end
       rule when 'when' !alphanumeric end
       rule where 'where' !alphanumeric end
       rule which 'which' !alphanumeric end

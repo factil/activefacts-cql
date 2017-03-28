@@ -6,9 +6,9 @@ require 'spec_helper'
 
 describe "ASTs from Derived Fact Types with expressions" do
   it "should parse a simple comparison clause" do
-    %q{
+    expect(%q{
       each combination FamilyName, GivenName occurs at most one time in Competitor has FamilyName, Competitor has GivenName;
-    }.should parse_to_ast \
+    }).to parse_to_ast \
       "PresenceConstraint over [[{Competitor} \"has\" {FamilyName}], [{Competitor} \"has\" {GivenName}]] -1 over ({FamilyName}, {GivenName})"
   end
 end

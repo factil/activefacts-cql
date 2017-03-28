@@ -71,8 +71,13 @@ module ActiveFacts
       end
 
       rule vocabulary_name
-        id
-        { def node_type; :vocabulary; end }
+        id tail:(S id)*
+        {
+	  def node_type; :vocabulary; end
+	  def value
+            [id.value, *tail.elements.map{|e| e.id.value }].join(' ')
+	  end
+	}
       end
 
       rule import_definition

@@ -33,7 +33,7 @@ describe "Fact Types" do
   FactTypes.each do |c|
     source, ast, definition = *c
     it "should parse #{source.inspect}" do
-      source.should parse_to_ast *ast
+      expect(source).to parse_to_ast *ast
     end
   end
 end
