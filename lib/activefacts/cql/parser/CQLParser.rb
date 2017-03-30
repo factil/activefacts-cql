@@ -274,7 +274,7 @@ module ActiveFacts
         end
 
         i0 = index
-        r1 = _nt_model_definition
+        r1 = _nt_schema_definition
         if r1
           r1 = SyntaxNode.new(input, (index-1)...index) if r1 == true
           r0 = r1
@@ -294,7 +294,7 @@ module ActiveFacts
         r0
       end
 
-      module ModelDefinition0
+      module SchemaDefinition0
         def s1
           elements[0]
         end
@@ -313,18 +313,18 @@ module ActiveFacts
 
       end
 
-      module ModelDefinition1
+      module SchemaDefinition1
         def ast
           Compiler::Vocabulary.new(vocabulary_name.value, false)
         end
       end
 
-      def _nt_model_definition
+      def _nt_schema_definition
         start_index = index
-        if node_cache[:model_definition].has_key?(index)
-          cached = node_cache[:model_definition][index]
+        if node_cache[:schema_definition].has_key?(index)
+          cached = node_cache[:schema_definition][index]
           if cached
-            node_cache[:model_definition][index] = cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
+            node_cache[:schema_definition][index] = cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
             @index = cached.interval.end
           end
           return cached
@@ -335,7 +335,7 @@ module ActiveFacts
         s0 << r1
         if r1
           i2 = index
-          r3 = _nt_model
+          r3 = _nt_schema
           if r3
             r3 = SyntaxNode.new(input, (index-1)...index) if r3 == true
             r2 = r3
@@ -381,14 +381,14 @@ module ActiveFacts
         end
         if s0.last
           r0 = instantiate_node(SyntaxNode,input, i0...index, s0)
-          r0.extend(ModelDefinition0)
-          r0.extend(ModelDefinition1)
+          r0.extend(SchemaDefinition0)
+          r0.extend(SchemaDefinition1)
         else
           @index = i0
           r0 = nil
         end
 
-        node_cache[:model_definition][start_index] = r0
+        node_cache[:schema_definition][start_index] = r0
 
         r0
       end

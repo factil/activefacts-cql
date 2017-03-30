@@ -62,12 +62,12 @@ module ActiveFacts
       end
 
       rule vocabulary_definition
-        model_definition /
+        schema_definition /
         transform_definition
       end
 
-      rule model_definition
-        s ( model / topic / vocabulary ) S vocabulary_name s ';'
+      rule schema_definition
+        s ( schema / topic / vocabulary ) S vocabulary_name s ';'
         {
           def ast
             Compiler::Vocabulary.new(vocabulary_name.value, false)

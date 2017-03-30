@@ -286,7 +286,6 @@ module ActiveFacts
       rule its 'its' !alphanumeric end
       rule masculine 'masculine' !alphanumeric end
       rule maybe 'maybe' !alphanumeric end
-      rule model 'model' !alphanumeric end
       rule only 'only' !alphanumeric end
       rule or 'or' !alphanumeric end
       rule of 'of' !alphanumeric end
@@ -297,6 +296,7 @@ module ActiveFacts
       rule radix_point '.' end
       rule reflexive 'reflexive' !alphanumeric end
       rule returning 'returning' !alphanumeric end
+      rule schema 'schema' !alphanumeric end
       rule separate 'separate' !alphanumeric end
       rule so_that 'so' S that end
       rule static 'static' !alphanumeric end
