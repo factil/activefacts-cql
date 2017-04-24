@@ -280,7 +280,8 @@ module ActiveFacts
           identifying_type =
             @reference_mode_value_type ||
             begin
-              @identification.size == 1 &&                    # Just one identifying role
+              @identification &&                              # There's an "identified by" clause
+              @identification.size == 1 &&                    # With just one identifying role
               (id = @identification[0]).is_a?(Reference) &&   # Which is a simple reference
               @clauses.size == 0 &&                           # No readings for this role
               id.binding.player                               # And the player is bound already
