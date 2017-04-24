@@ -54,7 +54,7 @@ module ActiveFacts
 
           # At this point, @identification is an array of References and/or Clauses (for unary fact types)
           # Have to do this after creating the necessary fact types
-          complete_reference_mode_fact_type fact_types
+          complete_reference_mode_fact_type context, fact_types
 
           # Find the roles to use if we have to create an identifying uniqueness constraint:
           identifying_roles = bind_identifying_roles context
@@ -276,8 +276,16 @@ module ActiveFacts
           @reference_mode_value_type = vt
         end
 
-        def complete_reference_mode_fact_type(fact_types)
-          return unless identifying_type = @reference_mode_value_type
+        def complete_reference_mode_fact_type context, fact_types
+          identifying_type =
+            @reference_mode_value_type ||
+            begin
+              @identification.size == 1 &&                    # Just one identifying role
+              (id = @identification[0]).is_a?(Reference) &&   # Which is a simple reference
+              @clauses.size == 0 &&                           # No readings for this role
+              id.binding.player                               # And the player is bound already
+            end
+          return unless identifying_type
 
           # Find an existing fact type, if any:
           entity_role = identifying_role = nil
