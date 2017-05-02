@@ -860,8 +860,8 @@ module ActiveFacts
       end
 
       class Reference
-        attr_reader :term, :quantifier, :function_call, :value_constraint, :literal, :nested_clauses
-        attr_accessor :leading_adjective, :trailing_adjective, :role_name
+        attr_reader :term, :function_call, :value_constraint, :literal, :nested_clauses
+        attr_accessor :quantifier, :leading_adjective, :trailing_adjective, :role_name
         attr_accessor :player     # What ObjectType does the Binding denote
         attr_accessor :binding    # What Binding for that ObjectType
         attr_accessor :role       # Which Role of this ObjectType
@@ -1105,7 +1105,7 @@ module ActiveFacts
         attr_accessor :enforcement
         attr_accessor :context_note
         attr_accessor :pragmas
-        attr_reader :min, :max
+        attr_accessor :min, :max
 
         def initialize min, max, enforcement = nil, context_note = nil, pragmas = nil
           @min = min

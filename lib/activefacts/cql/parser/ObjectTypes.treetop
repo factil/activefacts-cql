@@ -10,8 +10,7 @@ module ActiveFacts
       rule object_type
         value_type
         / entity_type
-        / named_fact_type
-        / anonymous_fact_type
+        / fact_type
       end
 
       rule entity_type

@@ -167,8 +167,7 @@ module ActiveFacts
       end
 
       rule quantifier1
-        (each s                   { def value; [1, nil]; end })
-        / (some s                 { def value; nil; end })
+          (some s                 { def value; nil; end })
           # REVISIT: "Some" means that any prior occurrence of this role player is to be ignored; this is a new occurrence
           # "that" on the other hand means that this role player was *previously* designated using "some".
           # These distinctions are lost here

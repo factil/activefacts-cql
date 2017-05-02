@@ -16,18 +16,31 @@ module ActiveFacts
         }
       end
 
-      rule named_fact_type
-        s each?
-        s term_definition_name
-        mapping_pragmas is_where
+      rule fact_type
+        s each:(each)?	    # Chew the "each" or it will get accepted as a quantifier
+	name:(s term_definition_name mapping_pragmas is_where)?	  # Name of objectifying entity type
         anonymous_fact_type
         {
           def ast
             ft = anonymous_fact_type.ast
-            ft.name = term_definition_name.value
-            pragmas = mapping_pragmas.value
-            pragmas << 'independent' if is_where.independent
-            ft.pragmas = pragmas
+	    if !name.empty?
+	      # "each" is often used, and doesn't imply uniqueness
+	      ft.name = name.term_definition_name.value
+	      pragmas = name.mapping_pragmas.value
+	      pragmas << 'independent' if name.is_where.independent
+	      ft.pragmas = pragmas
+	    elsif !each.empty?
+	      # Handle the implied mandatory constraint on the appropriate role
+	      first_reading = ft.clauses[0]
+	      refs = first_reading.refs
+	      raise "Ambiguous 'each' implies mandatory on fact type of arity #{refs.size}" unless refs.size == 2
+	      q = refs[-1].quantifier
+	      if q
+		q.min = 1  # Make the existing quantifier mandatory
+	      else
+		refs[-1].quantifier = q = Compiler::Quantifier.new(1, nil)
+	      end
+	    end
             ft
           end
         }
