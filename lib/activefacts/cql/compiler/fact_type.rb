@@ -108,7 +108,9 @@ module ActiveFacts
           # Prepare to objectify the fact type (so readings for link fact types can be created)
           if @name
             entity_type = @vocabulary.valid_entity_type_name(@name)
-            raise "You can't objectify #{@name}, it already exists" if entity_type
+
+            # REVISIT disable name check -- GSP 5 Jul 2017
+            raise "You can't objectify #{@name}, it already exists" if entity_type && false
             @entity_type = @constellation.EntityType(@vocabulary, @name, :fact_type => @fact_type, :concept => :new)
           end
 

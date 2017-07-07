@@ -59,7 +59,7 @@ module ActiveFacts
               objectification_step = nil
               if ref.nested_clauses
                 ref.nested_clauses.each do |nested_clause|
-                  objectification_step = build_step nested_clause, roles_by_binding
+                  objectification_step = build_step(query, nested_clause, roles_by_binding)
                   if ref.binding.player.is_a?(ActiveFacts::Metamodel::EntityType) and
                       ref.binding.player.fact_type == nested_clause.fact_type
                     objectification_step.objectification_variable = binding.variable

@@ -22,7 +22,7 @@ module ActiveFacts
         end
 
         def refs
-          @phrases.select{|r| r.respond_to?(:player)}
+          @phrases.select{|r| r.is_a?(ActiveFacts::CQL::Compiler::Reference)}
         end
 
         # A clause that contains only the name of a ObjectType and no literal or reading text
