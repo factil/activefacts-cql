@@ -67,10 +67,19 @@ module ActiveFacts
       end
 
       rule schema_definition
-        s ( schema / topic / vocabulary ) S vocabulary_name s ';'
+        s ( schema / topic / vocabulary ) S vocabulary_name vn:version_number? s ';'
         {
           def ast
-            Compiler::Vocabulary.new(vocabulary_name.value, false)
+            Compiler::Vocabulary.new(vocabulary_name.value, false, vn.empty? ? nil : vn.value)
+          end
+        }
+      end
+
+      rule transform_definition
+        s transform S vocabulary_name vn:version_number? s ';'
+        {
+          def ast
+            Compiler::Vocabulary.new(vocabulary_name.value, true, vn.empty? ? nil : vn.value)
           end
         }
       end
@@ -80,33 +89,48 @@ module ActiveFacts
         { def node_type; :vocabulary; end }
       end
 
-      rule transform_definition
-        s transform S vocabulary_name s ';'
-        {
-          def ast
-            Compiler::Vocabulary.new(vocabulary_name.value, true)
-          end
-        }
-      end
-
       rule import_definition
-        s import i:import_role? S vocabulary_name alias_list ';'
+        s import i:import_role? S vocabulary_name vp:version_pattern? alias_list ';'
         {
           def ast
             Compiler::Import.new(
-              import.input.parser, vocabulary_name.value, i.empty? ? "topic" : i.value, alias_list.value
+              import.input.parser, vocabulary_name.value, i.empty? ? "topic" : i.value, vp.empty? ? nil : vp.value, alias_list.value
             )
           end
         }
       end
 
-      rule import_role
-        S vocabulary_name
+      rule version_number
+        S version S version_string
         {
-          def value; vocabulary_name.value; end
+          def value
+            version_string.text_value
+          end
         }
       end
-      
+
+      rule version_pattern
+        S version S version_string
+        {
+          def value
+            version_string.text_value
+          end
+        }
+      end
+
+      rule version_string
+        [0-9]+ '.' [0-9]+ '.' [0-9]+ ('-' [0-9A-Za-z-]+ ('.' [0-9A-Za-z-]+ )* )?
+      end
+
+      rule import_role
+        S id
+        {
+          def value
+            id.text_value
+          end
+        }
+      end
+
       # REVISIT: Need a way to define equivalent readings for fact types here (and in the metamodel)
       rule alias_list
         ( s ',' s alias S aliased_from:alias_term S as S alias_to:alias_term s )*

@@ -307,15 +307,19 @@ module ActiveFacts
           elements[3]
         end
 
-        def s2
+        def vn
           elements[4]
+        end
+
+        def s2
+          elements[5]
         end
 
       end
 
       module SchemaDefinition1
         def ast
-          Compiler::Vocabulary.new(vocabulary_name.value, false)
+          Compiler::Vocabulary.new(vocabulary_name.value, false, vn.empty? ? nil : vn.value)
         end
       end
 
@@ -363,17 +367,26 @@ module ActiveFacts
               r7 = _nt_vocabulary_name
               s0 << r7
               if r7
-                r8 = _nt_s
+                r9 = _nt_version_number
+                if r9
+                  r8 = r9
+                else
+                  r8 = instantiate_node(SyntaxNode,input, index...index)
+                end
                 s0 << r8
                 if r8
-                  if (match_len = has_terminal?(';', false, index))
-                    r9 = true
-                    @index += match_len
-                  else
-                    terminal_parse_failure('\';\'')
-                    r9 = nil
+                  r10 = _nt_s
+                  s0 << r10
+                  if r10
+                    if (match_len = has_terminal?(';', false, index))
+                      r11 = true
+                      @index += match_len
+                    else
+                      terminal_parse_failure('\';\'')
+                      r11 = nil
+                    end
+                    s0 << r11
                   end
-                  s0 << r9
                 end
               end
             end
@@ -389,6 +402,102 @@ module ActiveFacts
         end
 
         node_cache[:schema_definition][start_index] = r0
+
+        r0
+      end
+
+      module TransformDefinition0
+        def s1
+          elements[0]
+        end
+
+        def transform
+          elements[1]
+        end
+
+        def S
+          elements[2]
+        end
+
+        def vocabulary_name
+          elements[3]
+        end
+
+        def vn
+          elements[4]
+        end
+
+        def s2
+          elements[5]
+        end
+
+      end
+
+      module TransformDefinition1
+        def ast
+          Compiler::Vocabulary.new(vocabulary_name.value, true, vn.empty? ? nil : vn.value)
+        end
+      end
+
+      def _nt_transform_definition
+        start_index = index
+        if node_cache[:transform_definition].has_key?(index)
+          cached = node_cache[:transform_definition][index]
+          if cached
+            node_cache[:transform_definition][index] = cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
+            @index = cached.interval.end
+          end
+          return cached
+        end
+
+        i0, s0 = index, []
+        r1 = _nt_s
+        s0 << r1
+        if r1
+          r2 = _nt_transform
+          s0 << r2
+          if r2
+            r3 = _nt_S
+            s0 << r3
+            if r3
+              r4 = _nt_vocabulary_name
+              s0 << r4
+              if r4
+                r6 = _nt_version_number
+                if r6
+                  r5 = r6
+                else
+                  r5 = instantiate_node(SyntaxNode,input, index...index)
+                end
+                s0 << r5
+                if r5
+                  r7 = _nt_s
+                  s0 << r7
+                  if r7
+                    if (match_len = has_terminal?(';', false, index))
+                      r8 = true
+                      @index += match_len
+                    else
+                      terminal_parse_failure('\';\'')
+                      r8 = nil
+                    end
+                    s0 << r8
+                  end
+                end
+              end
+            end
+          end
+        end
+        if s0.last
+          r0 = instantiate_node(SyntaxNode,input, i0...index, s0)
+          r0.extend(TransformDefinition0)
+          r0.extend(TransformDefinition1)
+        else
+          @index = i0
+          r0 = nil
+        end
+
+        node_cache[:transform_definition][start_index] = r0
 
         r0
       end
@@ -417,89 +526,6 @@ module ActiveFacts
         r0
       end
 
-      module TransformDefinition0
-        def s1
-          elements[0]
-        end
-
-        def transform
-          elements[1]
-        end
-
-        def S
-          elements[2]
-        end
-
-        def vocabulary_name
-          elements[3]
-        end
-
-        def s2
-          elements[4]
-        end
-
-      end
-
-      module TransformDefinition1
-        def ast
-          Compiler::Vocabulary.new(vocabulary_name.value, true)
-        end
-      end
-
-      def _nt_transform_definition
-        start_index = index
-        if node_cache[:transform_definition].has_key?(index)
-          cached = node_cache[:transform_definition][index]
-          if cached
-            node_cache[:transform_definition][index] = cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
-            @index = cached.interval.end
-          end
-          return cached
-        end
-
-        i0, s0 = index, []
-        r1 = _nt_s
-        s0 << r1
-        if r1
-          r2 = _nt_transform
-          s0 << r2
-          if r2
-            r3 = _nt_S
-            s0 << r3
-            if r3
-              r4 = _nt_vocabulary_name
-              s0 << r4
-              if r4
-                r5 = _nt_s
-                s0 << r5
-                if r5
-                  if (match_len = has_terminal?(';', false, index))
-                    r6 = true
-                    @index += match_len
-                  else
-                    terminal_parse_failure('\';\'')
-                    r6 = nil
-                  end
-                  s0 << r6
-                end
-              end
-            end
-          end
-        end
-        if s0.last
-          r0 = instantiate_node(SyntaxNode,input, i0...index, s0)
-          r0.extend(TransformDefinition0)
-          r0.extend(TransformDefinition1)
-        else
-          @index = i0
-          r0 = nil
-        end
-
-        node_cache[:transform_definition][start_index] = r0
-
-        r0
-      end
-
       module ImportDefinition0
         def s
           elements[0]
@@ -521,8 +547,12 @@ module ActiveFacts
           elements[4]
         end
 
-        def alias_list
+        def vp
           elements[5]
+        end
+
+        def alias_list
+          elements[6]
         end
 
       end
@@ -530,7 +560,7 @@ module ActiveFacts
       module ImportDefinition1
         def ast
           Compiler::Import.new(
-            import.input.parser, vocabulary_name.value, i.empty? ? "topic" : i.value, alias_list.value
+            import.input.parser, vocabulary_name.value, i.empty? ? "topic" : i.value, vp.empty? ? nil : vp.value, alias_list.value
           )
         end
       end
@@ -567,17 +597,26 @@ module ActiveFacts
                 r6 = _nt_vocabulary_name
                 s0 << r6
                 if r6
-                  r7 = _nt_alias_list
+                  r8 = _nt_version_pattern
+                  if r8
+                    r7 = r8
+                  else
+                    r7 = instantiate_node(SyntaxNode,input, index...index)
+                  end
                   s0 << r7
                   if r7
-                    if (match_len = has_terminal?(';', false, index))
-                      r8 = true
-                      @index += match_len
-                    else
-                      terminal_parse_failure('\';\'')
-                      r8 = nil
+                    r9 = _nt_alias_list
+                    s0 << r9
+                    if r9
+                      if (match_len = has_terminal?(';', false, index))
+                        r10 = true
+                        @index += match_len
+                      else
+                        terminal_parse_failure('\';\'')
+                        r10 = nil
+                      end
+                      s0 << r10
                     end
-                    s0 << r8
                   end
                 end
               end
@@ -598,18 +637,372 @@ module ActiveFacts
         r0
       end
 
+      module VersionNumber0
+        def S1
+          elements[0]
+        end
+
+        def version
+          elements[1]
+        end
+
+        def S2
+          elements[2]
+        end
+
+        def version_string
+          elements[3]
+        end
+      end
+
+      module VersionNumber1
+        def value
+          version_string.text_value
+        end
+      end
+
+      def _nt_version_number
+        start_index = index
+        if node_cache[:version_number].has_key?(index)
+          cached = node_cache[:version_number][index]
+          if cached
+            node_cache[:version_number][index] = cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
+            @index = cached.interval.end
+          end
+          return cached
+        end
+
+        i0, s0 = index, []
+        r1 = _nt_S
+        s0 << r1
+        if r1
+          r2 = _nt_version
+          s0 << r2
+          if r2
+            r3 = _nt_S
+            s0 << r3
+            if r3
+              r4 = _nt_version_string
+              s0 << r4
+            end
+          end
+        end
+        if s0.last
+          r0 = instantiate_node(SyntaxNode,input, i0...index, s0)
+          r0.extend(VersionNumber0)
+          r0.extend(VersionNumber1)
+        else
+          @index = i0
+          r0 = nil
+        end
+
+        node_cache[:version_number][start_index] = r0
+
+        r0
+      end
+
+      module VersionPattern0
+        def S1
+          elements[0]
+        end
+
+        def version
+          elements[1]
+        end
+
+        def S2
+          elements[2]
+        end
+
+        def version_string
+          elements[3]
+        end
+      end
+
+      module VersionPattern1
+        def value
+          version_string.text_value
+        end
+      end
+
+      def _nt_version_pattern
+        start_index = index
+        if node_cache[:version_pattern].has_key?(index)
+          cached = node_cache[:version_pattern][index]
+          if cached
+            node_cache[:version_pattern][index] = cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
+            @index = cached.interval.end
+          end
+          return cached
+        end
+
+        i0, s0 = index, []
+        r1 = _nt_S
+        s0 << r1
+        if r1
+          r2 = _nt_version
+          s0 << r2
+          if r2
+            r3 = _nt_S
+            s0 << r3
+            if r3
+              r4 = _nt_version_string
+              s0 << r4
+            end
+          end
+        end
+        if s0.last
+          r0 = instantiate_node(SyntaxNode,input, i0...index, s0)
+          r0.extend(VersionPattern0)
+          r0.extend(VersionPattern1)
+        else
+          @index = i0
+          r0 = nil
+        end
+
+        node_cache[:version_pattern][start_index] = r0
+
+        r0
+      end
+
+      module VersionString0
+      end
+
+      module VersionString1
+      end
+
+      module VersionString2
+      end
+
+      def _nt_version_string
+        start_index = index
+        if node_cache[:version_string].has_key?(index)
+          cached = node_cache[:version_string][index]
+          if cached
+            node_cache[:version_string][index] = cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
+            @index = cached.interval.end
+          end
+          return cached
+        end
+
+        i0, s0 = index, []
+        s1, i1 = [], index
+        loop do
+          if has_terminal?(@regexps[gr = '\A[0-9]'] ||= Regexp.new(gr), :regexp, index)
+            r2 = true
+            @index += 1
+          else
+            terminal_parse_failure('[0-9]')
+            r2 = nil
+          end
+          if r2
+            s1 << r2
+          else
+            break
+          end
+        end
+        if s1.empty?
+          @index = i1
+          r1 = nil
+        else
+          r1 = instantiate_node(SyntaxNode,input, i1...index, s1)
+        end
+        s0 << r1
+        if r1
+          if (match_len = has_terminal?('.', false, index))
+            r3 = true
+            @index += match_len
+          else
+            terminal_parse_failure('\'.\'')
+            r3 = nil
+          end
+          s0 << r3
+          if r3
+            s4, i4 = [], index
+            loop do
+              if has_terminal?(@regexps[gr = '\A[0-9]'] ||= Regexp.new(gr), :regexp, index)
+                r5 = true
+                @index += 1
+              else
+                terminal_parse_failure('[0-9]')
+                r5 = nil
+              end
+              if r5
+                s4 << r5
+              else
+                break
+              end
+            end
+            if s4.empty?
+              @index = i4
+              r4 = nil
+            else
+              r4 = instantiate_node(SyntaxNode,input, i4...index, s4)
+            end
+            s0 << r4
+            if r4
+              if (match_len = has_terminal?('.', false, index))
+                r6 = true
+                @index += match_len
+              else
+                terminal_parse_failure('\'.\'')
+                r6 = nil
+              end
+              s0 << r6
+              if r6
+                s7, i7 = [], index
+                loop do
+                  if has_terminal?(@regexps[gr = '\A[0-9]'] ||= Regexp.new(gr), :regexp, index)
+                    r8 = true
+                    @index += 1
+                  else
+                    terminal_parse_failure('[0-9]')
+                    r8 = nil
+                  end
+                  if r8
+                    s7 << r8
+                  else
+                    break
+                  end
+                end
+                if s7.empty?
+                  @index = i7
+                  r7 = nil
+                else
+                  r7 = instantiate_node(SyntaxNode,input, i7...index, s7)
+                end
+                s0 << r7
+                if r7
+                  i10, s10 = index, []
+                  if (match_len = has_terminal?('-', false, index))
+                    r11 = true
+                    @index += match_len
+                  else
+                    terminal_parse_failure('\'-\'')
+                    r11 = nil
+                  end
+                  s10 << r11
+                  if r11
+                    s12, i12 = [], index
+                    loop do
+                      if has_terminal?(@regexps[gr = '\A[0-9A-Za-z-]'] ||= Regexp.new(gr), :regexp, index)
+                        r13 = true
+                        @index += 1
+                      else
+                        terminal_parse_failure('[0-9A-Za-z-]')
+                        r13 = nil
+                      end
+                      if r13
+                        s12 << r13
+                      else
+                        break
+                      end
+                    end
+                    if s12.empty?
+                      @index = i12
+                      r12 = nil
+                    else
+                      r12 = instantiate_node(SyntaxNode,input, i12...index, s12)
+                    end
+                    s10 << r12
+                    if r12
+                      s14, i14 = [], index
+                      loop do
+                        i15, s15 = index, []
+                        if (match_len = has_terminal?('.', false, index))
+                          r16 = true
+                          @index += match_len
+                        else
+                          terminal_parse_failure('\'.\'')
+                          r16 = nil
+                        end
+                        s15 << r16
+                        if r16
+                          s17, i17 = [], index
+                          loop do
+                            if has_terminal?(@regexps[gr = '\A[0-9A-Za-z-]'] ||= Regexp.new(gr), :regexp, index)
+                              r18 = true
+                              @index += 1
+                            else
+                              terminal_parse_failure('[0-9A-Za-z-]')
+                              r18 = nil
+                            end
+                            if r18
+                              s17 << r18
+                            else
+                              break
+                            end
+                          end
+                          if s17.empty?
+                            @index = i17
+                            r17 = nil
+                          else
+                            r17 = instantiate_node(SyntaxNode,input, i17...index, s17)
+                          end
+                          s15 << r17
+                        end
+                        if s15.last
+                          r15 = instantiate_node(SyntaxNode,input, i15...index, s15)
+                          r15.extend(VersionString0)
+                        else
+                          @index = i15
+                          r15 = nil
+                        end
+                        if r15
+                          s14 << r15
+                        else
+                          break
+                        end
+                      end
+                      r14 = instantiate_node(SyntaxNode,input, i14...index, s14)
+                      s10 << r14
+                    end
+                  end
+                  if s10.last
+                    r10 = instantiate_node(SyntaxNode,input, i10...index, s10)
+                    r10.extend(VersionString1)
+                  else
+                    @index = i10
+                    r10 = nil
+                  end
+                  if r10
+                    r9 = r10
+                  else
+                    r9 = instantiate_node(SyntaxNode,input, index...index)
+                  end
+                  s0 << r9
+                end
+              end
+            end
+          end
+        end
+        if s0.last
+          r0 = instantiate_node(SyntaxNode,input, i0...index, s0)
+          r0.extend(VersionString2)
+        else
+          @index = i0
+          r0 = nil
+        end
+
+        node_cache[:version_string][start_index] = r0
+
+        r0
+      end
+
       module ImportRole0
         def S
           elements[0]
         end
 
-        def vocabulary_name
+        def id
           elements[1]
         end
       end
 
       module ImportRole1
-        def value; vocabulary_name.value; end
+        def value
+          id.text_value
+        end
       end
 
       def _nt_import_role
@@ -627,7 +1020,7 @@ module ActiveFacts
         r1 = _nt_S
         s0 << r1
         if r1
-          r2 = _nt_vocabulary_name
+          r2 = _nt_id
           s0 << r2
         end
         if s0.last

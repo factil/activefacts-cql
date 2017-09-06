@@ -35,7 +35,7 @@ module ActiveFacts
         def <=>(other)
           key <=> other.key
         end
-        
+
         def variable= v
           @variable = v   # A place for a breakpoint :)
         end
@@ -111,16 +111,17 @@ module ActiveFacts
       end
 
       class Vocabulary < Definition
-        def initialize name, is_transform
+        def initialize name, is_transform, version_number
           @name = name
           @is_transform = is_transform
+          @version_number = version_number
         end
 
         def compile
           if @constellation.Vocabulary.size > 0
             @constellation.Topic @name
           else
-            @constellation.Vocabulary @name
+            @constellation.Vocabulary(:new, name: @name, is_transform: @is_transform, version_number: @version_number)
           end
         end
 
@@ -130,10 +131,11 @@ module ActiveFacts
       end
 
       class Import < Definition
-        def initialize parser, name, import_role, alias_hash
+        def initialize parser, name, import_role, version_pattern, alias_hash
           @parser = parser
           @name = name
           @import_role = import_role
+          @version_pattern = version_pattern
           @alias_hash = alias_hash
         end
 

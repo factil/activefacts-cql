@@ -307,7 +307,8 @@ module ActiveFacts
       rule transform 'transform' !alphanumeric end
       rule transient 'transitoires' !alphanumeric end
       rule transitive 'transitif' !alphanumeric end
-      rule true 'vrai' !alphanumeric end 
+      rule true 'vrai' !alphanumeric end
+      rule version 'version' !alphanumeric end 
       rule vocabulary 'vocabulaire' !alphanumeric end 
       rule where 'où' !alphanumeric end 
       rule who 'qui' !alphanumeric end 

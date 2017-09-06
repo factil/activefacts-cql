@@ -7787,6 +7787,54 @@ module ActiveFacts
         r0
       end
 
+      module Version0
+      end
+
+      def _nt_version
+        start_index = index
+        if node_cache[:version].has_key?(index)
+          cached = node_cache[:version][index]
+          if cached
+            node_cache[:version][index] = cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
+            @index = cached.interval.end
+          end
+          return cached
+        end
+
+        i0, s0 = index, []
+        if (match_len = has_terminal?('version', false, index))
+          r1 = instantiate_node(SyntaxNode,input, index...(index + match_len))
+          @index += match_len
+        else
+          terminal_parse_failure('\'version\'')
+          r1 = nil
+        end
+        s0 << r1
+        if r1
+          i2 = index
+          r3 = _nt_alphanumeric
+          if r3
+            @index = i2
+            r2 = nil
+          else
+            @index = i2
+            r2 = instantiate_node(SyntaxNode,input, index...index)
+          end
+          s0 << r2
+        end
+        if s0.last
+          r0 = instantiate_node(SyntaxNode,input, i0...index, s0)
+          r0.extend(Version0)
+        else
+          @index = i0
+          r0 = nil
+        end
+
+        node_cache[:version][start_index] = r0
+
+        r0
+      end
+
       module Vocabulary0
       end
 
