@@ -1,0 +1,213 @@
+#
+#       ActiveFacts CQL Parser.
+#       Parse rules relating to Transformation Rules.
+#
+# Copyright (c) 2017 Factil Pty Ltd. Read the LICENSE file.
+#
+module ActiveFacts
+  module CQL
+    grammar TransformRules
+
+      rule transformation
+        ctr:compound_transform_rule s ';'
+        {
+          def ast
+            Compiler::Transformation.new(ctr.ast)
+          end
+        }
+      end
+
+      rule compound_transform_rule
+        s t:term s '<==' s tq:transform_query s '{' tr:transform_rules s '}'
+        {
+          def ast
+            Compiler::CompoundTransformRule.new(t.ast, tq.ast, tr.ast)
+          end
+        }
+      end
+
+      rule value_transform_rule
+        s t:term s '<--' s te:transform_expr
+        {
+          def ast
+            Compiler::ValueTransformRule.new(t.ast, te.ast)
+          end
+        }
+      end
+
+      rule transform_query
+        cl:clauses_list         { def ast; cl.ast; end; }
+        / t:term                { def ast; t.ast; end; }
+      end
+
+      rule transform_rules
+        s r0:transform_rule tail:(s ',' s r1:transform_rule)*
+        {
+          def ast
+            [r0.ast, *tail.elements.map{|e| e.r1.ast }]
+          end
+        }
+      end
+
+      rule transform_rule
+        vtr:value_transform_rule            { def ast; vtr.ast; end; }
+        / ctr:compound_transform_rule       { def ast; ctr.ast; end; }
+      end
+
+      rule transform_expr
+        s c:logical_texpr s '?' s t0:logical_texpr s ':' s t1:logical_texpr
+          {
+            def ast
+              Compiler::Ternary.new(c.ast, t0.ast, t1.ast)
+            end
+          }
+        / s o:aggregate_op S agg_of s t:logical_texpr
+          {
+            def ast
+              Compiler::Aggregate.new(o.text_value, t.ast)
+            end
+          }
+        / s t0:logical_texpr    { def ast; t0.ast; end; }
+      end
+
+      rule aggregate_op
+        'sum' / 'average' / 'max' / 'min' / 'count'
+      end
+
+      rule logical_texpr
+        s t0:logical_and_texpr tail:(s op:or s t1:logical_and_texpr)*
+        {
+          def ast
+            if tail.elements.empty?
+              t0.ast
+            else
+              Compiler::LogicalOr.new(t0.ast, *tail.elements.map{|e| e.t1.ast})
+            end
+          end
+        }
+      end
+
+      rule logical_and_texpr
+        s t0:equality_texpr tail:(s op:and s t1:equality_texpr)*
+        {
+          def ast
+            if tail.elements.empty?
+              t0.ast
+            else
+              Compiler::LogicalAnd.new(t0.ast, *tail.elements.map{|e| e.t1.ast})
+            end
+          end
+        }
+      end
+
+      rule equality_texpr
+        s t0:relational_texpr operation:(s op:equality_op s t1:relational_texpr)?
+        {
+          def ast
+            if operation.empty?
+              t0.ast
+            else
+              Compiler::Comparison.new(op.text_value, t0.ast, operation.t1.ast)
+            end
+          end
+        }
+      end
+
+      rule equality_op
+        '=' / '!='
+      end
+
+      rule relational_texpr
+        s t0:additive_texpr operation:(s op:relational_op s t1:additive_texpr)?
+        {
+          def ast
+            if operation.empty?
+              t0.ast
+            else
+              Compiler::Comparison.new(op.text_value, t0.ast, operation.t1.ast)
+            end
+          end
+        }
+      end
+
+      rule relational_op
+        '<' / '>' / '>=' / '<='
+      end
+
+      rule additive_texpr
+        s t0:multiplicative_texpr tail:(s op:additive_op s t1:multiplicative_texpr)*
+        {
+          def ast
+            if tail.elements.empty?
+              t0.ast
+            else
+              Compiler::Sum.new(
+                t0.ast,
+                *tail.elements.map{|e| e.op.text_value == '-' ? Compiler::Negate.new(e.t1.ast) : e.t1.ast}
+              )
+            end
+          end
+        }
+      end
+
+      rule additive_op
+        '+' / '-'
+      end
+
+      rule multiplicative_texpr
+        s t0:unary_texpr tail:(s op:multiplicative_op s t1:unary_texpr)*
+        {
+          def ast
+            if tail.elements.empty?
+              t0.ast
+            else
+              Compiler::Product.new(
+                t0.ast,
+                *tail.elements.map{|e| e.op.text_value == '/' ? Compiler::Reciprocal.new(e.t1.ast) : e.t1.ast}
+              )
+            end
+          end
+        }
+      end
+
+      rule multiplicative_op
+        '*' / '/'
+      end
+
+      rule unary_texpr
+        s u:unary_op? s t:primary_texpr
+        {
+          def ast
+            if u.empty?
+              t.ast
+            else
+              u.text_value == '-' ? Compiler::Negate.new(t.ast) : Compiler::Negation.new(t.ast)
+            end
+          end
+        }
+      end
+
+      rule unary_op
+        '-' / '!'
+      end
+
+      rule primary_texpr
+        t:term
+          {
+            def ast
+              t.ast
+            end
+          }
+        / l:literal
+          {
+            def ast
+              Compiler::Literal.new(l.value, nil)
+            end
+          }
+        # / '(' source_expr ')'
+        # / id '(' source_expr (s ',' s source_expr) * ')'
+      end
+
+    end
+  end
+end

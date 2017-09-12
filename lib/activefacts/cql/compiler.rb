@@ -14,6 +14,7 @@ require 'activefacts/cql/compiler/fact'
 require 'activefacts/cql/compiler/constraint'
 require 'activefacts/cql/compiler/query'
 require 'activefacts/cql/compiler/informal'
+require 'activefacts/cql/compiler/transformation'
 
 module ActiveFacts
   module CQL

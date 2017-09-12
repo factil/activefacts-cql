@@ -14,6 +14,7 @@ require 'activefacts/cql/parser/Terms'
 require 'activefacts/cql/parser/ObjectTypes'
 require 'activefacts/cql/parser/ValueTypes'
 require 'activefacts/cql/parser/FactTypes'
+require 'activefacts/cql/parser/TransformRules'
 require 'activefacts/cql/parser/Context'
 
 module ActiveFacts
@@ -36,6 +37,8 @@ module ActiveFacts
       include ValueTypes
 
       include FactTypes
+
+      include TransformRules
 
       include Context
 
@@ -216,37 +219,43 @@ module ActiveFacts
                         r8 = SyntaxNode.new(input, (index-1)...index) if r8 == true
                         r0 = r8
                       else
-                        i9, s9 = index, []
-                        r10 = _nt_s
-                        s9 << r10
-                        if r10
-                          if (match_len = has_terminal?(';', false, index))
-                            r11 = true
-                            @index += match_len
-                          else
-                            terminal_parse_failure('\';\'')
-                            r11 = nil
-                          end
-                          s9 << r11
-                          if r11
-                            r12 = _nt_s
-                            s9 << r12
-                          end
-                        end
-                        if s9.last
-                          r9 = instantiate_node(SyntaxNode,input, i9...index, s9)
-                          r9.extend(DefinitionBody0)
-                          r9.extend(DefinitionBody1)
-                        else
-                          @index = i9
-                          r9 = nil
-                        end
+                        r9 = _nt_transformation
                         if r9
                           r9 = SyntaxNode.new(input, (index-1)...index) if r9 == true
                           r0 = r9
                         else
-                          @index = i0
-                          r0 = nil
+                          i10, s10 = index, []
+                          r11 = _nt_s
+                          s10 << r11
+                          if r11
+                            if (match_len = has_terminal?(';', false, index))
+                              r12 = true
+                              @index += match_len
+                            else
+                              terminal_parse_failure('\';\'')
+                              r12 = nil
+                            end
+                            s10 << r12
+                            if r12
+                              r13 = _nt_s
+                              s10 << r13
+                            end
+                          end
+                          if s10.last
+                            r10 = instantiate_node(SyntaxNode,input, i10...index, s10)
+                            r10.extend(DefinitionBody0)
+                            r10.extend(DefinitionBody1)
+                          else
+                            @index = i10
+                            r10 = nil
+                          end
+                          if r10
+                            r10 = SyntaxNode.new(input, (index-1)...index) if r10 == true
+                            r0 = r10
+                          else
+                            @index = i0
+                            r0 = nil
+                          end
                         end
                       end
                     end

@@ -11,6 +11,7 @@ require 'activefacts/cql/parser/Terms'
 require 'activefacts/cql/parser/ObjectTypes'
 require 'activefacts/cql/parser/ValueTypes'
 require 'activefacts/cql/parser/FactTypes'
+require 'activefacts/cql/parser/TransformRules'
 require 'activefacts/cql/parser/Context'
 
 module ActiveFacts
@@ -22,6 +23,7 @@ module ActiveFacts
       include ObjectTypes
       include ValueTypes
       include FactTypes
+      include TransformRules
       include Context
 
       rule cql_file
@@ -58,6 +60,7 @@ module ActiveFacts
         / object_type
         / informal_description
         / query
+        / transformation
         / s ';' s { def ast; nil; end }
       end
 

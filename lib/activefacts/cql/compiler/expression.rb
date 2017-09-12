@@ -195,14 +195,6 @@ module ActiveFacts
           end
         end
 
-=begin
-        def project lr
-          @projection = lr
-          projected_rr = lr == :left ? @e2 : @e1
-          true
-        end
-=end
-
         def inspect; to_s; end
 
         def to_s
@@ -254,14 +246,6 @@ module ActiveFacts
           "SUM_OF<#{ @terms.map{|f| f.player.name}*', ' }>"
         end
 
-=begin
-        def result_value_type(context, name)
-          # REVISIT: If there are units involved, check compatibility
-          vt = super
-          vt
-        end
-=end
-
         def inspect; to_s; end
 
         def to_s
@@ -298,14 +282,6 @@ module ActiveFacts
           "PRODUCT_OF<#{ @factors.map{|f| f.player.name}*' ' }>"
         end
 
-=begin
-        def result_value_type(context, name)
-          vt = super
-          # REVISIT: If there are units involved, create the result units
-          vt
-        end
-=end
-
         def inspect; to_s; end
 
         def to_s
@@ -337,12 +313,6 @@ module ActiveFacts
           end
         end
 
-=begin
-        def result_type_name(context)
-          raise hell
-        end
-=end
-
         def inspect; to_s; end
 
         def to_s
@@ -368,16 +338,157 @@ module ActiveFacts
           end
         end
 
-=begin
-        def result_type_name(context)
-          raise hell
-        end
-=end
-
         def inspect; to_s; end
 
         def to_s
           "NEGATIVE(#{term.to_s})"
+        end
+      end
+
+      class Negation
+        attr_accessor :term
+        def initialize term
+          @term = term
+        end
+
+        def operator
+          '!'
+        end
+
+        def identify_player context
+          @player || begin
+            # The player in @term have already been identified
+            v = context.vocabulary
+            @player = @term.player
+          end
+        end
+
+        def inspect; to_s; end
+
+        def to_s
+          "NEGATION(#{term.to_s})"
+        end
+      end
+
+      class LogicalAnd < Operation
+        attr_accessor :factors
+        def initialize *factors
+          @factors = factors
+        end
+
+        def refs
+          @factors
+        end
+
+        def operator
+          'and'
+        end
+
+        def identify_player context
+          @player || begin
+            v = context.vocabulary
+            @player = @factors[0].player
+          end
+        end
+
+        def result_type_name(context)
+          "CONJUNCTION_OF<#{ @factors.map{|f| f.player.name}*' ' }>"
+        end
+
+        def inspect; to_s; end
+
+        def to_s
+          'CONJUNCTION(' + @factors.map{|factor| "#{factor.to_s}" } * ' AND ' + ')'
+        end
+      end
+
+      class LogicalOr < Operation
+        attr_accessor :factors
+        def initialize *factors
+          @factors = factors
+        end
+
+        def refs
+          @factors
+        end
+
+        def operator
+          'or'
+        end
+
+        def identify_player context
+          @player || begin
+            v = context.vocabulary
+            @player = @factors[0].player
+          end
+        end
+
+        def result_type_name(context)
+          "DISJUNCTION_OF<#{ @factors.map{|f| f.player.name}*' ' }>"
+        end
+
+        def inspect; to_s; end
+
+        def to_s
+          'DISJUNCTION(' + @factors.map{|factor| "#{factor.to_s}" } * ' OR ' + ')'
+        end
+      end
+
+      class Ternary < Operation
+        attr_accessor :condition, :true_value, :false_value
+        def initialize condition, true_value, false_value
+          @condition = condition
+          @true_value = true_value
+          @false_value = false_value
+        end
+
+        def refs
+          [@condition, @true_value, @false_value]
+        end
+
+        def operator
+          '?'
+        end
+
+        def identify_player context
+          @player || begin
+            v = context.vocabulary
+            @player = @true_value.player
+          end
+        end
+
+        def inspect; to_s; end
+
+        def to_s
+          "TERNARY(#{@condition.to_s}, #{@true_value.to_s}, #{@false_value.to_s})"
+        end
+      end
+
+      class Aggregate < Operation
+        attr_accessor :operation, :aggregand
+        def initialize operation, aggregand
+          @operation = operation
+          @aggregand = aggregand
+        end
+
+        def refs
+          [@operation, @aggregand]
+        end
+
+        def operator
+          'aggregate'
+        end
+
+        def identify_player context
+          @player || begin
+            @player = @aggregand.player
+          end
+        end
+
+        def inspect; to_s; end
+
+        def to_s
+          "AGGREGATE(#{@operation.to_s}, #{@aggregand.to_s})"
         end
       end
 
