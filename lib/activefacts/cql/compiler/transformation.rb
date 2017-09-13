@@ -16,10 +16,9 @@ module ActiveFacts
         end
         
         def compile
-          transform_rule = @compound_transform_rule.compile(@constellation, @vocabulary)     
-          transformation = @constellation.Transformation(:new, :compound_transform_rule => transform_rule)
-          # transformation.compound_transform_rule = transform_rule
-          return transformation
+          context = CompilationContext.new(@vocabulary)
+          transform_rule = @compound_transform_rule.compile(context)     
+          @constellation.Transformation(:new, :compound_transform_rule => transform_rule)
         end
       end
       
@@ -32,9 +31,10 @@ module ActiveFacts
           @transform_rules = transform_rules
         end
         
-        def compile(constellation, vocabulary)
+        def compile(context)
           compound_rule = nil
-          vocabulary_identifier = vocabulary.identifying_role_values
+          vocabulary_identifier = context.vocabulary.identifying_role_values
+          constellation = context.vocabulary.constellation
           if (target_ot = constellation.ObjectType[[vocabulary_identifier, @targ_term.term]]).nil?
             raise "Target object '#{@targ_term.term}' of transformation must be a valid object type"
           end
@@ -49,7 +49,7 @@ module ActiveFacts
           else
             query = Query.new(nil, @transform_query.flatten)
             query.constellation = constellation
-            query.vocabulary = vocabulary
+            query.vocabulary = context.vocabulary
             if (source_query = query.compile).nil?
               raise "Invalid source query for '#{@targ_term.term}' transformation"
             end
@@ -59,17 +59,15 @@ module ActiveFacts
           end
           
           @transform_rules.each do |tr|
-            trule = tr.compile(constellation, vocabulary)
-            constellation.CompoundTransformPart(
-                    :new, :compound_transform_rule => compound_rule, :transform_rule => trule
-                  )
+            trule = tr.compile(context)
+            constellation.TransformPart(compound_rule, trule)
           end
           
-          return compound_rule
+          compound_rule
         end
       end
 
-      class ValueTransformRule
+      class SimpleTransformRule
         attr_accessor :targ_term, :transform_expr
         
         def initialize targ_term, transform_expr
@@ -77,16 +75,17 @@ module ActiveFacts
           @transform_expr = transform_expr
         end
         
-        def compile(constellation, vocabulary)
-          vocabulary_identifier = vocabulary.identifying_role_values
+        def compile(context)
+          vocabulary_identifier = context.vocabulary.identifying_role_values
+          constellation = context.vocabulary.constellation
           if (target_ot = constellation.ObjectType[[vocabulary_identifier, @targ_term.term]]).nil?
             raise "Target object '#{@targ_term.term}' of transformation must be a valid object type"
           end
           
-          constellation.ValueTransformRule(:new, :target_object_type => target_ot, expression: nil)
+          expr = transform_expr.compile(context)
+          @simple_rule = constellation.SimpleTransformRule(:new, :target_object_type => target_ot, :expression => expr)
         end
       end
-      
     end
   end
 end

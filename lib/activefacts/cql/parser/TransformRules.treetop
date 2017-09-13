@@ -26,11 +26,11 @@ module ActiveFacts
         }
       end
 
-      rule value_transform_rule
+      rule simple_transform_rule
         s t:term s '<--' s te:transform_expr
         {
           def ast
-            Compiler::ValueTransformRule.new(t.ast, te.ast)
+            Compiler::SimpleTransformRule.new(t.ast, te.ast)
           end
         }
       end
@@ -50,7 +50,7 @@ module ActiveFacts
       end
 
       rule transform_rule
-        vtr:value_transform_rule            { def ast; vtr.ast; end; }
+        str:simple_transform_rule            { def ast; str.ast; end; }
         / ctr:compound_transform_rule       { def ast; ctr.ast; end; }
       end
 

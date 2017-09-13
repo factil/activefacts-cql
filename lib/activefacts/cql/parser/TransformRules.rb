@@ -28,8 +28,8 @@ module ActiveFacts
       end
 
       module Transformation1
-        def ast 
-          Compiler::Transformation.new(ctr.ast) 
+        def ast
+          Compiler::Transformation.new(ctr.ast)
         end
       end
 
@@ -112,9 +112,6 @@ module ActiveFacts
 
       module CompoundTransformRule1
         def ast
-          
-          # byebug
-          
           Compiler::CompoundTransformRule.new(t.ast, tq.ast, tr.ast)
         end
       end
@@ -205,7 +202,7 @@ module ActiveFacts
         r0
       end
 
-      module ValueTransformRule0
+      module SimpleTransformRule0
         def s1
           elements[0]
         end
@@ -227,18 +224,18 @@ module ActiveFacts
         end
       end
 
-      module ValueTransformRule1
+      module SimpleTransformRule1
         def ast
-          Compiler::ValueTransformRule.new(t.ast, te.ast)
+          Compiler::SimpleTransformRule.new(t.ast, te.ast)
         end
       end
 
-      def _nt_value_transform_rule
+      def _nt_simple_transform_rule
         start_index = index
-        if node_cache[:value_transform_rule].has_key?(index)
-          cached = node_cache[:value_transform_rule][index]
+        if node_cache[:simple_transform_rule].has_key?(index)
+          cached = node_cache[:simple_transform_rule][index]
           if cached
-            node_cache[:value_transform_rule][index] = cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
+            node_cache[:simple_transform_rule][index] = cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
             @index = cached.interval.end
           end
           return cached
@@ -275,14 +272,14 @@ module ActiveFacts
         end
         if s0.last
           r0 = instantiate_node(SyntaxNode,input, i0...index, s0)
-          r0.extend(ValueTransformRule0)
-          r0.extend(ValueTransformRule1)
+          r0.extend(SimpleTransformRule0)
+          r0.extend(SimpleTransformRule1)
         else
           @index = i0
           r0 = nil
         end
 
-        node_cache[:value_transform_rule][start_index] = r0
+        node_cache[:simple_transform_rule][start_index] = r0
 
         r0
       end
@@ -466,13 +463,13 @@ module ActiveFacts
       end
 
       module TransformRule0
-        def vtr
+        def str
           elements[0]
         end
       end
 
       module TransformRule1
-        def ast; vtr.ast; end;
+        def ast; str.ast; end;
       end
 
       module TransformRule2
@@ -498,7 +495,7 @@ module ActiveFacts
 
         i0 = index
         i1, s1 = index, []
-        r2 = _nt_value_transform_rule
+        r2 = _nt_simple_transform_rule
         s1 << r2
         if s1.last
           r1 = instantiate_node(SyntaxNode,input, i1...index, s1)

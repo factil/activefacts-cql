@@ -214,6 +214,15 @@ module ActiveFacts
             @qualifiers.empty? ? '' : ', ['+@qualifiers*', '+']'
           })"
         end
+
+        def compile(context)
+          op1 = e1.compile(context)
+          op2 = e2.compile(context)
+          context.vocabulary.constellation.Expression(
+              :new, :expression_type => 'Binary', :operator_string => operator, :object_type => nil,
+              :first_op_expression => op1, :second_op_expression => op2, :third_op_expression => nil
+          )
+        end
       end
 
       class Sum < Operation
@@ -251,6 +260,24 @@ module ActiveFacts
         def to_s
           'SUM(' + @terms.map{|term| "#{term.to_s}" } * ' PLUS ' + ')'
         end
+
+        def compile(context)
+          compile_terms(context, @terms)
+        end
+
+        def compile_terms(context, terms)
+          if terms.size == 1
+            terms[0].compile(context)
+          else
+            lhs = terms.shift
+            lhs_expr = lhs.compile(context)
+            rhs_expr = compile_terms(context, terms)
+            context.vocabulary.constellation.Expression(
+                :new, :expression_type => 'Binary', :operator_string => operator, :object_type => nil,
+                :first_op_expression => lhs_expr, :second_op_expression => rhs_expr, :third_op_expression => nil
+            )
+          end
+        end
       end
 
       class Product < Operation
@@ -287,6 +314,24 @@ module ActiveFacts
         def to_s
           'PRODUCT(' + @factors.map{|factor| "#{factor.to_s}" } * ' TIMES ' + ')'
         end
+
+        def compile(context)
+          compile_factors(context, @factors)
+        end
+
+        def compile_factors(context, factors)
+          if factors.size == 1
+            factors[0].compile(context)
+          else
+            lhs = factors.shift
+            lhs_expr = lhs.compile(context)
+            rhs_expr = compile_factors(context, factors)
+            context.vocabulary.constellation.Expression(
+                :new, :expression_type => 'Binary', :operator_string => operator, :object_type => nil,
+                :first_op_expression => lhs_expr, :second_op_expression => rhs_expr, :third_op_expression => nil
+            )
+          end
+        end
       end
 
       class Reciprocal < Operation
@@ -318,6 +363,14 @@ module ActiveFacts
         def to_s
           "RECIPROCAL(#{factor.to_s})"
         end
+
+        def compile(context)
+          op1 = @divisor.compile(context)
+          context.vocabulary.constellation.Expression(
+              :new, :expression_type => 'Unary', :operator_string => operator, :object_type => nil,
+              :first_op_expression => op1, :second_op_expression => nil, :third_op_expression => nil
+          )
+        end
       end
 
       class Negate
@@ -343,6 +396,14 @@ module ActiveFacts
         def to_s
           "NEGATIVE(#{term.to_s})"
         end
+
+        def compile(context)
+          op1 = @term.compile(context)
+          context.vocabulary.constellation.Expression(
+              :new, :expression_type => 'Unary', :operator_string => operator, :object_type => nil,
+              :first_op_expression => op1, :second_op_expression => nil, :third_op_expression => nil
+          )
+        end
       end
 
       class Negation
@@ -367,6 +428,14 @@ module ActiveFacts
 
         def to_s
           "NEGATION(#{term.to_s})"
+        end
+
+        def compile(context)
+          op1 = @term.compile(context)
+          context.vocabulary.constellation.Expression(
+              :new, :expression_type => 'Unary', :operator_string => operator, :object_type => nil,
+              :first_op_expression => op1, :second_op_expression => nil, :third_op_expression => nil
+          )
         end
       end
 
@@ -400,6 +469,24 @@ module ActiveFacts
         def to_s
           'CONJUNCTION(' + @factors.map{|factor| "#{factor.to_s}" } * ' AND ' + ')'
         end
+
+        def compile(context)
+          compile_factors(context, @factors)
+        end
+
+        def compile_factors(context, factors)
+          if factors.size == 1
+            factors[0].compile(context)
+          else
+            lhs = factors.shift
+            lhs_expr = lhs.compile(context)
+            rhs_expr = compile_factors(context, factors)
+            context.vocabulary.constellation.Expression(
+                :new, :expression_type => 'Binary', :operator_string => operator, :object_type => nil,
+                :first_op_expression => lhs_expr, :second_op_expression => rhs_expr, :third_op_expression => nil
+            )
+          end
+        end
       end
 
       class LogicalOr < Operation
@@ -432,6 +519,24 @@ module ActiveFacts
         def to_s
           'DISJUNCTION(' + @factors.map{|factor| "#{factor.to_s}" } * ' OR ' + ')'
         end
+
+        def compile(context)
+          compile_factors(context, @factors)
+        end
+
+        def compile_factors(context, factors)
+          if factors.size == 1
+            factors[0].compile(context)
+          else
+            lhs = factors.shift
+            lhs_expr = lhs.compile(context)
+            rhs_expr = compile_factors(context, factors)
+            context.vocabulary.constellation.Expression(
+                :new, :expression_type => 'Binary', :operator_string => operator, :object_type => nil,
+                :first_op_expression => lhs_expr, :second_op_expression => rhs_expr, :third_op_expression => nil
+            )
+          end
+        end
       end
 
       class Ternary < Operation
@@ -462,6 +567,16 @@ module ActiveFacts
         def to_s
           "TERNARY(#{@condition.to_s}, #{@true_value.to_s}, #{@false_value.to_s})"
         end
+
+        def compile(context)
+          op1 = @condition.compile(context)
+          op2 = @true_value.compile(context)
+          op3 = @false_value.compile(context)
+          context.vocabulary.constellation.Expression(
+              :new, :expression_type => 'Ternary', :operator_string => operator, :object_type => nil,
+              :first_op_expression => op1, :second_op_expression => op2, :third_op_expression => op3
+          )
+        end
       end
 
       class Aggregate < Operation
@@ -476,7 +591,7 @@ module ActiveFacts
         end
 
         def operator
-          'aggregate'
+          operation
         end
 
         def identify_player context
@@ -489,6 +604,14 @@ module ActiveFacts
 
         def to_s
           "AGGREGATE(#{@operation.to_s}, #{@aggregand.to_s})"
+        end
+
+        def compile(context)
+          op1 = @aggregand.compile(context)
+          context.vocabulary.constellation.Expression(
+              :new, :expression_type => 'Unary', :operator_string => operator, :object_type => nil,
+              :first_op_expression => op1, :second_op_expression => nil, :third_op_expression => nil
+          )
         end
       end
 
@@ -549,6 +672,12 @@ module ActiveFacts
         end
       end
 
+      def compile(context)
+        op1 = @aggregand.compile(context)
+        context.vocabulary.constellation.Expression(
+            :new, :expression_type => 'Literal', :literal_string => @literal.to_s
+        )
+      end
     end
   end
 end

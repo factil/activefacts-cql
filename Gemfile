@@ -2,6 +2,8 @@ source 'https://rubygems.org'
 
 gemspec
 
+gem "byebug", "~>1.8.2"
+
 this_file = File.absolute_path(__FILE__)
 if this_file =~ %r{\A#{ENV['HOME']}}i
   dir = File.dirname(File.dirname(this_file))

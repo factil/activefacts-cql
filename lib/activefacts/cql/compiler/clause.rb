@@ -1131,6 +1131,14 @@ module ActiveFacts
         def result(context = nil)
           self
         end
+
+        def compile(context)
+          identify_player(context)
+          constellation = context.vocabulary.constellation
+          constellation.Expression(
+              :new, :expression_type => 'Object', :object_type => @player
+          )
+        end
       end
 
       # REVISIT: This needs to handle annotations for some/that/which, etc.

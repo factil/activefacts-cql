@@ -121,7 +121,7 @@ module ActiveFacts
           if @constellation.Vocabulary.size > 0
             @constellation.Topic @name
           else
-            @constellation.Vocabulary(:new, name: @name, is_transform: @is_transform, version_number: @version_number)
+            @constellation.Vocabulary(@name, is_transform: @is_transform, version_number: @version_number)
           end
         end
 
