@@ -60,7 +60,7 @@ module ActiveFacts
         / object_type
         / informal_description
         / query
-        / transformation
+        / transform_rule
         / s ';' s { def ast; nil; end }
       end
 

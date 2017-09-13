@@ -1,6 +1,6 @@
 #
 #       ActiveFacts CQL Parser.
-#       Compiler classes relating to Transformation Rules.
+#       Compiler classes relating to Transform Rules.
 #
 # Copyright (c) 2017 Factil Pty Ltd. Read the LICENSE file.
 #
@@ -8,27 +8,27 @@ module ActiveFacts
   module CQL
     class Compiler < ActiveFacts::CQL::Parser
 
-      class Transformation < Definition
-        attr_accessor :compound_transform_rule
+      class TransformRule < Definition
+        attr_accessor :compound_transform_matching
 
-        def initialize compound_transform_rule
-          @compound_transform_rule = compound_transform_rule
+        def initialize compound_transform_matching
+          @compound_transform_matching = compound_transform_matching
         end
         
         def compile
           context = CompilationContext.new(@vocabulary)
-          transform_rule = @compound_transform_rule.compile(context)     
-          @constellation.Transformation(:new, :compound_transform_rule => transform_rule)
+          transform_matching = @compound_transform_matching.compile(context)     
+          @constellation.TransformRule(:new, :compound_transform_matching => transform_matching)
         end
       end
       
-      class CompoundTransformRule
-        attr_accessor :targ_term, :transform_query, :transform_rules
+      class CompoundTransformMatching
+        attr_accessor :targ_term, :transform_query, :transform_matchings
         
-        def initialize targ_term, transform_query, transform_rules
+        def initialize targ_term, transform_query, transform_matchings
           @targ_term = targ_term
           @transform_query = transform_query
-          @transform_rules = transform_rules
+          @transform_matchings = transform_matchings
         end
         
         def compile(context)
@@ -43,7 +43,7 @@ module ActiveFacts
             if (source_ot = constellation.ObjectType[[vocabulary_identifier, @transform_query.term]]).nil?
               raise "Invalid source object '#{@transform_query.term}' for '#{@targ_term.term}' transformation"
             end
-            compound_rule = constellation.CompoundTransformRule(
+            compound_rule = constellation.CompoundTransformMatching(
                                   :new, :target_object_type => target_ot, :source_object_type => source_ot
                                 )
           else
@@ -53,21 +53,21 @@ module ActiveFacts
             if (source_query = query.compile).nil?
               raise "Invalid source query for '#{@targ_term.term}' transformation"
             end
-            compound_rule = constellation.CompoundTransformRule(
+            compound_rule = constellation.CompoundTransformMatching(
                                   :new, :target_object_type => target_ot, :source_query => source_query
                                 )
           end
           
-          @transform_rules.each do |tr|
+          @transform_matchings.each do |tr|
             trule = tr.compile(context)
-            constellation.TransformPart(compound_rule, trule)
+            trule.compound_transform_matching = compound_rule
           end
           
           compound_rule
         end
       end
 
-      class SimpleTransformRule
+      class SimpleTransformMatching
         attr_accessor :targ_term, :transform_expr
         
         def initialize targ_term, transform_expr
@@ -83,7 +83,7 @@ module ActiveFacts
           end
           
           expr = transform_expr.compile(context)
-          @simple_rule = constellation.SimpleTransformRule(:new, :target_object_type => target_ot, :expression => expr)
+          @simple_rule = constellation.SimpleTransformMatching(:new, :target_object_type => target_ot, :expression => expr)
         end
       end
     end

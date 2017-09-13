@@ -219,7 +219,7 @@ module ActiveFacts
                         r8 = SyntaxNode.new(input, (index-1)...index) if r8 == true
                         r0 = r8
                       else
-                        r9 = _nt_transformation
+                        r9 = _nt_transform_rule
                         if r9
                           r9 = SyntaxNode.new(input, (index-1)...index) if r9 == true
                           r0 = r9

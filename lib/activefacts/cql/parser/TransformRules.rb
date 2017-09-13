@@ -13,10 +13,10 @@ module ActiveFacts
       include Treetop::Runtime
 
       def root
-        @root ||= :transformation
+        @root ||= :transform_rule
       end
 
-      module Transformation0
+      module TransformRule0
         def ctr
           elements[0]
         end
@@ -27,25 +27,25 @@ module ActiveFacts
 
       end
 
-      module Transformation1
+      module TransformRule1
         def ast
-          Compiler::Transformation.new(ctr.ast)
+          Compiler::TransformRule.new(ctr.ast)
         end
       end
 
-      def _nt_transformation
+      def _nt_transform_rule
         start_index = index
-        if node_cache[:transformation].has_key?(index)
-          cached = node_cache[:transformation][index]
+        if node_cache[:transform_rule].has_key?(index)
+          cached = node_cache[:transform_rule][index]
           if cached
-            node_cache[:transformation][index] = cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
+            node_cache[:transform_rule][index] = cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
             @index = cached.interval.end
           end
           return cached
         end
 
         i0, s0 = index, []
-        r1 = _nt_compound_transform_rule
+        r1 = _nt_compound_transform_matching
         s0 << r1
         if r1
           r2 = _nt_s
@@ -63,19 +63,19 @@ module ActiveFacts
         end
         if s0.last
           r0 = instantiate_node(SyntaxNode,input, i0...index, s0)
-          r0.extend(Transformation0)
-          r0.extend(Transformation1)
+          r0.extend(TransformRule0)
+          r0.extend(TransformRule1)
         else
           @index = i0
           r0 = nil
         end
 
-        node_cache[:transformation][start_index] = r0
+        node_cache[:transform_rule][start_index] = r0
 
         r0
       end
 
-      module CompoundTransformRule0
+      module CompoundTransformMatching0
         def s1
           elements[0]
         end
@@ -110,18 +110,18 @@ module ActiveFacts
 
       end
 
-      module CompoundTransformRule1
+      module CompoundTransformMatching1
         def ast
-          Compiler::CompoundTransformRule.new(t.ast, tq.ast, tr.ast)
+          Compiler::CompoundTransformMatching.new(t.ast, tq.ast, tr.ast)
         end
       end
 
-      def _nt_compound_transform_rule
+      def _nt_compound_transform_matching
         start_index = index
-        if node_cache[:compound_transform_rule].has_key?(index)
-          cached = node_cache[:compound_transform_rule][index]
+        if node_cache[:compound_transform_matching].has_key?(index)
+          cached = node_cache[:compound_transform_matching][index]
           if cached
-            node_cache[:compound_transform_rule][index] = cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
+            node_cache[:compound_transform_matching][index] = cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
             @index = cached.interval.end
           end
           return cached
@@ -164,7 +164,7 @@ module ActiveFacts
                       end
                       s0 << r8
                       if r8
-                        r9 = _nt_transform_rules
+                        r9 = _nt_transform_matchings
                         s0 << r9
                         if r9
                           r10 = _nt_s
@@ -190,19 +190,19 @@ module ActiveFacts
         end
         if s0.last
           r0 = instantiate_node(SyntaxNode,input, i0...index, s0)
-          r0.extend(CompoundTransformRule0)
-          r0.extend(CompoundTransformRule1)
+          r0.extend(CompoundTransformMatching0)
+          r0.extend(CompoundTransformMatching1)
         else
           @index = i0
           r0 = nil
         end
 
-        node_cache[:compound_transform_rule][start_index] = r0
+        node_cache[:compound_transform_matching][start_index] = r0
 
         r0
       end
 
-      module SimpleTransformRule0
+      module SimpleTransformMatching0
         def s1
           elements[0]
         end
@@ -224,18 +224,18 @@ module ActiveFacts
         end
       end
 
-      module SimpleTransformRule1
+      module SimpleTransformMatching1
         def ast
-          Compiler::SimpleTransformRule.new(t.ast, te.ast)
+          Compiler::SimpleTransformMatching.new(t.ast, te.ast)
         end
       end
 
-      def _nt_simple_transform_rule
+      def _nt_simple_transform_matching
         start_index = index
-        if node_cache[:simple_transform_rule].has_key?(index)
-          cached = node_cache[:simple_transform_rule][index]
+        if node_cache[:simple_transform_matching].has_key?(index)
+          cached = node_cache[:simple_transform_matching][index]
           if cached
-            node_cache[:simple_transform_rule][index] = cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
+            node_cache[:simple_transform_matching][index] = cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
             @index = cached.interval.end
           end
           return cached
@@ -272,14 +272,14 @@ module ActiveFacts
         end
         if s0.last
           r0 = instantiate_node(SyntaxNode,input, i0...index, s0)
-          r0.extend(SimpleTransformRule0)
-          r0.extend(SimpleTransformRule1)
+          r0.extend(SimpleTransformMatching0)
+          r0.extend(SimpleTransformMatching1)
         else
           @index = i0
           r0 = nil
         end
 
-        node_cache[:simple_transform_rule][start_index] = r0
+        node_cache[:simple_transform_matching][start_index] = r0
 
         r0
       end
@@ -356,7 +356,7 @@ module ActiveFacts
         r0
       end
 
-      module TransformRules0
+      module TransformMatchings0
         def s1
           elements[0]
         end
@@ -370,7 +370,7 @@ module ActiveFacts
         end
       end
 
-      module TransformRules1
+      module TransformMatchings1
         def s
           elements[0]
         end
@@ -384,18 +384,18 @@ module ActiveFacts
         end
       end
 
-      module TransformRules2
+      module TransformMatchings2
         def ast
           [r0.ast, *tail.elements.map{|e| e.r1.ast }]
         end
       end
 
-      def _nt_transform_rules
+      def _nt_transform_matchings
         start_index = index
-        if node_cache[:transform_rules].has_key?(index)
-          cached = node_cache[:transform_rules][index]
+        if node_cache[:transform_matchings].has_key?(index)
+          cached = node_cache[:transform_matchings][index]
           if cached
-            node_cache[:transform_rules][index] = cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
+            node_cache[:transform_matchings][index] = cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
             @index = cached.interval.end
           end
           return cached
@@ -405,7 +405,7 @@ module ActiveFacts
         r1 = _nt_s
         s0 << r1
         if r1
-          r2 = _nt_transform_rule
+          r2 = _nt_transform_matching
           s0 << r2
           if r2
             s3, i3 = [], index
@@ -426,14 +426,14 @@ module ActiveFacts
                   r7 = _nt_s
                   s4 << r7
                   if r7
-                    r8 = _nt_transform_rule
+                    r8 = _nt_transform_matching
                     s4 << r8
                   end
                 end
               end
               if s4.last
                 r4 = instantiate_node(SyntaxNode,input, i4...index, s4)
-                r4.extend(TransformRules0)
+                r4.extend(TransformMatchings0)
               else
                 @index = i4
                 r4 = nil
@@ -450,44 +450,44 @@ module ActiveFacts
         end
         if s0.last
           r0 = instantiate_node(SyntaxNode,input, i0...index, s0)
-          r0.extend(TransformRules1)
-          r0.extend(TransformRules2)
+          r0.extend(TransformMatchings1)
+          r0.extend(TransformMatchings2)
         else
           @index = i0
           r0 = nil
         end
 
-        node_cache[:transform_rules][start_index] = r0
+        node_cache[:transform_matchings][start_index] = r0
 
         r0
       end
 
-      module TransformRule0
+      module TransformMatching0
         def str
           elements[0]
         end
       end
 
-      module TransformRule1
+      module TransformMatching1
         def ast; str.ast; end;
       end
 
-      module TransformRule2
+      module TransformMatching2
         def ctr
           elements[0]
         end
       end
 
-      module TransformRule3
+      module TransformMatching3
         def ast; ctr.ast; end;
       end
 
-      def _nt_transform_rule
+      def _nt_transform_matching
         start_index = index
-        if node_cache[:transform_rule].has_key?(index)
-          cached = node_cache[:transform_rule][index]
+        if node_cache[:transform_matching].has_key?(index)
+          cached = node_cache[:transform_matching][index]
           if cached
-            node_cache[:transform_rule][index] = cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
+            node_cache[:transform_matching][index] = cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
             @index = cached.interval.end
           end
           return cached
@@ -495,12 +495,12 @@ module ActiveFacts
 
         i0 = index
         i1, s1 = index, []
-        r2 = _nt_simple_transform_rule
+        r2 = _nt_simple_transform_matching
         s1 << r2
         if s1.last
           r1 = instantiate_node(SyntaxNode,input, i1...index, s1)
-          r1.extend(TransformRule0)
-          r1.extend(TransformRule1)
+          r1.extend(TransformMatching0)
+          r1.extend(TransformMatching1)
         else
           @index = i1
           r1 = nil
@@ -510,12 +510,12 @@ module ActiveFacts
           r0 = r1
         else
           i3, s3 = index, []
-          r4 = _nt_compound_transform_rule
+          r4 = _nt_compound_transform_matching
           s3 << r4
           if s3.last
             r3 = instantiate_node(SyntaxNode,input, i3...index, s3)
-            r3.extend(TransformRule2)
-            r3.extend(TransformRule3)
+            r3.extend(TransformMatching2)
+            r3.extend(TransformMatching3)
           else
             @index = i3
             r3 = nil
@@ -529,7 +529,7 @@ module ActiveFacts
           end
         end
 
-        node_cache[:transform_rule][start_index] = r0
+        node_cache[:transform_matching][start_index] = r0
 
         r0
       end

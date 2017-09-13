@@ -8,29 +8,29 @@ module ActiveFacts
   module CQL
     grammar TransformRules
 
-      rule transformation
-        ctr:compound_transform_rule s ';'
+      rule transform_rule
+        ctr:compound_transform_matching s ';'
         {
           def ast
-            Compiler::Transformation.new(ctr.ast)
+            Compiler::TransformRule.new(ctr.ast)
           end
         }
       end
 
-      rule compound_transform_rule
-        s t:term s '<==' s tq:transform_query s '{' tr:transform_rules s '}'
+      rule compound_transform_matching
+        s t:term s '<==' s tq:transform_query s '{' tr:transform_matchings s '}'
         {
           def ast
-            Compiler::CompoundTransformRule.new(t.ast, tq.ast, tr.ast)
+            Compiler::CompoundTransformMatching.new(t.ast, tq.ast, tr.ast)
           end
         }
       end
 
-      rule simple_transform_rule
+      rule simple_transform_matching
         s t:term s '<--' s te:transform_expr
         {
           def ast
-            Compiler::SimpleTransformRule.new(t.ast, te.ast)
+            Compiler::SimpleTransformMatching.new(t.ast, te.ast)
           end
         }
       end
@@ -40,8 +40,8 @@ module ActiveFacts
         / t:term                { def ast; t.ast; end; }
       end
 
-      rule transform_rules
-        s r0:transform_rule tail:(s ',' s r1:transform_rule)*
+      rule transform_matchings
+        s r0:transform_matching tail:(s ',' s r1:transform_matching)*
         {
           def ast
             [r0.ast, *tail.elements.map{|e| e.r1.ast }]
@@ -49,9 +49,9 @@ module ActiveFacts
         }
       end
 
-      rule transform_rule
-        str:simple_transform_rule            { def ast; str.ast; end; }
-        / ctr:compound_transform_rule       { def ast; ctr.ast; end; }
+      rule transform_matching
+        str:simple_transform_matching            { def ast; str.ast; end; }
+        / ctr:compound_transform_matching       { def ast; ctr.ast; end; }
       end
 
       rule transform_expr

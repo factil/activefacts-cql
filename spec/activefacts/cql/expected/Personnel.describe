@@ -76,8 +76,8 @@ Role in (WorksOn*, Hours)
 Role in (WorksOn*, WorksOn Name)
 Role in (WorksOn, Hours*)
 Role in (WorksOn, WorksOn Name*)
-Transformation: Personnel <== Query {Addr <-- Addr, ID <-- ID, Name <-- Name, Salary <-- Salary}
-Transformation: Personnel <== Query {Name <-- Name, Salary <-- Expr}
+Transform Rule: Personnel <== Query {Addr <-- Addr, ID <-- ID, Name <-- Name, Salary <-- Salary}
+Transform Rule: Personnel <== Query {Name <-- Name, Salary <-- Expr}
 ValueType "Addr"
 ValueType "Address ID"
 ValueType "Auto Counter"
