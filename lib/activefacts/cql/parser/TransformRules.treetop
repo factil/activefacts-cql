@@ -36,8 +36,8 @@ module ActiveFacts
       end
 
       rule transform_query
-        t:term                    { def ast; t.ast; end; }
-        / cl:clauses_list         { def ast; cl.ast; end; }
+        cl:clauses_list             { def ast; cl.ast; end; }
+        / t:term                    { def ast; t.ast; end; }
       end
 
       rule transform_matchings

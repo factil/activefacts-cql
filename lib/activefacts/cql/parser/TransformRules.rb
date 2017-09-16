@@ -295,23 +295,23 @@ module ActiveFacts
       end
 
       module TransformQuery0
-        def t
-          elements[0]
-        end
-      end
-
-      module TransformQuery1
-        def ast; t.ast; end;
-      end
-
-      module TransformQuery2
         def cl
           elements[0]
         end
       end
 
-      module TransformQuery3
+      module TransformQuery1
         def ast; cl.ast; end;
+      end
+
+      module TransformQuery2
+        def t
+          elements[0]
+        end
+      end
+
+      module TransformQuery3
+        def ast; t.ast; end;
       end
 
       def _nt_transform_query
@@ -327,7 +327,7 @@ module ActiveFacts
 
         i0 = index
         i1, s1 = index, []
-        r2 = _nt_term
+        r2 = _nt_clauses_list
         s1 << r2
         if s1.last
           r1 = instantiate_node(SyntaxNode,input, i1...index, s1)
@@ -342,7 +342,7 @@ module ActiveFacts
           r0 = r1
         else
           i3, s3 = index, []
-          r4 = _nt_clauses_list
+          r4 = _nt_term
           s3 << r4
           if s3.last
             r3 = instantiate_node(SyntaxNode,input, i3...index, s3)

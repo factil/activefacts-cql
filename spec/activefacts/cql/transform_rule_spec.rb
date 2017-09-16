@@ -60,8 +60,8 @@ describe "TRANSFORM rules from CQL" do
   Dir.mkdir actual_dir unless Dir.exist? actual_dir
 
   it "Produces the expected fact model for Personnel.cql" do
-    cql_file = 'Personnel.cql'
-    out_file = "Personnel.describe"
+    cql_file = 'Staff_Personnel.cql'
+    out_file = "Staff_Personnel.describe"
 
     expected, actual, expected_text = prepare(expected_dir, actual_dir, out_file)
 
