@@ -119,6 +119,8 @@ module ActiveFacts
               @term = @term_part if t[@term_part]
               @global_term = (t = t[@term_part]) == true ? @term_part : t
               trace :context, "saving context #{@term}/#{@global_term}"
+              # trace :context, "@terms =\n\t#{@terms.map{|k,v| "#{k} => #{v}"} * "\n\t"}"
+              # trace :context, "@role_names =\n\t#{@role_names.map{|k,v| "#{k} => #{v}"} * "\n\t"}"
               @context_saver.context = {:term => @term, :global_term => @global_term }
             end
           end
@@ -128,8 +130,49 @@ module ActiveFacts
         def term_complete?
           return true if @allowed_forward_terms.include?(@term)
           return true if system_term(@term)
-          (t = @terms[@term] and t[@term]) or
-            (t = @role_names[@term] and t[@term])
+          result = ((t = @terms[@term] and t[@term]) or (t = @role_names[@term] and t[@term]))
+          trace :context, "term #{@term} is #{result ? '' : 'in'}complete"
+          result
+        end
+
+        def global_term_starts?(s, context_saver)
+          @term = @global_term = nil
+
+          @term_part = s
+          @context_saver = context_saver
+          t = @terms[s] || system_term(s)
+          if t
+            # s is a prefix of the keys of t.
+            if t[s]
+              @global_term = @term = @term_part
+              @context_saver.context = {:term => @term, :global_term => @global_term }
+            end
+            trace :context, "Term #{t[s] ? "is" : "starts"} '#{@term_part}'"
+          elsif @allowed_forward_terms.include?(@term_part)
+            @term = @term_part
+            @context_saver.context = {:term => @term, :global_term => @term }
+            trace :context, "Term #{s} is an allowed forward"
+            return true
+          end
+          t
+        end
+
+        def global_term_continues?(s)
+          @term_part = "#{@term_part} #{s}"
+          t = @terms[@term_part]
+          if t
+            trace :context, "Multi-word term #{t[@term_part] ? 'ends at' : 'continues to'} #{@term_part.inspect}"
+
+            # Record the name of the full term and the underlying global term:
+            if t[@term_part]
+              @term = @term_part if t[@term_part]
+              @global_term = (t = t[@term_part]) == true ? @term_part : t
+              trace :context, "saving context #{@term}/#{@global_term}"
+              # trace :context, "@terms =\n\t#{@terms.map{|k,v| "#{k} => #{v}"} * "\n\t"}"
+              @context_saver.context = {:term => @term, :global_term => @global_term }
+            end
+          end
+          t
         end
 
         def system_term(s)

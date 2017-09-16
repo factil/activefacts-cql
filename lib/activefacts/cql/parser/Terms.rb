@@ -2065,7 +2065,7 @@ module ActiveFacts
           s0 << r2
           if r2
             i3 = index
-            r4 = lambda {|s| input.context.term_starts?(s[0].text_value, s[1]) }.call(s0)
+            r4 = lambda {|s| input.context.global_term_starts?(s[0].text_value, s[1]) }.call(s0)
             if !r4
               terminal_parse_failure("<semantic predicate>")
             end
@@ -2088,7 +2088,7 @@ module ActiveFacts
                   s6 << r8
                   if r8
                     i9 = index
-                    r10 = lambda {|s| input.context.term_continues?(s[1].text_value) }.call(s6)
+                    r10 = lambda {|s| input.context.global_term_continues?(s[1].text_value) }.call(s6)
                     if !r10
                       terminal_parse_failure("<semantic predicate>")
                     end
