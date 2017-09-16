@@ -18,26 +18,26 @@ module ActiveFacts
       end
 
       rule compound_transform_matching
-        s t:term s '<==' s tq:transform_query s '{' tr:transform_matchings s '}'
+        s tl:term_list s '<==' s tq:transform_query? s '{' tr:transform_matchings s '}'
         {
           def ast
-            Compiler::CompoundTransformMatching.new(t.ast, tq.ast, tr.ast)
+            Compiler::CompoundTransformMatching.new(tl.ast, tq.empty? ? nil : tq.ast, tr.ast)
           end
         }
       end
 
       rule simple_transform_matching
-        s t:term s '<--' s te:transform_expr
+        s tl:term_list s '<--' s te:transform_expr?
         {
           def ast
-            Compiler::SimpleTransformMatching.new(t.ast, te.ast)
+            Compiler::SimpleTransformMatching.new(tl.ast, te.empty? ? nil : te.ast)
           end
         }
       end
 
       rule transform_query
-        cl:clauses_list         { def ast; cl.ast; end; }
-        / t:term                { def ast; t.ast; end; }
+        t:term                    { def ast; t.ast; end; }
+        / cl:clauses_list         { def ast; cl.ast; end; }
       end
 
       rule transform_matchings
@@ -51,7 +51,20 @@ module ActiveFacts
 
       rule transform_matching
         str:simple_transform_matching            { def ast; str.ast; end; }
-        / ctr:compound_transform_matching       { def ast; ctr.ast; end; }
+        / ctr:compound_transform_matching        { def ast; ctr.ast; end; }
+      end
+
+      rule term_list
+        s t0:term tail:(s '.' s t1:term_list)*
+        {
+          def ast
+            if tail.elements.empty?
+              [t0.ast]
+            else
+              [t0.ast, *tail.elements.map{|t| t.t1.ast }]
+            end
+          end
+        }
       end
 
       rule transform_expr

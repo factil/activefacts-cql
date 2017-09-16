@@ -80,7 +80,7 @@ module ActiveFacts
           elements[0]
         end
 
-        def t
+        def tl
           elements[1]
         end
 
@@ -112,7 +112,7 @@ module ActiveFacts
 
       module CompoundTransformMatching1
         def ast
-          Compiler::CompoundTransformMatching.new(t.ast, tq.ast, tr.ast)
+          Compiler::CompoundTransformMatching.new(tl.ast, tq.empty? ? nil : tq.ast, tr.ast)
         end
       end
 
@@ -131,7 +131,7 @@ module ActiveFacts
         r1 = _nt_s
         s0 << r1
         if r1
-          r2 = _nt_term
+          r2 = _nt_term_list
           s0 << r2
           if r2
             r3 = _nt_s
@@ -149,35 +149,40 @@ module ActiveFacts
                 r5 = _nt_s
                 s0 << r5
                 if r5
-                  r6 = _nt_transform_query
+                  r7 = _nt_transform_query
+                  if r7
+                    r6 = r7
+                  else
+                    r6 = instantiate_node(SyntaxNode,input, index...index)
+                  end
                   s0 << r6
                   if r6
-                    r7 = _nt_s
-                    s0 << r7
-                    if r7
+                    r8 = _nt_s
+                    s0 << r8
+                    if r8
                       if (match_len = has_terminal?('{', false, index))
-                        r8 = true
+                        r9 = true
                         @index += match_len
                       else
                         terminal_parse_failure('\'{\'')
-                        r8 = nil
+                        r9 = nil
                       end
-                      s0 << r8
-                      if r8
-                        r9 = _nt_transform_matchings
-                        s0 << r9
-                        if r9
-                          r10 = _nt_s
-                          s0 << r10
-                          if r10
+                      s0 << r9
+                      if r9
+                        r10 = _nt_transform_matchings
+                        s0 << r10
+                        if r10
+                          r11 = _nt_s
+                          s0 << r11
+                          if r11
                             if (match_len = has_terminal?('}', false, index))
-                              r11 = true
+                              r12 = true
                               @index += match_len
                             else
                               terminal_parse_failure('\'}\'')
-                              r11 = nil
+                              r12 = nil
                             end
-                            s0 << r11
+                            s0 << r12
                           end
                         end
                       end
@@ -207,7 +212,7 @@ module ActiveFacts
           elements[0]
         end
 
-        def t
+        def tl
           elements[1]
         end
 
@@ -226,7 +231,7 @@ module ActiveFacts
 
       module SimpleTransformMatching1
         def ast
-          Compiler::SimpleTransformMatching.new(t.ast, te.ast)
+          Compiler::SimpleTransformMatching.new(tl.ast, te.empty? ? nil : te.ast)
         end
       end
 
@@ -245,7 +250,7 @@ module ActiveFacts
         r1 = _nt_s
         s0 << r1
         if r1
-          r2 = _nt_term
+          r2 = _nt_term_list
           s0 << r2
           if r2
             r3 = _nt_s
@@ -263,7 +268,12 @@ module ActiveFacts
                 r5 = _nt_s
                 s0 << r5
                 if r5
-                  r6 = _nt_transform_expr
+                  r7 = _nt_transform_expr
+                  if r7
+                    r6 = r7
+                  else
+                    r6 = instantiate_node(SyntaxNode,input, index...index)
+                  end
                   s0 << r6
                 end
               end
@@ -285,23 +295,23 @@ module ActiveFacts
       end
 
       module TransformQuery0
-        def cl
-          elements[0]
-        end
-      end
-
-      module TransformQuery1
-        def ast; cl.ast; end;
-      end
-
-      module TransformQuery2
         def t
           elements[0]
         end
       end
 
-      module TransformQuery3
+      module TransformQuery1
         def ast; t.ast; end;
+      end
+
+      module TransformQuery2
+        def cl
+          elements[0]
+        end
+      end
+
+      module TransformQuery3
+        def ast; cl.ast; end;
       end
 
       def _nt_transform_query
@@ -317,7 +327,7 @@ module ActiveFacts
 
         i0 = index
         i1, s1 = index, []
-        r2 = _nt_clauses_list
+        r2 = _nt_term
         s1 << r2
         if s1.last
           r1 = instantiate_node(SyntaxNode,input, i1...index, s1)
@@ -332,7 +342,7 @@ module ActiveFacts
           r0 = r1
         else
           i3, s3 = index, []
-          r4 = _nt_term
+          r4 = _nt_clauses_list
           s3 << r4
           if s3.last
             r3 = instantiate_node(SyntaxNode,input, i3...index, s3)
@@ -530,6 +540,116 @@ module ActiveFacts
         end
 
         node_cache[:transform_matching][start_index] = r0
+
+        r0
+      end
+
+      module TermList0
+        def s1
+          elements[0]
+        end
+
+        def s2
+          elements[2]
+        end
+
+        def t1
+          elements[3]
+        end
+      end
+
+      module TermList1
+        def s
+          elements[0]
+        end
+
+        def t0
+          elements[1]
+        end
+
+        def tail
+          elements[2]
+        end
+      end
+
+      module TermList2
+        def ast
+          if tail.elements.empty?
+            [t0.ast]
+          else
+            [t0.ast, *tail.elements.map{|t| t.t1.ast }]
+          end
+        end
+      end
+
+      def _nt_term_list
+        start_index = index
+        if node_cache[:term_list].has_key?(index)
+          cached = node_cache[:term_list][index]
+          if cached
+            node_cache[:term_list][index] = cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
+            @index = cached.interval.end
+          end
+          return cached
+        end
+
+        i0, s0 = index, []
+        r1 = _nt_s
+        s0 << r1
+        if r1
+          r2 = _nt_term
+          s0 << r2
+          if r2
+            s3, i3 = [], index
+            loop do
+              i4, s4 = index, []
+              r5 = _nt_s
+              s4 << r5
+              if r5
+                if (match_len = has_terminal?('.', false, index))
+                  r6 = true
+                  @index += match_len
+                else
+                  terminal_parse_failure('\'.\'')
+                  r6 = nil
+                end
+                s4 << r6
+                if r6
+                  r7 = _nt_s
+                  s4 << r7
+                  if r7
+                    r8 = _nt_term_list
+                    s4 << r8
+                  end
+                end
+              end
+              if s4.last
+                r4 = instantiate_node(SyntaxNode,input, i4...index, s4)
+                r4.extend(TermList0)
+              else
+                @index = i4
+                r4 = nil
+              end
+              if r4
+                s3 << r4
+              else
+                break
+              end
+            end
+            r3 = instantiate_node(SyntaxNode,input, i3...index, s3)
+            s0 << r3
+          end
+        end
+        if s0.last
+          r0 = instantiate_node(SyntaxNode,input, i0...index, s0)
+          r0.extend(TermList1)
+          r0.extend(TermList2)
+        else
+          @index = i0
+          r0 = nil
+        end
+
+        node_cache[:term_list][start_index] = r0
 
         r0
       end
