@@ -659,14 +659,14 @@ module ActiveFacts
           elements[2]
         end
 
-        def version_string
+        def version_number_string
           elements[3]
         end
       end
 
       module VersionNumber1
         def value
-          version_string.text_value
+          version_number_string.text_value
         end
       end
 
@@ -691,7 +691,7 @@ module ActiveFacts
             r3 = _nt_S
             s0 << r3
             if r3
-              r4 = _nt_version_string
+              r4 = _nt_version_number_string
               s0 << r4
             end
           end
@@ -723,14 +723,14 @@ module ActiveFacts
           elements[2]
         end
 
-        def version_string
+        def version_pattern_string
           elements[3]
         end
       end
 
       module VersionPattern1
         def value
-          version_string.text_value
+          version_pattern_string.text_value
         end
       end
 
@@ -755,7 +755,7 @@ module ActiveFacts
             r3 = _nt_S
             s0 << r3
             if r3
-              r4 = _nt_version_string
+              r4 = _nt_version_pattern_string
               s0 << r4
             end
           end
@@ -774,21 +774,21 @@ module ActiveFacts
         r0
       end
 
-      module VersionString0
+      module VersionNumberString0
       end
 
-      module VersionString1
+      module VersionNumberString1
       end
 
-      module VersionString2
+      module VersionNumberString2
       end
 
-      def _nt_version_string
+      def _nt_version_number_string
         start_index = index
-        if node_cache[:version_string].has_key?(index)
-          cached = node_cache[:version_string][index]
+        if node_cache[:version_number_string].has_key?(index)
+          cached = node_cache[:version_number_string][index]
           if cached
-            node_cache[:version_string][index] = cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
+            node_cache[:version_number_string][index] = cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
             @index = cached.interval.end
           end
           return cached
@@ -952,7 +952,7 @@ module ActiveFacts
                         end
                         if s15.last
                           r15 = instantiate_node(SyntaxNode,input, i15...index, s15)
-                          r15.extend(VersionString0)
+                          r15.extend(VersionNumberString0)
                         else
                           @index = i15
                           r15 = nil
@@ -969,7 +969,7 @@ module ActiveFacts
                   end
                   if s10.last
                     r10 = instantiate_node(SyntaxNode,input, i10...index, s10)
-                    r10.extend(VersionString1)
+                    r10.extend(VersionNumberString1)
                   else
                     @index = i10
                     r10 = nil
@@ -987,13 +987,271 @@ module ActiveFacts
         end
         if s0.last
           r0 = instantiate_node(SyntaxNode,input, i0...index, s0)
-          r0.extend(VersionString2)
+          r0.extend(VersionNumberString2)
         else
           @index = i0
           r0 = nil
         end
 
-        node_cache[:version_string][start_index] = r0
+        node_cache[:version_number_string][start_index] = r0
+
+        r0
+      end
+
+      module VersionPatternString0
+      end
+
+      module VersionPatternString1
+      end
+
+      module VersionPatternString2
+      end
+
+      module VersionPatternString3
+      end
+
+      module VersionPatternString4
+      end
+
+      def _nt_version_pattern_string
+        start_index = index
+        if node_cache[:version_pattern_string].has_key?(index)
+          cached = node_cache[:version_pattern_string][index]
+          if cached
+            node_cache[:version_pattern_string][index] = cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
+            @index = cached.interval.end
+          end
+          return cached
+        end
+
+        i0, s0 = index, []
+        s1, i1 = [], index
+        loop do
+          if has_terminal?(@regexps[gr = '\A[0-9]'] ||= Regexp.new(gr), :regexp, index)
+            r2 = true
+            @index += 1
+          else
+            terminal_parse_failure('[0-9]')
+            r2 = nil
+          end
+          if r2
+            s1 << r2
+          else
+            break
+          end
+        end
+        if s1.empty?
+          @index = i1
+          r1 = nil
+        else
+          r1 = instantiate_node(SyntaxNode,input, i1...index, s1)
+        end
+        s0 << r1
+        if r1
+          i4, s4 = index, []
+          if (match_len = has_terminal?('.', false, index))
+            r5 = true
+            @index += match_len
+          else
+            terminal_parse_failure('\'.\'')
+            r5 = nil
+          end
+          s4 << r5
+          if r5
+            s6, i6 = [], index
+            loop do
+              if has_terminal?(@regexps[gr = '\A[0-9]'] ||= Regexp.new(gr), :regexp, index)
+                r7 = true
+                @index += 1
+              else
+                terminal_parse_failure('[0-9]')
+                r7 = nil
+              end
+              if r7
+                s6 << r7
+              else
+                break
+              end
+            end
+            if s6.empty?
+              @index = i6
+              r6 = nil
+            else
+              r6 = instantiate_node(SyntaxNode,input, i6...index, s6)
+            end
+            s4 << r6
+            if r6
+              i9, s9 = index, []
+              if (match_len = has_terminal?('.', false, index))
+                r10 = true
+                @index += match_len
+              else
+                terminal_parse_failure('\'.\'')
+                r10 = nil
+              end
+              s9 << r10
+              if r10
+                s11, i11 = [], index
+                loop do
+                  if has_terminal?(@regexps[gr = '\A[0-9]'] ||= Regexp.new(gr), :regexp, index)
+                    r12 = true
+                    @index += 1
+                  else
+                    terminal_parse_failure('[0-9]')
+                    r12 = nil
+                  end
+                  if r12
+                    s11 << r12
+                  else
+                    break
+                  end
+                end
+                if s11.empty?
+                  @index = i11
+                  r11 = nil
+                else
+                  r11 = instantiate_node(SyntaxNode,input, i11...index, s11)
+                end
+                s9 << r11
+                if r11
+                  i14, s14 = index, []
+                  if (match_len = has_terminal?('-', false, index))
+                    r15 = true
+                    @index += match_len
+                  else
+                    terminal_parse_failure('\'-\'')
+                    r15 = nil
+                  end
+                  s14 << r15
+                  if r15
+                    s16, i16 = [], index
+                    loop do
+                      if has_terminal?(@regexps[gr = '\A[0-9A-Za-z-]'] ||= Regexp.new(gr), :regexp, index)
+                        r17 = true
+                        @index += 1
+                      else
+                        terminal_parse_failure('[0-9A-Za-z-]')
+                        r17 = nil
+                      end
+                      if r17
+                        s16 << r17
+                      else
+                        break
+                      end
+                    end
+                    if s16.empty?
+                      @index = i16
+                      r16 = nil
+                    else
+                      r16 = instantiate_node(SyntaxNode,input, i16...index, s16)
+                    end
+                    s14 << r16
+                    if r16
+                      s18, i18 = [], index
+                      loop do
+                        i19, s19 = index, []
+                        if (match_len = has_terminal?('.', false, index))
+                          r20 = true
+                          @index += match_len
+                        else
+                          terminal_parse_failure('\'.\'')
+                          r20 = nil
+                        end
+                        s19 << r20
+                        if r20
+                          s21, i21 = [], index
+                          loop do
+                            if has_terminal?(@regexps[gr = '\A[0-9A-Za-z-]'] ||= Regexp.new(gr), :regexp, index)
+                              r22 = true
+                              @index += 1
+                            else
+                              terminal_parse_failure('[0-9A-Za-z-]')
+                              r22 = nil
+                            end
+                            if r22
+                              s21 << r22
+                            else
+                              break
+                            end
+                          end
+                          if s21.empty?
+                            @index = i21
+                            r21 = nil
+                          else
+                            r21 = instantiate_node(SyntaxNode,input, i21...index, s21)
+                          end
+                          s19 << r21
+                        end
+                        if s19.last
+                          r19 = instantiate_node(SyntaxNode,input, i19...index, s19)
+                          r19.extend(VersionPatternString0)
+                        else
+                          @index = i19
+                          r19 = nil
+                        end
+                        if r19
+                          s18 << r19
+                        else
+                          break
+                        end
+                      end
+                      r18 = instantiate_node(SyntaxNode,input, i18...index, s18)
+                      s14 << r18
+                    end
+                  end
+                  if s14.last
+                    r14 = instantiate_node(SyntaxNode,input, i14...index, s14)
+                    r14.extend(VersionPatternString1)
+                  else
+                    @index = i14
+                    r14 = nil
+                  end
+                  if r14
+                    r13 = r14
+                  else
+                    r13 = instantiate_node(SyntaxNode,input, index...index)
+                  end
+                  s9 << r13
+                end
+              end
+              if s9.last
+                r9 = instantiate_node(SyntaxNode,input, i9...index, s9)
+                r9.extend(VersionPatternString2)
+              else
+                @index = i9
+                r9 = nil
+              end
+              if r9
+                r8 = r9
+              else
+                r8 = instantiate_node(SyntaxNode,input, index...index)
+              end
+              s4 << r8
+            end
+          end
+          if s4.last
+            r4 = instantiate_node(SyntaxNode,input, i4...index, s4)
+            r4.extend(VersionPatternString3)
+          else
+            @index = i4
+            r4 = nil
+          end
+          if r4
+            r3 = r4
+          else
+            r3 = instantiate_node(SyntaxNode,input, index...index)
+          end
+          s0 << r3
+        end
+        if s0.last
+          r0 = instantiate_node(SyntaxNode,input, i0...index, s0)
+          r0.extend(VersionPatternString4)
+        else
+          @index = i0
+          r0 = nil
+        end
+
+        node_cache[:version_pattern_string][start_index] = r0
 
         r0
       end

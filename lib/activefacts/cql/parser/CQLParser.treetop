@@ -104,25 +104,29 @@ module ActiveFacts
       end
 
       rule version_number
-        S version S version_string
+        S version S version_number_string
         {
           def value
-            version_string.text_value
+            version_number_string.text_value
           end
         }
       end
 
       rule version_pattern
-        S version S version_string
+        S version S version_pattern_string
         {
           def value
-            version_string.text_value
+            version_pattern_string.text_value
           end
         }
       end
 
-      rule version_string
+      rule version_number_string
         [0-9]+ '.' [0-9]+ '.' [0-9]+ ('-' [0-9A-Za-z-]+ ('.' [0-9A-Za-z-]+ )* )?
+      end
+
+      rule version_pattern_string
+        [0-9]+ ('.' [0-9]+ ('.' [0-9]+ ('-' [0-9A-Za-z-]+ ('.' [0-9A-Za-z-]+ )* )? )? )?
       end
 
       rule import_role
