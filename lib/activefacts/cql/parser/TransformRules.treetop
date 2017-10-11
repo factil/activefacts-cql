@@ -9,7 +9,7 @@ module ActiveFacts
     grammar TransformRules
 
       rule transform_rule
-        ctr:compound_transform_matching s ';'
+        ctr:compound_matching s ';'
         {
           def ast
             Compiler::TransformRule.new(ctr.ast)
@@ -17,20 +17,20 @@ module ActiveFacts
         }
       end
 
-      rule compound_transform_matching
+      rule compound_matching
         s tl:term_list s '<==' s tq:transform_query? s '{' tr:transform_matchings s '}'
         {
           def ast
-            Compiler::CompoundTransformMatching.new(tl.ast, tq.empty? ? nil : tq.ast, tr.ast)
+            Compiler::CompoundMatching.new(tl.ast, tq.empty? ? nil : tq.ast, tr.ast)
           end
         }
       end
 
-      rule simple_transform_matching
+      rule simple_matching
         s tl:term_list s '<--' s te:transform_expr?
         {
           def ast
-            Compiler::SimpleTransformMatching.new(tl.ast, te.empty? ? nil : te.ast)
+            Compiler::SimpleMatching.new(tl.ast, te.empty? ? nil : te.ast)
           end
         }
       end
@@ -50,8 +50,8 @@ module ActiveFacts
       end
 
       rule transform_matching
-        str:simple_transform_matching            { def ast; str.ast; end; }
-        / ctr:compound_transform_matching        { def ast; ctr.ast; end; }
+        str:simple_matching            { def ast; str.ast; end; }
+        / ctr:compound_matching        { def ast; ctr.ast; end; }
       end
 
       rule term_list
@@ -205,10 +205,10 @@ module ActiveFacts
       end
 
       rule primary_texpr
-        t:term
+        tl:term_list
           {
             def ast
-              t.ast
+              Compiler::ExpressionTermList.new(tl.ast)
             end
           }
         / l:literal

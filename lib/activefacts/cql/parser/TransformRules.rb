@@ -45,7 +45,7 @@ module ActiveFacts
         end
 
         i0, s0 = index, []
-        r1 = _nt_compound_transform_matching
+        r1 = _nt_compound_matching
         s0 << r1
         if r1
           r2 = _nt_s
@@ -75,7 +75,7 @@ module ActiveFacts
         r0
       end
 
-      module CompoundTransformMatching0
+      module CompoundMatching0
         def s1
           elements[0]
         end
@@ -110,18 +110,18 @@ module ActiveFacts
 
       end
 
-      module CompoundTransformMatching1
+      module CompoundMatching1
         def ast
-          Compiler::CompoundTransformMatching.new(tl.ast, tq.empty? ? nil : tq.ast, tr.ast)
+          Compiler::CompoundMatching.new(tl.ast, tq.empty? ? nil : tq.ast, tr.ast)
         end
       end
 
-      def _nt_compound_transform_matching
+      def _nt_compound_matching
         start_index = index
-        if node_cache[:compound_transform_matching].has_key?(index)
-          cached = node_cache[:compound_transform_matching][index]
+        if node_cache[:compound_matching].has_key?(index)
+          cached = node_cache[:compound_matching][index]
           if cached
-            node_cache[:compound_transform_matching][index] = cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
+            node_cache[:compound_matching][index] = cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
             @index = cached.interval.end
           end
           return cached
@@ -195,19 +195,19 @@ module ActiveFacts
         end
         if s0.last
           r0 = instantiate_node(SyntaxNode,input, i0...index, s0)
-          r0.extend(CompoundTransformMatching0)
-          r0.extend(CompoundTransformMatching1)
+          r0.extend(CompoundMatching0)
+          r0.extend(CompoundMatching1)
         else
           @index = i0
           r0 = nil
         end
 
-        node_cache[:compound_transform_matching][start_index] = r0
+        node_cache[:compound_matching][start_index] = r0
 
         r0
       end
 
-      module SimpleTransformMatching0
+      module SimpleMatching0
         def s1
           elements[0]
         end
@@ -229,18 +229,18 @@ module ActiveFacts
         end
       end
 
-      module SimpleTransformMatching1
+      module SimpleMatching1
         def ast
-          Compiler::SimpleTransformMatching.new(tl.ast, te.empty? ? nil : te.ast)
+          Compiler::SimpleMatching.new(tl.ast, te.empty? ? nil : te.ast)
         end
       end
 
-      def _nt_simple_transform_matching
+      def _nt_simple_matching
         start_index = index
-        if node_cache[:simple_transform_matching].has_key?(index)
-          cached = node_cache[:simple_transform_matching][index]
+        if node_cache[:simple_matching].has_key?(index)
+          cached = node_cache[:simple_matching][index]
           if cached
-            node_cache[:simple_transform_matching][index] = cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
+            node_cache[:simple_matching][index] = cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
             @index = cached.interval.end
           end
           return cached
@@ -282,14 +282,14 @@ module ActiveFacts
         end
         if s0.last
           r0 = instantiate_node(SyntaxNode,input, i0...index, s0)
-          r0.extend(SimpleTransformMatching0)
-          r0.extend(SimpleTransformMatching1)
+          r0.extend(SimpleMatching0)
+          r0.extend(SimpleMatching1)
         else
           @index = i0
           r0 = nil
         end
 
-        node_cache[:simple_transform_matching][start_index] = r0
+        node_cache[:simple_matching][start_index] = r0
 
         r0
       end
@@ -505,7 +505,7 @@ module ActiveFacts
 
         i0 = index
         i1, s1 = index, []
-        r2 = _nt_simple_transform_matching
+        r2 = _nt_simple_matching
         s1 << r2
         if s1.last
           r1 = instantiate_node(SyntaxNode,input, i1...index, s1)
@@ -520,7 +520,7 @@ module ActiveFacts
           r0 = r1
         else
           i3, s3 = index, []
-          r4 = _nt_compound_transform_matching
+          r4 = _nt_compound_matching
           s3 << r4
           if s3.last
             r3 = instantiate_node(SyntaxNode,input, i3...index, s3)
@@ -1924,14 +1924,14 @@ module ActiveFacts
       end
 
       module PrimaryTexpr0
-        def t
+        def tl
           elements[0]
         end
       end
 
       module PrimaryTexpr1
         def ast
-          t.ast
+          Compiler::ExpressionTermList.new(tl.ast)
         end
       end
 
@@ -1960,7 +1960,7 @@ module ActiveFacts
 
         i0 = index
         i1, s1 = index, []
-        r2 = _nt_term
+        r2 = _nt_term_list
         s1 << r2
         if s1.last
           r1 = instantiate_node(SyntaxNode,input, i1...index, s1)

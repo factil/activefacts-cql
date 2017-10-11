@@ -219,8 +219,8 @@ module ActiveFacts
           op1 = e1.compile(context)
           op2 = e2.compile(context)
           context.vocabulary.constellation.Expression(
-              :new, :expression_type => 'Binary', :operator_string => operator, :object_type => nil,
-              :first_op_expression => op1, :second_op_expression => op2, :third_op_expression => nil
+              :new, :expression_type => 'Binary', :operator => operator,
+              :first_operand_expression => op1, :second_operand_expression => op2
           )
         end
       end
@@ -273,8 +273,8 @@ module ActiveFacts
             lhs_expr = lhs.compile(context)
             rhs_expr = compile_terms(context, terms)
             context.vocabulary.constellation.Expression(
-                :new, :expression_type => 'Binary', :operator_string => operator, :object_type => nil,
-                :first_op_expression => lhs_expr, :second_op_expression => rhs_expr, :third_op_expression => nil
+                :new, :expression_type => 'Binary', :operator => operator,
+                :first_operand_expression => lhs_expr, :second_operand_expression => rhs_expr
             )
           end
         end
@@ -327,8 +327,8 @@ module ActiveFacts
             lhs_expr = lhs.compile(context)
             rhs_expr = compile_factors(context, factors)
             context.vocabulary.constellation.Expression(
-                :new, :expression_type => 'Binary', :operator_string => operator, :object_type => nil,
-                :first_op_expression => lhs_expr, :second_op_expression => rhs_expr, :third_op_expression => nil
+                :new, :expression_type => 'Binary', :operator => operator,
+                :first_operand_expression => lhs_expr, :second_operand_expression => rhs_expr
             )
           end
         end
@@ -367,8 +367,8 @@ module ActiveFacts
         def compile(context)
           op1 = @divisor.compile(context)
           context.vocabulary.constellation.Expression(
-              :new, :expression_type => 'Unary', :operator_string => operator, :object_type => nil,
-              :first_op_expression => op1, :second_op_expression => nil, :third_op_expression => nil
+              :new, :expression_type => 'Unary', :operator => operator,
+              :first_operand_expression => op1
           )
         end
       end
@@ -400,8 +400,8 @@ module ActiveFacts
         def compile(context)
           op1 = @term.compile(context)
           context.vocabulary.constellation.Expression(
-              :new, :expression_type => 'Unary', :operator_string => operator, :object_type => nil,
-              :first_op_expression => op1, :second_op_expression => nil, :third_op_expression => nil
+              :new, :expression_type => 'Unary', :operator => operator,
+              :first_operand_expression => op1
           )
         end
       end
@@ -413,7 +413,7 @@ module ActiveFacts
         end
 
         def operator
-          '!'
+          'not'
         end
 
         def identify_player context
@@ -433,8 +433,8 @@ module ActiveFacts
         def compile(context)
           op1 = @term.compile(context)
           context.vocabulary.constellation.Expression(
-              :new, :expression_type => 'Unary', :operator_string => operator, :object_type => nil,
-              :first_op_expression => op1, :second_op_expression => nil, :third_op_expression => nil
+              :new, :expression_type => 'Unary', :operator => operator,
+              :first_operand_expression => op1
           )
         end
       end
@@ -482,8 +482,8 @@ module ActiveFacts
             lhs_expr = lhs.compile(context)
             rhs_expr = compile_factors(context, factors)
             context.vocabulary.constellation.Expression(
-                :new, :expression_type => 'Binary', :operator_string => operator, :object_type => nil,
-                :first_op_expression => lhs_expr, :second_op_expression => rhs_expr, :third_op_expression => nil
+                :new, :expression_type => 'Binary', :operator => operator,
+                :first_operand_expression => lhs_expr, :second_operand_expression => rhs_expr
             )
           end
         end
@@ -532,8 +532,8 @@ module ActiveFacts
             lhs_expr = lhs.compile(context)
             rhs_expr = compile_factors(context, factors)
             context.vocabulary.constellation.Expression(
-                :new, :expression_type => 'Binary', :operator_string => operator, :object_type => nil,
-                :first_op_expression => lhs_expr, :second_op_expression => rhs_expr, :third_op_expression => nil
+                :new, :expression_type => 'Binary', :operator => operator,
+                :first_operand_expression => lhs_expr, :second_operand_expression => rhs_expr
             )
           end
         end
@@ -573,8 +573,8 @@ module ActiveFacts
           op2 = @true_value.compile(context)
           op3 = @false_value.compile(context)
           context.vocabulary.constellation.Expression(
-              :new, :expression_type => 'Ternary', :operator_string => operator, :object_type => nil,
-              :first_op_expression => op1, :second_op_expression => op2, :third_op_expression => op3
+              :new, :expression_type => 'Ternary', :operator => operator,
+              :first_operand_expression => op1, :second_operand_expression => op2, :third_operand_expression => op3
           )
         end
       end
@@ -609,8 +609,8 @@ module ActiveFacts
         def compile(context)
           op1 = @aggregand.compile(context)
           context.vocabulary.constellation.Expression(
-              :new, :expression_type => 'Unary', :operator_string => operator, :object_type => nil,
-              :first_op_expression => op1, :second_op_expression => nil, :third_op_expression => nil
+              :new, :expression_type => 'Unary', :operator => operator,
+              :first_operand_expression => op1
           )
         end
       end

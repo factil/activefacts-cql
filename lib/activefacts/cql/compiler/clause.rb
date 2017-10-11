@@ -1136,7 +1136,8 @@ module ActiveFacts
           identify_player(context)
           constellation = context.vocabulary.constellation
           constellation.Expression(
-              :new, :expression_type => 'Object', :object_type => @player
+              :new, :expression_type => 'Role', :object_type => @player,
+              :leading_adjective => leading_adjective, :trailing_adjective => trailing_adjective
           )
         end
       end
