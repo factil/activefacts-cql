@@ -678,6 +678,7 @@ module ActiveFacts
           )
         end
       end
+
     end
 
   end
