@@ -670,14 +670,15 @@ module ActiveFacts
         def binding
           @binding
         end
-      end
 
-      def compile(context)
-        op1 = @aggregand.compile(context)
-        context.vocabulary.constellation.Expression(
-            :new, :expression_type => 'Literal', :literal_string => @literal.to_s
-        )
+        def compile(context)
+          op1 = @aggregand.compile(context)
+          context.vocabulary.constellation.Expression(
+              :new, :expression_type => 'Literal', :literal_string => @literal.to_s
+          )
+        end
       end
     end
+
   end
 end
