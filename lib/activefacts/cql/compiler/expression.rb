@@ -672,9 +672,12 @@ module ActiveFacts
         end
 
         def compile(context)
-          op1 = @aggregand.compile(context)
+          literal_string = case @literal
+            when String; "'#{@literal.to_s}'"
+            else @literal.to_s
+            end
           context.vocabulary.constellation.Expression(
-              :new, :expression_type => 'Literal', :literal_string => @literal.to_s
+              :new, :expression_type => 'Literal', :literal_string => literal_string
           )
         end
       end
