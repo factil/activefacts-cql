@@ -44,6 +44,9 @@ module ActiveFacts
         in S units
       end
 
+      # A ValueType name that might not yet have been identified or registered as a Term
+      # REVISIT: We'd like to support multi-word terms here (cannot include "where", "and", or anything that could follow in the value_type definition)
+      # REVISIT: We'd like these to be forward-referenced ObjectTypes too, not immediately created as ValueTypes
       rule implicit_value_type_name
         id
         {

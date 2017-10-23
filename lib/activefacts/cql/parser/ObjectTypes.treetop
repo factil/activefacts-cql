@@ -92,7 +92,7 @@ module ActiveFacts
             end
           }
         /
-        identified_by role_list
+        identified_by role_list	  # REVISIT: We'd like to be able to use implicit_value_type_names here too.
           &{|s|
             role_list = s[-1]
             forwards = role_list.ast.
