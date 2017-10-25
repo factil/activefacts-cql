@@ -195,14 +195,6 @@ module ActiveFacts
           end
         end
 
-=begin
-        def project lr
-          @projection = lr
-          projected_rr = lr == :left ? @e2 : @e1
-          true
-        end
-=end
-
         def inspect; to_s; end
 
         def to_s
@@ -221,6 +213,15 @@ module ActiveFacts
           }#{
             @qualifiers.empty? ? '' : ', ['+@qualifiers*', '+']'
           })"
+        end
+
+        def compile(context)
+          op1 = e1.compile(context)
+          op2 = e2.compile(context)
+          context.vocabulary.constellation.Expression(
+              :new, :expression_type => 'Binary', :operator => operator,
+              :first_operand_expression => op1, :second_operand_expression => op2
+          )
         end
       end
 
@@ -254,18 +255,28 @@ module ActiveFacts
           "SUM_OF<#{ @terms.map{|f| f.player.name}*', ' }>"
         end
 
-=begin
-        def result_value_type(context, name)
-          # REVISIT: If there are units involved, check compatibility
-          vt = super
-          vt
-        end
-=end
-
         def inspect; to_s; end
 
         def to_s
           'SUM(' + @terms.map{|term| "#{term.to_s}" } * ' PLUS ' + ')'
+        end
+
+        def compile(context)
+          compile_terms(context, @terms)
+        end
+
+        def compile_terms(context, terms)
+          if terms.size == 1
+            terms[0].compile(context)
+          else
+            lhs = terms.shift
+            lhs_expr = lhs.compile(context)
+            rhs_expr = compile_terms(context, terms)
+            context.vocabulary.constellation.Expression(
+                :new, :expression_type => 'Binary', :operator => operator,
+                :first_operand_expression => lhs_expr, :second_operand_expression => rhs_expr
+            )
+          end
         end
       end
 
@@ -298,18 +309,28 @@ module ActiveFacts
           "PRODUCT_OF<#{ @factors.map{|f| f.player.name}*' ' }>"
         end
 
-=begin
-        def result_value_type(context, name)
-          vt = super
-          # REVISIT: If there are units involved, create the result units
-          vt
-        end
-=end
-
         def inspect; to_s; end
 
         def to_s
           'PRODUCT(' + @factors.map{|factor| "#{factor.to_s}" } * ' TIMES ' + ')'
+        end
+
+        def compile(context)
+          compile_factors(context, @factors)
+        end
+
+        def compile_factors(context, factors)
+          if factors.size == 1
+            factors[0].compile(context)
+          else
+            lhs = factors.shift
+            lhs_expr = lhs.compile(context)
+            rhs_expr = compile_factors(context, factors)
+            context.vocabulary.constellation.Expression(
+                :new, :expression_type => 'Binary', :operator => operator,
+                :first_operand_expression => lhs_expr, :second_operand_expression => rhs_expr
+            )
+          end
         end
       end
 
@@ -337,16 +358,18 @@ module ActiveFacts
           end
         end
 
-=begin
-        def result_type_name(context)
-          raise hell
-        end
-=end
-
         def inspect; to_s; end
 
         def to_s
           "RECIPROCAL(#{factor.to_s})"
+        end
+
+        def compile(context)
+          op1 = @divisor.compile(context)
+          context.vocabulary.constellation.Expression(
+              :new, :expression_type => 'Unary', :operator => operator,
+              :first_operand_expression => op1
+          )
         end
       end
 
@@ -368,16 +391,227 @@ module ActiveFacts
           end
         end
 
-=begin
-        def result_type_name(context)
-          raise hell
-        end
-=end
-
         def inspect; to_s; end
 
         def to_s
           "NEGATIVE(#{term.to_s})"
+        end
+
+        def compile(context)
+          op1 = @term.compile(context)
+          context.vocabulary.constellation.Expression(
+              :new, :expression_type => 'Unary', :operator => operator,
+              :first_operand_expression => op1
+          )
+        end
+      end
+
+      class Negation
+        attr_accessor :term
+        def initialize term
+          @term = term
+        end
+
+        def operator
+          'not'
+        end
+
+        def identify_player context
+          @player || begin
+            # The player in @term have already been identified
+            v = context.vocabulary
+            @player = @term.player
+          end
+        end
+
+        def inspect; to_s; end
+
+        def to_s
+          "NEGATION(#{term.to_s})"
+        end
+
+        def compile(context)
+          op1 = @term.compile(context)
+          context.vocabulary.constellation.Expression(
+              :new, :expression_type => 'Unary', :operator => operator,
+              :first_operand_expression => op1
+          )
+        end
+      end
+
+      class LogicalAnd < Operation
+        attr_accessor :factors
+        def initialize *factors
+          @factors = factors
+        end
+
+        def refs
+          @factors
+        end
+
+        def operator
+          'and'
+        end
+
+        def identify_player context
+          @player || begin
+            v = context.vocabulary
+            @player = @factors[0].player
+          end
+        end
+
+        def result_type_name(context)
+          "CONJUNCTION_OF<#{ @factors.map{|f| f.player.name}*' ' }>"
+        end
+
+        def inspect; to_s; end
+
+        def to_s
+          'CONJUNCTION(' + @factors.map{|factor| "#{factor.to_s}" } * ' AND ' + ')'
+        end
+
+        def compile(context)
+          compile_factors(context, @factors)
+        end
+
+        def compile_factors(context, factors)
+          if factors.size == 1
+            factors[0].compile(context)
+          else
+            lhs = factors.shift
+            lhs_expr = lhs.compile(context)
+            rhs_expr = compile_factors(context, factors)
+            context.vocabulary.constellation.Expression(
+                :new, :expression_type => 'Binary', :operator => operator,
+                :first_operand_expression => lhs_expr, :second_operand_expression => rhs_expr
+            )
+          end
+        end
+      end
+
+      class LogicalOr < Operation
+        attr_accessor :factors
+        def initialize *factors
+          @factors = factors
+        end
+
+        def refs
+          @factors
+        end
+
+        def operator
+          'or'
+        end
+
+        def identify_player context
+          @player || begin
+            v = context.vocabulary
+            @player = @factors[0].player
+          end
+        end
+
+        def result_type_name(context)
+          "DISJUNCTION_OF<#{ @factors.map{|f| f.player.name}*' ' }>"
+        end
+
+        def inspect; to_s; end
+
+        def to_s
+          'DISJUNCTION(' + @factors.map{|factor| "#{factor.to_s}" } * ' OR ' + ')'
+        end
+
+        def compile(context)
+          compile_factors(context, @factors)
+        end
+
+        def compile_factors(context, factors)
+          if factors.size == 1
+            factors[0].compile(context)
+          else
+            lhs = factors.shift
+            lhs_expr = lhs.compile(context)
+            rhs_expr = compile_factors(context, factors)
+            context.vocabulary.constellation.Expression(
+                :new, :expression_type => 'Binary', :operator => operator,
+                :first_operand_expression => lhs_expr, :second_operand_expression => rhs_expr
+            )
+          end
+        end
+      end
+
+      class Ternary < Operation
+        attr_accessor :condition, :true_value, :false_value
+        def initialize condition, true_value, false_value
+          @condition = condition
+          @true_value = true_value
+          @false_value = false_value
+        end
+
+        def refs
+          [@condition, @true_value, @false_value]
+        end
+
+        def operator
+          '?'
+        end
+
+        def identify_player context
+          @player || begin
+            v = context.vocabulary
+            @player = @true_value.player
+          end
+        end
+
+        def inspect; to_s; end
+
+        def to_s
+          "TERNARY(#{@condition.to_s}, #{@true_value.to_s}, #{@false_value.to_s})"
+        end
+
+        def compile(context)
+          op1 = @condition.compile(context)
+          op2 = @true_value.compile(context)
+          op3 = @false_value.compile(context)
+          context.vocabulary.constellation.Expression(
+              :new, :expression_type => 'Ternary', :operator => operator,
+              :first_operand_expression => op1, :second_operand_expression => op2, :third_operand_expression => op3
+          )
+        end
+      end
+
+      class Aggregate < Operation
+        attr_accessor :operation, :aggregand
+        def initialize operation, aggregand
+          @operation = operation
+          @aggregand = aggregand
+        end
+
+        def refs
+          [@operation, @aggregand]
+        end
+
+        def operator
+          operation
+        end
+
+        def identify_player context
+          @player || begin
+            @player = @aggregand.player
+          end
+        end
+
+        def inspect; to_s; end
+
+        def to_s
+          "AGGREGATE(#{@operation.to_s}, #{@aggregand.to_s})"
+        end
+
+        def compile(context)
+          op1 = @aggregand.compile(context)
+          context.vocabulary.constellation.Expression(
+              :new, :expression_type => 'Unary', :operator => operator,
+              :first_operand_expression => op1
+          )
         end
       end
 
@@ -436,8 +670,19 @@ module ActiveFacts
         def binding
           @binding
         end
+
+        def compile(context)
+          literal_string = case @literal
+            when String; "'#{@literal.to_s}'"
+            else @literal.to_s
+            end
+          context.vocabulary.constellation.Expression(
+              :new, :expression_type => 'Literal', :literal_string => literal_string
+          )
+        end
       end
 
     end
+
   end
 end

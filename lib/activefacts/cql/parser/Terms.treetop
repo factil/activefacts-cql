@@ -155,8 +155,8 @@ module ActiveFacts
 
       rule global_term
         # This rule shouldn't be used outside the prescan, it will memoize the wrong things.
-        head:id x    &{|s| input.context.term_starts?(s[0].text_value, s[1]) }
-        tail:(s w:id &{|s| input.context.term_continues?(s[1].text_value) } )*
+        head:id x    &{|s| input.context.global_term_starts?(s[0].text_value, s[1]) }
+        tail:(s w:id &{|s| input.context.global_term_continues?(s[1].text_value) } )*
         { def value
             tail.elements.inject(head.value) { |t, e| "#{t} #{e.w.value}" }
           end

@@ -14,6 +14,7 @@ require 'activefacts/cql/compiler/fact'
 require 'activefacts/cql/compiler/constraint'
 require 'activefacts/cql/compiler/query'
 require 'activefacts/cql/compiler/informal'
+require 'activefacts/cql/compiler/transform_rule'
 
 module ActiveFacts
   module CQL
@@ -23,30 +24,35 @@ module ActiveFacts
         'fr' => 'French',
         'cn' => 'Mandarin'
       }
+      EXTENSIONS = ['fiml', 'fidl', 'fiql', 'cql']
+
       attr_reader :vocabulary
 
-      def initialize *a
-        @filename = a.shift || "stdio"
+      def initialize filepath, *a
+        @filepath = filepath
         super *a
         @constellation = ActiveFacts::API::Constellation.new(ActiveFacts::Metamodel)
         @constellation.loggers << proc{|*k| trace :apilog, k.inspect} if trace(:apilog)
         @language = nil
+        @pending_import_topic = nil
+        @pending_import_role = ''
+        @pending_import_file_name = ''
         trace :file, "Parsing '#{@filename}'"
       end
 
-      def compile_file filename
-        old_filename = @filename
-        @filename = filename
-        File.open(filename) do |f|
+      def compile_file filepath
+        old_filepath = @filepath
+        @filepath = filename
+        File.open(filepath) do |f|
           compile(f.read)
         end
-        @filename = old_filename
+        @filepath = old_filepath
         @vocabulary
       end
 
       # Load the appropriate natural language module
       def detect_language
-        @filename =~ /.*\.(..)\.cql$/i
+        @filepath =~ /.*\.(..)\.cql$/i
         language_code = $1
         @language = LANGUAGES[language_code] || 'English'
       end
@@ -64,6 +70,23 @@ module ActiveFacts
           next if concept.topic
           trace :topic, "Colouring #{concept.describe} with #{@topic.topic_name}"
           concept.topic = @topic
+        end
+      end
+
+      def create_import_if_pending new_topic
+        if @pending_import_topic
+          trace :import, "Topic #{@pending_import_topic.topic_name} imports #{new_topic.topic_name} as #{@pending_import_role} from file #{@pending_import_file_name}"
+
+          @constellation.Import(
+            topic: @pending_import_topic,
+            precursor_topic: new_topic,
+            import_role: @pending_import_role,
+            file_name: @pending_import_file_name
+          )
+
+          @pending_import_topic = nil
+          @pending_import_role = ''
+          @pending_import_file_name = ''
         end
       end
 
@@ -87,10 +110,11 @@ module ActiveFacts
               value = compile_definition ast
               trace :definition, "Compiled to #{value.is_a?(Array) ? value.map{|v| v.verbalise}*', ' : value.verbalise}" if value
               if value.is_a?(ActiveFacts::Metamodel::Topic)
-                topic_flood if @topic
+                topic_flood() if @topic
+                create_import_if_pending(value)
                 @topic = value
               elsif ast.is_a?(Compiler::Vocabulary)
-                topic_flood if @topic
+                topic_flood() if @topic
                 @vocabulary = value
                 @topic = @constellation.Topic(@vocabulary.name)
               end
@@ -104,33 +128,25 @@ module ActiveFacts
               raise ne
             end
           end
-          topic_flood if @topic
+          topic_flood() if @topic
         end
         raise failure_reason unless ok
         vocabulary
       end
 
-      def compile_import file, aliases
+      def compile_import file, import_role, aliases
         saved_index = @index
         saved_block = @block
         saved_string = @string
         saved_input_length = @input_length
-        saved_topic = @topic
-        old_filename = @filename
-        @filename = import_filename(old_filename, file)
+        old_filepath = @filepath
+        @file = file
+        @filepath = import_filepath(old_filepath, file)
 
-        # REVISIT: Save and use another @vocabulary for this file?
-        File.open(@filename) do |f|
-          topic_flood if @topic
-          @topic = @constellation.Topic(File.basename(@filename, '.cql'))
-          trace :import, "Importing #{@filename} as #{@topic.topic_name}" do
-            ok = parse_all(f.read, nil, &@block)
-          end
-          @topic = saved_topic
-        end
+        compile_import_file(@filepath, import_role)
 
       rescue => e
-        ne = StandardError.new("In #{@filename} #{e.message.strip}")
+        ne = StandardError.new("In #{@filepath} #{e.message.strip}")
         ne.set_backtrace(e.backtrace)
         raise ne
       ensure
@@ -138,13 +154,52 @@ module ActiveFacts
         @index = saved_index
         @input_length = saved_input_length
         @string = saved_string
-        @filename = old_filename
+        @filepath = old_filepath
         nil
       end
 
-      # import_filename may be redefined in subclass
-      def import_filename(old_filename, file)
-        File.dirname(old_filename)+'/'+file+'.cql'
+      # redefine in subsclass for different behaviour
+      def import_filepath(old_filepath, file)
+        filepath = ''
+        EXTENSIONS.each do |extension|
+          filepath = File.dirname(old_filepath)+'/'+file+".#{extension}"
+          break if File.exist?(filepath)
+        end
+        filepath
+      end
+
+      # redefine in subsclass for different behaviour
+      def compile_import_file filepath, import_role
+        # REVISIT: Save and use another @vocabulary for this file?
+        File.open(filepath) do |f|
+          compile_import_input(f.read, import_role)
+        end
+      end
+
+      def compile_import_input input, import_role
+        topic_external_name = @file
+
+        if existing_topic = @constellation.Topic[[topic_external_name]]
+          # topic has already been loaded, just build import
+          trace :import, "Topic #{@topic.topic_name} has already been loaded, skip reload"
+          import = @constellation.Import(
+            topic: @topic, precursor_topic: existing_topic, 
+            import_role: import_role, file_name: topic_external_name
+          )
+        else
+          # topic has not been loaded previously, import topic
+          saved_topic = @topic
+          topic_flood() if @topic
+
+          @pending_import_topic = saved_topic
+          @pending_import_role = import_role
+          @pending_import_file_name = topic_external_name
+
+          trace :import, "Importing #{@filepath} into #{@topic.topic_name}" do
+            ok = parse_all(input, nil, &@block)
+          end
+          @topic = saved_topic
+        end
       end
 
       def compile_definition ast

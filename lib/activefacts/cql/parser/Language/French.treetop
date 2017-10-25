@@ -292,7 +292,8 @@ module ActiveFacts
       rule radix_point ',' end
       rule reflexive 'réflexive' !alphanumeric end
       rule returning 'retour' !alphanumeric end
-      rule separate 'distincte' !alphanumeric end 
+      rule separate 'distincte' !alphanumeric end
+      rule schema 'schema' !alphanumeric end
       rule si 'si' !alphanumeric end
       rule so_that 'pour' s 'que' !alphanumeric end
       rule soit 'soit' !alphanumeric end
@@ -302,9 +303,12 @@ module ActiveFacts
       rule then 'puis' !alphanumeric end
       rule to 'à' !alphanumeric end
       rule to_avoid ('pour' s 'empecher' s 'de' / 'pour' s 'ne' s 'pas') !alphanumeric end
+      rule topic 'sujet' !alphanumeric end
+      rule transform 'transform' !alphanumeric end
       rule transient 'transitoires' !alphanumeric end
       rule transitive 'transitif' !alphanumeric end
-      rule true 'vrai' !alphanumeric end 
+      rule true 'vrai' !alphanumeric end
+      rule version 'version' !alphanumeric end 
       rule vocabulary 'vocabulaire' !alphanumeric end 
       rule where 'où' !alphanumeric end 
       rule who 'qui' !alphanumeric end 

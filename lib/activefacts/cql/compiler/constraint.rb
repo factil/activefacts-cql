@@ -297,7 +297,7 @@ module ActiveFacts
 
                 # Create a query with a variable for every binding and all steps:
                 query = build_variables(clauses_list)
-                roles_by_binding = build_all_steps(clauses_list)
+                roles_by_binding = build_all_steps(query, clauses_list)
                 query.validate
 
                 # Create the projected RoleSequence for the constraint:

@@ -295,6 +295,7 @@ module ActiveFacts
       rule radix_point '.' end
       rule reflexive 'reflexive' !alphanumeric end
       rule returning 'returning' !alphanumeric end
+      rule schema 'schema' !alphanumeric end
       rule separate 'separate' !alphanumeric end
       rule so_that 'so' S that end
       rule static 'static' !alphanumeric end
@@ -304,10 +305,13 @@ module ActiveFacts
       rule then 'then' !alphanumeric end
       rule to 'to' !alphanumeric end
       rule to_avoid to s 'avoid' !alphanumeric end
+      rule topic 'topic' !alphanumeric end
+      rule transform 'transform' !alphanumeric end
       rule transient 'transient' !alphanumeric end
       rule transitive 'transitive' !alphanumeric end
       rule true 'true' !alphanumeric end
-      rule vocabulary ('vocabulary' / 'schema') !alphanumeric end
+      rule version 'version' !alphanumeric end
+      rule vocabulary 'vocabulary' !alphanumeric end
       rule when 'when' !alphanumeric end
       rule where 'where' !alphanumeric end
       rule which 'which' !alphanumeric end

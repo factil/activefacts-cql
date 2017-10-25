@@ -11,6 +11,7 @@ require 'activefacts/cql/parser/Terms'
 require 'activefacts/cql/parser/ObjectTypes'
 require 'activefacts/cql/parser/ValueTypes'
 require 'activefacts/cql/parser/FactTypes'
+require 'activefacts/cql/parser/TransformRules'
 require 'activefacts/cql/parser/Context'
 
 module ActiveFacts
@@ -22,6 +23,7 @@ module ActiveFacts
       include ObjectTypes
       include ValueTypes
       include FactTypes
+      include TransformRules
       include Context
 
       rule cql_file
@@ -58,20 +60,35 @@ module ActiveFacts
         / object_type
         / informal_description
         / query
+        / transform_rule
         / s ';' s { def ast; nil; end }
       end
 
       rule vocabulary_definition
-        s vocabulary S vocabulary_name s ';'
+        schema_definition /
+        transform_definition
+      end
+
+      rule schema_definition
+        s ( schema / topic / vocabulary ) S vocabulary_name vn:version_number? s ';'
         {
           def ast
-            Compiler::Vocabulary.new(vocabulary_name.value)
+            Compiler::Vocabulary.new(vocabulary_name.value, false, vn.empty? ? nil : vn.value)
+          end
+        }
+      end
+
+      rule transform_definition
+        s transform S vocabulary_name vn:version_number? s ';'
+        {
+          def ast
+            Compiler::Vocabulary.new(vocabulary_name.value, true, vn.empty? ? nil : vn.value)
           end
         }
       end
 
       rule vocabulary_name
-        id tail:(S id)*
+        id tail:(S !version id)*
         {
 	  def node_type; :vocabulary; end
 	  def value
@@ -81,10 +98,47 @@ module ActiveFacts
       end
 
       rule import_definition
-        s import S vocabulary_name alias_list ';'
+        s import i:import_role? S vocabulary_name vp:version_pattern? alias_list ';'
         {
           def ast
-            Compiler::Import.new(import.input.parser, vocabulary_name.value, alias_list.value)
+            Compiler::Import.new(
+              import.input.parser, vocabulary_name.value, i.empty? ? "topic" : i.value, vp.empty? ? nil : vp.value, alias_list.value
+            )
+          end
+        }
+      end
+
+      rule version_number
+        S version S version_number_string
+        {
+          def value
+            version_number_string.text_value
+          end
+        }
+      end
+
+      rule version_pattern
+        S version S version_pattern_string
+        {
+          def value
+            version_pattern_string.text_value
+          end
+        }
+      end
+
+      rule version_number_string
+        [0-9]+ '.' [0-9]+ '.' [0-9]+ ('-' [0-9A-Za-z-]+ ('.' [0-9A-Za-z-]+ )* )?
+      end
+
+      rule version_pattern_string
+        [0-9]+ ('.' [0-9]+ ('.' [0-9]+ ('-' [0-9A-Za-z-]+ ('.' [0-9A-Za-z-]+ )* )? )? )?
+      end
+
+      rule import_role
+        S id
+        {
+          def value
+            id.text_value
           end
         }
       end

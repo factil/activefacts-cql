@@ -8,8 +8,11 @@ module ActiveFacts
             query = @constellation.Query(:new)
             all_bindings_in_clauses(clauses_list).
               each do |binding|
-                trace :query, "Creating variable #{query.all_variable.size} for #{binding.inspect}"
-                binding.variable = @constellation.Variable(query, query.all_variable.size, :object_type => binding.player)
+                var_name = (r = binding.refs.select{|r| r.is_a?(Reference)}.first) ? r.var_name : nil
+                trace :query, "Creating variable #{query.all_variable.size} for #{binding.inspect} with role_name #{var_name}"
+                binding.variable = @constellation.Variable(
+                  query, query.all_variable.size, :object_type => binding.player, role_name: var_name
+                )
                 if literal = binding.refs.detect{|r| r.literal}
                   if literal.kind_of?(ActiveFacts::CQL::Compiler::Reference)
                     # REVISIT: Fix this crappy ad-hoc polymorphism hack
@@ -23,21 +26,21 @@ module ActiveFacts
           end
         end
 
-        def build_all_steps(clauses_list)
+        def build_all_steps(query, clauses_list)
           roles_by_binding = {}
           trace :query, "Building steps" do
             clauses_list.each do |clause|
-              build_step(clause, roles_by_binding)
+              build_step(query, clause, roles_by_binding)
             end
           end
           roles_by_binding
         end
 
-        def build_step clause, roles_by_binding = {}, parent_variable = nil
+        def build_step query, clause, roles_by_binding = {}, parent_variable = nil
           return unless clause.refs.size > 0  # Empty clause... really?
 
           step = @constellation.Step(
-              :guid => :new,
+              query, query.all_step.size,
               :fact_type => clause.fact_type,
               :alternative_set => nil,
               :is_disallowed => clause.certainty == false,
@@ -56,7 +59,7 @@ module ActiveFacts
               objectification_step = nil
               if ref.nested_clauses
                 ref.nested_clauses.each do |nested_clause|
-                  objectification_step = build_step nested_clause, roles_by_binding
+                  objectification_step = build_step(query, nested_clause, roles_by_binding)
                   if ref.binding.player.is_a?(ActiveFacts::Metamodel::EntityType) and
                       ref.binding.player.fact_type == nested_clause.fact_type
                     objectification_step.objectification_variable = binding.variable
@@ -72,9 +75,10 @@ module ActiveFacts
                 if binding.variable.object_type.common_supertype(role.object_type)
                   # REVISIT: there's an implicit subtyping step here, create it; then always raise the error here.
                   # I don't want to do this for now because the verbaliser will always verbalise all steps.
-                  raise "Disallowing implicit subtyping step from #{role.object_type.name} to #{binding.variable.object_type.name} in #{clause.fact_type.default_reading.inspect}"
+                  # raise "Disallowing implicit subtyping step from #{role.object_type.name} to #{binding.variable.object_type.name} in #{clause.fact_type.default_reading.inspect}"
+                else
+                  raise "A #{role.object_type.name} cannot satisfy #{binding.variable.object_type.name} in #{clause.fact_type.default_reading.inspect}"
                 end
-                raise "A #{role.object_type.name} cannot satisfy #{binding.variable.object_type.name} in #{clause.fact_type.default_reading.inspect}"
               end
 
               trace :query, "Creating Play for #{ref.inspect}"

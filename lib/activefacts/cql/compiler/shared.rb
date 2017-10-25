@@ -13,7 +13,7 @@ module ActiveFacts
       class Binding
         attr_reader :player             # The ObjectType (object type)
         attr_reader :refs               # an array of the References
-        attr_reader :role_name
+        attr_accessor :role_name
         attr_accessor :rebound_to       # Loose binding may set this to another binding
         attr_reader :variable
         attr_accessor :instance         # When binding fact instances, the instance goes here
@@ -35,7 +35,7 @@ module ActiveFacts
         def <=>(other)
           key <=> other.key
         end
-        
+
         def variable= v
           @variable = v   # A place for a breakpoint :)
         end
@@ -111,15 +111,17 @@ module ActiveFacts
       end
 
       class Vocabulary < Definition
-        def initialize name
+        def initialize name, is_transform, version_number
           @name = name
+          @is_transform = is_transform
+          @version_number = version_number
         end
 
         def compile
           if @constellation.Vocabulary.size > 0
             @constellation.Topic @name
           else
-            @constellation.Vocabulary @name
+            @constellation.Vocabulary(@name, is_transform: @is_transform, version_number: @version_number)
           end
         end
 
@@ -129,9 +131,11 @@ module ActiveFacts
       end
 
       class Import < Definition
-        def initialize parser, name, alias_hash
+        def initialize parser, name, import_role, version_pattern, alias_hash
           @parser = parser
           @name = name
+          @import_role = import_role
+          @version_pattern = version_pattern
           @alias_hash = alias_hash
         end
 
@@ -140,7 +144,7 @@ module ActiveFacts
         end
 
         def compile
-          @parser.compile_import(@name, @alias_hash)
+          @parser.compile_import(@name, @import_role, @alias_hash)
         end
       end
 

@@ -22,7 +22,7 @@ module ActiveFacts
         end
 
         def refs
-          @phrases.select{|r| r.respond_to?(:player)}
+          @phrases.select{|r| r.is_a?(ActiveFacts::CQL::Compiler::Reference)}
         end
 
         # A clause that contains only the name of a ObjectType and no literal or reading text
@@ -142,7 +142,7 @@ module ActiveFacts
         # no change is made to this Clause object - those will be done later.
         #
         def match_existing_fact_type context, options = {}
-          raise "Cannot match a clause that contains no object types" if refs.size == 0
+          raise "Cannot match a clause that contains no object types for #{self.inspect}" if refs.size == 0
           raise "Internal error, clause already matched, should not match again" if @fact_type
 
           if is_naked_object_type
@@ -184,7 +184,12 @@ module ActiveFacts
           contract_left = proc do
             contracted_from = left_contract_this_onto.refs[0]
             contraction_player = contracted_from.player
-            contracted_role = Reference.new(contraction_player.name)
+            contracted_role = Reference.new(
+              term: contraction_player.name,
+              leading_adjective: contracted_from.leading_adjective,
+              trailing_adjective: contracted_from.trailing_adjective,
+              role_name: contracted_from.role_name
+            )
             supposed_roles << contracted_role
             left_insertion = contracted_role.inspect+' '
             contracted_role.player = contracted_from.player
@@ -199,7 +204,12 @@ module ActiveFacts
           contract_right = proc do
             contracted_from = left_contract_this_onto.refs[-1]
             contraction_player = contracted_from.player
-            contracted_role = Reference.new(contraction_player.name)
+            contracted_role = Reference.new(
+              term: contraction_player.name,
+              leading_adjective: contracted_from.leading_adjective,
+              trailing_adjective: contracted_from.trailing_adjective,
+              role_name: contracted_from.role_name
+            )
             supposed_roles << contracted_role
             right_insertion = ' '+contracted_role.inspect
             contracted_role.player = contracted_from.player
@@ -306,7 +316,7 @@ module ActiveFacts
 
                   if equal_best.size > 1 and equal_best.detect{|k,m| !m.fact_type.is_a?(Metamodel::TypeInheritance)}
                     # Complain if there's more than one equivalent cost match (unless all are TypeInheritance):
-                    raise "#{@phrases.inspect} could match any of the following:\n\t"+
+                    trace :matching_fails, "#{@phrases.inspect} could match any of the following:\n\t"+
                       best_matches.map { |reading| reading.expand + " with " + matches[reading].describe } * "\n\t"
                   end
                 end
@@ -317,7 +327,14 @@ module ActiveFacts
                   @fact_type = @side_effects.fact_type
                   trace :matching, "Matched '#{@fact_type.default_reading}'"
                   @phrases = phrases
-                  apply_side_effects(context, @side_effects)
+
+                  # REVISIT: Drop handling side-effects because roles are still required for processing conditions in transformation logic
+                  # apply_side_effects(context, @side_effects)
+                  @side_effects.role_side_effects.each do |side_effect|
+                    phrase = side_effect.phrase
+                    phrase.role_ref = side_effect.role_ref
+                  end
+
                   return @fact_type
                 end
 
@@ -757,7 +774,7 @@ module ActiveFacts
 
           if @qualifiers && @qualifiers.size > 0
             # We shouldn't make a new ring constraint if there's already one over this ring.
-            existing_rcs = 
+            existing_rcs =
               @role_sequence.all_role_ref.map{|rr| rr.role.all_ring_constraint.to_a }.flatten.uniq
             unless existing_rcs[0]
               rc = RingConstraint.new(@role_sequence, @qualifiers)
@@ -904,6 +921,22 @@ module ActiveFacts
           }}"
         end
 
+        def var_name
+          if @role_name && !@role_name.is_a?(Integer)
+            @role_name
+          else
+            "#{
+              @leading_adjective && @leading_adjective.split.map(&:capitalize).join(' ') + ' '
+            }#{
+              @term
+            }#{
+              @trailing_adjective && ' ' + @trailing_adjective.split.map(&:capitalize).join(' ')
+            }#{
+              @role_name && "(#{@role_name})"
+            }"
+          end
+        end
+
         def <=>(other)
           ( 4*(@term <=> other.term) +
             2*((@leading_adjective||'') <=> (other.leading_adjective||'')) +
@@ -1038,7 +1071,7 @@ module ActiveFacts
         end
 
         def find_pc_over_roles(roles)
-          return nil if roles.size == 0 # Safeguard; this would chuck an exception otherwise
+          raise "No Role for embedded_presence_constraint" if roles.size == 0 # Safeguard; this would chuck an exception otherwise
           roles[0].all_role_ref.each do |role_ref|
             next if role_ref.role_sequence.all_role_ref.map(&:role) != roles
             pc = role_ref.role_sequence.all_presence_constraint.single  # Will return nil if there's more than one.
@@ -1049,7 +1082,7 @@ module ActiveFacts
         end
 
         def make_embedded_presence_constraint vocabulary
-          raise "No Role for embedded_presence_constraint" unless @role_ref
+          return unless @role_ref
           fact_type = @role_ref.role.fact_type
           constellation = vocabulary.constellation
 
@@ -1097,6 +1130,15 @@ module ActiveFacts
 
         def result(context = nil)
           self
+        end
+
+        def compile(context)
+          identify_player(context)
+          constellation = context.vocabulary.constellation
+          constellation.Expression(
+              :new, :expression_type => 'Role', :object_type => @player,
+              :leading_adjective => leading_adjective, :trailing_adjective => trailing_adjective
+          )
         end
       end
 

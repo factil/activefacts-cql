@@ -294,7 +294,8 @@ module ActiveFacts
       rule to_avoid ('pour' s 'empecher' s 'de' / 'pour' s 'ne' s 'pas') !alphanumeric end
       rule transient 'transitoires' !alphanumeric end
       rule transitive 'transitif' !alphanumeric end
-      rule true 'vrai' !alphanumeric end 
+      rule true 'vrai' !alphanumeric end
+      rule version 'version' !alphanumeric end 
       rule vocabulary 'vocabulaire' !alphanumeric end 
       rule where 'où' !alphanumeric end 
       rule who 'qui' !alphanumeric end 

@@ -1,0 +1,99 @@
+EntityType "Address"
+EntityType "PayRate"
+EntityType "Personnel"
+EntityType "Professor"
+EntityType "Student"
+EntityType "WorksOn"
+FactType "Address has Addr"
+FactType "Address has Address ID"
+FactType "PayRate has HrRate"
+FactType "PayRate has PayRate Rank"
+FactType "Personnel has Addr"
+FactType "Personnel has Name"
+FactType "Personnel has Personnel ID"
+FactType "Personnel has Salary"
+FactType "Professor has Name"
+FactType "Professor has Professor ID"
+FactType "Professor has Salary"
+FactType "Student has GPA"
+FactType "Student has Student Name"
+FactType "Student is studying in Year"
+FactType "WorksOn has Hours"
+FactType "WorksOn has WorksOn Name"
+PresenceConstraint over (Address ID in "Address has Address ID") occurs at most one time
+PresenceConstraint over (Address in "Address has Addr") occurs one time
+PresenceConstraint over (Address in "Address has Address ID") occurs one time
+PresenceConstraint over (PayRate Rank in "PayRate has PayRate Rank") occurs at most one time
+PresenceConstraint over (PayRate in "PayRate has HrRate") occurs one time
+PresenceConstraint over (PayRate in "PayRate has PayRate Rank") occurs one time
+PresenceConstraint over (Personnel ID in "Personnel has Personnel ID") occurs at most one time
+PresenceConstraint over (Personnel in "Personnel has Addr") occurs one time
+PresenceConstraint over (Personnel in "Personnel has Name") occurs one time
+PresenceConstraint over (Personnel in "Personnel has Personnel ID") occurs one time
+PresenceConstraint over (Personnel in "Personnel has Salary") occurs one time
+PresenceConstraint over (Professor ID in "Professor has Professor ID") occurs at most one time
+PresenceConstraint over (Professor in "Professor has Name") occurs one time
+PresenceConstraint over (Professor in "Professor has Professor ID") occurs one time
+PresenceConstraint over (Professor in "Professor has Salary") occurs one time
+PresenceConstraint over (Student Name in "Student has Student Name") occurs at most one time
+PresenceConstraint over (Student in "Student has GPA") occurs one time
+PresenceConstraint over (Student in "Student has Student Name") occurs one time
+PresenceConstraint over (Student in "Student is studying in Year") occurs one time
+PresenceConstraint over (WorksOn Name in "WorksOn has WorksOn Name") occurs at most one time
+PresenceConstraint over (WorksOn in "WorksOn has Hours") occurs one time
+PresenceConstraint over (WorksOn in "WorksOn has WorksOn Name") occurs one time
+Query(Professor Var0: Step from Professor Var0 to Professor ID Var1 'Professor has Professor ID'; ID Var1: Step from Address Var2 to Address ID Var1 'Address has Address ID'; Address Var2: )
+Query(Student Var0: Step from Student Var0 to Student Name Var1 'Student has Student Name'; Name Var1: Step from WorksOn Var2 to WorksOn Name Var1 'WorksOn has WorksOn Name'; WorksOn Var2: )
+Role in (Address*, Addr)
+Role in (Address*, Address ID)
+Role in (Address, Addr*)
+Role in (Address, Address ID*)
+Role in (PayRate*, HrRate)
+Role in (PayRate*, PayRate Rank)
+Role in (PayRate, HrRate*)
+Role in (PayRate, PayRate Rank*)
+Role in (Personnel*, Addr)
+Role in (Personnel*, Name)
+Role in (Personnel*, Personnel ID)
+Role in (Personnel*, Salary)
+Role in (Personnel, Addr*)
+Role in (Personnel, Name*)
+Role in (Personnel, Personnel ID*)
+Role in (Personnel, Salary*)
+Role in (Professor*, Name)
+Role in (Professor*, Professor ID)
+Role in (Professor*, Salary)
+Role in (Professor, Name*)
+Role in (Professor, Professor ID*)
+Role in (Professor, Salary*)
+Role in (Student*, GPA)
+Role in (Student*, Student Name)
+Role in (Student*, Year)
+Role in (Student, GPA*)
+Role in (Student, Student Name*)
+Role in (Student, Year*)
+Role in (WorksOn*, Hours)
+Role in (WorksOn*, WorksOn Name)
+Role in (WorksOn, Hours*)
+Role in (WorksOn, WorksOn Name*)
+Transform Rule: Personnel <== Query {Addr <-- Addr, ID <-- ID, Name <-- Name, Salary <-- Salary}
+Transform Rule: Personnel <== Query {Name <-- Name, Salary <-- Expr}
+ValueType "Addr"
+ValueType "Address ID"
+ValueType "Auto Counter"
+ValueType "Decimal"
+ValueType "GPA"
+ValueType "Hours"
+ValueType "HrRate"
+ValueType "ID"
+ValueType "Integer"
+ValueType "Name"
+ValueType "PayRate Rank"
+ValueType "Personnel ID"
+ValueType "Professor ID"
+ValueType "Rank"
+ValueType "Salary"
+ValueType "String"
+ValueType "Student Name"
+ValueType "WorksOn Name"
+ValueType "Year"

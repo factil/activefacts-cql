@@ -44,7 +44,7 @@ module ActiveFacts
           unless @conditions.empty? and @returning.empty?
             trace :query, "building query for derived fact type (returning #{@returning}) with #{@conditions.size} conditions: (#{@conditions.map{|c|c.inspect}*', '})" do
               @query = build_variables(@conditions.flatten)
-              @roles_by_binding = build_all_steps(@conditions)
+              @roles_by_binding = build_all_steps(@query, @conditions)
               @query.validate
               @query
             end
@@ -108,7 +108,9 @@ module ActiveFacts
           # Prepare to objectify the fact type (so readings for link fact types can be created)
           if @name
             entity_type = @vocabulary.valid_entity_type_name(@name)
-            raise "You can't objectify #{@name}, it already exists" if entity_type
+
+            # REVISIT disable name check -- GSP 5 Jul 2017
+            raise "You can't objectify #{@name}, it already exists" if entity_type && false
             @entity_type = @constellation.EntityType(@vocabulary, @name, :fact_type => @fact_type, :concept => :new)
           end
 

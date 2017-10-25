@@ -472,13 +472,11 @@ module ActiveFacts
         subscript ||= prr.subscript if prr
         trace :subscript, "Need to apply subscript #{subscript} to #{role_ref.role.object_type.name}" if subscript
         object_type = role_ref.role.object_type
-        (play_name ||
-          [
-            role_ref.leading_adjective,
-            object_type.name,
-            role_ref.trailing_adjective
-          ].compact*' '
-        ) +
+        [
+          role_ref.leading_adjective,
+          play_name || object_type.name,
+          role_ref.trailing_adjective
+        ].compact*' ' +
           (value ? ' '+value.inspect : '') +
           (subscript ? "(#{subscript})" : '')
       end
