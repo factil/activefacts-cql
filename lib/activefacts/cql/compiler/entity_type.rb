@@ -29,6 +29,7 @@ module ActiveFacts
         end
 
         def compile
+          @extant_entity_type = @vocabulary.object_type_lookup(@name)
           @entity_type = @vocabulary.valid_entity_type_name(@name) ||
             @constellation.EntityType(@vocabulary, @name, :concept => :new)
           @entity_type.is_independent = true if @pragmas.delete('independent')
@@ -36,7 +37,7 @@ module ActiveFacts
           # REVISIT: CQL needs a way to indicate whether subtype migration can occur.
           # For example by saying "Xyz is a role of Abc".
           @supertypes.each_with_index do |supertype_name, i|
-            add_supertype(supertype_name, @identification || i > 0)
+            add_supertype(supertype_name, @extant_entity_type || @identification || i > 0)
           end
           @pragmas.each do |p|
             @constellation.ConceptAnnotation(:concept => @entity_type.concept, :mapping_annotation => p)
