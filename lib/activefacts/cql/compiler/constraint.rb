@@ -518,16 +518,6 @@ module ActiveFacts
           @regular_expression = ast[:regular_expression]
         end
 
-        def assert_value(val)
-          if val.is_a?(String)
-            @constellation.Value(eval(val), true, nil)
-          elsif val
-            @constellation.Value(val.to_s, false , nil)
-          else
-            nil
-          end
-        end
-
         def compile
           @constraint = @constellation.ValueConstraint(:new)
           raise "Units on value constraints are not yet processed (at line #{'REVISIT'})" if @units
@@ -537,8 +527,8 @@ module ActiveFacts
             @value_ranges.each do |range|
               min, max = Array === range ? range : [range, range]
               v_range = @constellation.ValueRange(
-                min && @constellation.Bound(:value => assert_value(min), :is_inclusive => true),
-                max && @constellation.Bound(:value => assert_value(max), :is_inclusive => true))
+                min && @constellation.Bound(:value => assert_literal_value(min), :is_inclusive => true),
+                max && @constellation.Bound(:value => assert_literal_value(max), :is_inclusive => true))
               ar = @constellation.AllowedRange(@constraint, v_range)
             end
           else

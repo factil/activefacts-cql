@@ -108,6 +108,16 @@ module ActiveFacts
         def source
           @tree.text_value
         end
+
+        def assert_literal_value(val)
+          if val.is_a?(String)
+            @constellation.Value(eval(val), true, nil)
+          elsif val
+            @constellation.Value(val.to_s, false , nil)
+          else
+            nil
+          end
+        end
       end
 
       class Vocabulary < Definition
