@@ -106,20 +106,36 @@ module ActiveFacts
           if (@base_type_name != @name)
             unless base_type = @vocabulary.valid_value_type_name(@base_type_name)
               base_type = @constellation.ValueType(@vocabulary, @base_type_name, :concept => :new)
-              return base_type if @base_type_name == @name
             end
           end
 
           # Create and initialise the ValueType:
           vt = @vocabulary.valid_value_type_name(@name) ||
             @constellation.ValueType(@vocabulary, @name, :concept => :new)
+
+          # Apply independence:
           vt.is_independent = true if @pragmas.delete('independent')
+
+          # Apply pragmas:
           @pragmas.each do |p|
             @constellation.ConceptAnnotation(:concept => vt.concept, :mapping_annotation => p)
           end if @pragmas
-          vt.supertype = base_type if base_type
-          vt.length = length if length
-          vt.scale = scale if scale
+
+          # Apply supertype
+          if base_type and base_type != vt
+            raise "You may not change the supertype of #{vt.name} from #{vt.supertype.name} to #{base_type.name}" if vt.supertype && vt.supertype != base_type
+            vt.supertype = base_type
+          end
+
+          # Apply ordered parameters:
+          if length
+            raise "You may not change the length of #{vt.name} from #{vt.length} to #{length}" if vt.length && vt.length != length
+            vt.length = length
+          end
+          if scale
+            raise "You may not change the scale of #{vt.name} from #{vt.scale} to #{scale}" if vt.scale && vt.scale != scale
+            vt.scale = scale
+          end
           vt.transaction_phase = @auto_assigned_at
 
           unless @unit.empty?
@@ -140,14 +156,18 @@ module ActiveFacts
                 @constellation.Derivation(unit, base_unit).exponent = exponent
               end
             end
+            raise "You may not change the units of #{vt.name} from #{vt.unit.describe} to #{unit.describe}" if vt.unit && vt.unit != unit
             vt.unit = unit
           end
 
+          # Apply a value constraint:
           if @value_constraint
-            @value_constraint.constellation = @constellation
+            @value_constraint.constellation = @constellation  # Pass constellation to the value_constraint compiler
+            raise "You may not change the value constraint of #{vt.name} from #{vt.value_constraint.describe} to #{@value_constraint.describe}" if vt.value_constraint && vt.value_constraint != value_constraint
             vt.value_constraint = @value_constraint.compile
           end
 
+          # Apply a context note:
           if @context_note
             @context_note.compile(@constellation, vt)
           end
