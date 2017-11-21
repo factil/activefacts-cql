@@ -62,12 +62,43 @@ module ActiveFacts
       end
 
       rule type_parameter_list
-        head:number s tail:( ',' s number s )*
-        {
+        head:parameter s tail:( ',' s parameter s)*
+	{
           def values
-            [head.value, *tail.elements.map{|i| i.number.value}]
+            [head.value, *tail.elements.map{|i| i.parameter.value}]
           end
-        }
+	}
+      end
+
+      rule parameter
+	number / named_parameter
+      end
+
+      rule ordered_parameter
+        number
+      end
+
+      rule named_parameter
+        (	# Set the value for a parameter
+          with s parameter_name as s literal:parameter_literal
+          /
+          parameter_name ':' s literal:parameter_literal
+        ) <Parser::ValueTypeParameterSetting>
+        /	# Define a new parameter
+        accepts s parameter_name as value_type:term s vc:value_constraint? <Parser::ValueTypeParameterDefinition>
+        /	# Restrict values for a parameter
+        restricts s parameter_name to s range_list <Parser::ValueTypeParameterRestriction>
+      end
+
+      rule parameter_name
+        !(with/accepts/restricts/as/term) id s
+        { def value; id.text_value; end }
+      end
+
+      rule parameter_literal
+	number
+	/   # We need the text_value of a string here, not the result of parsing it
+	string { def value; text_value; end }
       end
 
       rule unit_definition

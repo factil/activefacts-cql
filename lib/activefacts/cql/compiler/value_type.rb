@@ -99,7 +99,8 @@ module ActiveFacts
         end
 
         def compile
-          length, scale = *@parameters
+          ordered_parameters, named_parameters = @parameters.partition{|p| Integer === p}
+          length, scale = *ordered_parameters
 
           # Create the base type unless it already exists:
           base_type = nil
@@ -170,6 +171,39 @@ module ActiveFacts
           # Apply a context note:
           if @context_note
             @context_note.compile(@constellation, vt)
+          end
+
+          # Apply named parameter (definitions, restrictions, and settings):
+          named_parameters.each do |(kind, name, *rest)|
+            vtp = vt.all_value_type_parameter.detect{|vtp| vtp.name == name}
+            restrictions = nil
+            case kind
+            when :definition
+              raise "You may not redefine parameter #{name} of {#vt.name}" if vtp
+              parameter_value_type_name = rest.shift.term
+              parameter_value_type = @vocabulary.valid_value_type_name(parameter_value_type_name)
+              raise "Type #{parameter_value_type_name} for parameter #{name} of #{vt.name} is not defined" unless parameter_value_type
+              vtp = @constellation.ValueTypeParameter(value_type: vt, name: name, parameter_value_type: parameter_value_type)
+              restrictions = rest[0][:ranges]
+
+            when :restriction
+              restrictions = rest[0]
+
+            when :setting
+              raise "parameter #{name} of {#vt.name} is not defined" unless vtp
+              # A Setting is a single-valued restriction
+              restrictions = [rest[0]]
+            else
+              raise "AST error: unknown valuetype parameter #{kind}"
+            end
+
+            if restrictions
+              restrictions.each do |restriction|
+                raise "Ranges are not allowed in value type parameters" if Array === restriction
+                value = assert_literal_value restriction
+                @constellation.ValueTypeParameterRestriction(value_type: vt, value_type_parameter: vtp, value: value)
+              end
+            end
           end
 
           vt

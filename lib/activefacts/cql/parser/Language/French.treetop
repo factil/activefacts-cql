@@ -256,6 +256,7 @@ module ActiveFacts
       rule according_to 'selon' !alphanumeric end 
       rule acyclic 'acyclique' !alphanumeric end
       rule alias 'alias' !alphanumeric end 
+      rule accepts 'accepte' !alphanumeric end
       rule and 'et' !alphanumeric end
       rule antisymmetric 'antisymmetric' !alphanumeric end
       rule approximately 'environ' !alphanumeric end            # REVISIT: google translate
@@ -291,6 +292,8 @@ module ActiveFacts
       rule personal 'personelle' !alphanumeric end 
       rule radix_point ',' end
       rule reflexive 'réflexive' !alphanumeric end
+      rule restricted 'limité' !alphanumeric s end
+      rule restricts 'limit' [ée] !alphanumeric s end
       rule returning 'retour' !alphanumeric end
       rule separate 'distincte' !alphanumeric end
       rule schema 'schema' !alphanumeric end
@@ -312,6 +315,7 @@ module ActiveFacts
       rule vocabulary 'vocabulaire' !alphanumeric end 
       rule where 'où' !alphanumeric end 
       rule who 'qui' !alphanumeric end 
+      rule with 'avec' !alphanumeric end 
 
     end
   end
