@@ -175,22 +175,30 @@ module ActiveFacts
 
           # Apply named parameter (definitions, restrictions, and settings):
           named_parameters.each do |(kind, name, *rest)|
-            vtp = vt.all_value_type_parameter.detect{|vtp| vtp.name == name}
+            # Look up an existing definition of the parameter:
+            vtp = nil
+            vt.supertypes_transitive.detect do |st|
+              vtp = st.all_value_type_parameter.detect{|evtp| evtp.name == name}
+            end
+
             restrictions = nil
             case kind
             when :definition
-              raise "You may not redefine parameter #{name} of {#vt.name}" if vtp
-              parameter_value_type_name = rest.shift.term
-              parameter_value_type = @vocabulary.valid_value_type_name(parameter_value_type_name)
-              raise "Type #{parameter_value_type_name} for parameter #{name} of #{vt.name} is not defined" unless parameter_value_type
-              vtp = @constellation.ValueTypeParameter(value_type: vt, name: name, parameter_value_type: parameter_value_type)
-              restrictions = rest[0][:ranges]
+              raise "You may not redefine parameter #{name} of #{vt.name}" if vtp
+              trace :vtp, "Defining parameter #{name} for #{vt.name}" do
+                parameter_value_type_name = rest.shift.term
+                parameter_value_type = @vocabulary.valid_value_type_name(parameter_value_type_name)
+                raise "Type #{parameter_value_type_name} for parameter #{name} of #{vt.name} is not defined" unless parameter_value_type
+                vtp = @constellation.ValueTypeParameter(value_type: vt, name: name, parameter_value_type: parameter_value_type)
+                restrictions = rest[0][:ranges]
+              end
 
             when :restriction
+              raise "parameter #{name} of #{vt.name} is not defined" unless vtp
               restrictions = rest[0]
 
             when :setting
-              raise "parameter #{name} of {#vt.name} is not defined" unless vtp
+              raise "parameter #{name} of #{vt.name} is not defined" unless vtp
               # A Setting is a single-valued restriction
               restrictions = [rest[0]]
             else
@@ -198,10 +206,12 @@ module ActiveFacts
             end
 
             if restrictions
-              restrictions.each do |restriction|
-                raise "Ranges are not allowed in value type parameters" if Array === restriction
-                value = assert_literal_value restriction
-                @constellation.ValueTypeParameterRestriction(value_type: vt, value_type_parameter: vtp, value: value)
+              trace :vtp, "Restricting parameter #{name}#{vt != vtp.value_type ? " (of #{vtp.value_type.name})" : ''} for #{vt.name} to #{restrictions.inspect}" do
+                restrictions.each do |restriction|
+                  raise "Ranges are not allowed in value type parameters" if Array === restriction
+                  value = assert_literal_value restriction
+                  @constellation.ValueTypeParameterRestriction(value_type: vt, value_type_parameter: vtp, value: value)
+                end
               end
             end
           end
