@@ -258,7 +258,7 @@ module ActiveFacts
         begin
           node = parse(InputProxy.new(input, context, self), :index => @index)
           unless node 
-            raise failure_reason unless @index == input.size
+            raise failure_reason || "not all input was understood" unless @index == input.size
             return nil  # No input, or no more input
           end
           if @block

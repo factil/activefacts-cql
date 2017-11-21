@@ -99,27 +99,44 @@ module ActiveFacts
         end
 
         def compile
-          length, scale = *@parameters
+          ordered_parameters, named_parameters = @parameters.partition{|p| Integer === p}
+          length, scale = *ordered_parameters
 
           # Create the base type unless it already exists:
           base_type = nil
           if (@base_type_name != @name)
             unless base_type = @vocabulary.valid_value_type_name(@base_type_name)
               base_type = @constellation.ValueType(@vocabulary, @base_type_name, :concept => :new)
-              return base_type if @base_type_name == @name
             end
           end
 
           # Create and initialise the ValueType:
           vt = @vocabulary.valid_value_type_name(@name) ||
             @constellation.ValueType(@vocabulary, @name, :concept => :new)
+
+          # Apply independence:
           vt.is_independent = true if @pragmas.delete('independent')
+
+          # Apply pragmas:
           @pragmas.each do |p|
             @constellation.ConceptAnnotation(:concept => vt.concept, :mapping_annotation => p)
           end if @pragmas
-          vt.supertype = base_type if base_type
-          vt.length = length if length
-          vt.scale = scale if scale
+
+          # Apply supertype
+          if base_type and base_type != vt
+            raise "You may not change the supertype of #{vt.name} from #{vt.supertype.name} to #{base_type.name}" if vt.supertype && vt.supertype != base_type
+            vt.supertype = base_type
+          end
+
+          # Apply ordered parameters:
+          if length
+            raise "You may not change the length of #{vt.name} from #{vt.length} to #{length}" if vt.length && vt.length != length
+            vt.length = length
+          end
+          if scale
+            raise "You may not change the scale of #{vt.name} from #{vt.scale} to #{scale}" if vt.scale && vt.scale != scale
+            vt.scale = scale
+          end
           vt.transaction_phase = @auto_assigned_at
 
           unless @unit.empty?
@@ -140,16 +157,84 @@ module ActiveFacts
                 @constellation.Derivation(unit, base_unit).exponent = exponent
               end
             end
+            raise "You may not change the units of #{vt.name} from #{vt.unit.describe} to #{unit.describe}" if vt.unit && vt.unit != unit
             vt.unit = unit
           end
 
+          # Apply a value constraint:
           if @value_constraint
-            @value_constraint.constellation = @constellation
+            @value_constraint.constellation = @constellation  # Pass constellation to the value_constraint compiler
+            raise "You may not change the value constraint of #{vt.name} from #{vt.value_constraint.describe} to #{@value_constraint.describe}" if vt.value_constraint && vt.value_constraint != value_constraint
             vt.value_constraint = @value_constraint.compile
           end
 
+          # Apply a context note:
           if @context_note
             @context_note.compile(@constellation, vt)
+          end
+
+          # Apply named parameter (definitions, restrictions, and settings):
+          trace :vtp, "Applying named parameters for #{@name}" do
+            named_parameters.each do |(kind, name, *rest)|
+              # Look up an existing definition of the parameter:
+              vtp = nil
+              vt.supertypes_transitive.detect do |st|
+                vtp = st.all_value_type_parameter.detect{|evtp| evtp.name == name}
+              end
+
+              trace :vtp, "Applying #{kind} of named parameter #{name}" do
+                restrictions = nil
+                case kind
+                when :definition
+                  raise "You may not redefine parameter #{name} of #{vt.name}" if vtp
+                  trace :vtp, "Defining parameter #{name} for #{vt.name}" do
+                    parameter_value_type_name = rest.shift.term
+                    parameter_value_type = @vocabulary.valid_value_type_name(parameter_value_type_name)
+                    raise "Type #{parameter_value_type_name} for parameter #{name} of #{vt.name} is not defined" unless parameter_value_type
+                    vtp = @constellation.ValueTypeParameter(value_type: vt, name: name, parameter_value_type: parameter_value_type)
+                    restrictions = rest[0][:ranges]
+                  end
+
+                when :restriction
+                  raise "parameter #{name} of #{vt.name} is not defined" unless vtp
+                  restrictions = rest[0]
+
+                when :setting
+                  raise "parameter #{name} of #{vt.name} is not defined" unless vtp
+                  # A Setting is a single-valued restriction
+                  restrictions = [rest[0]]
+                else
+                  raise "AST error: unknown valuetype parameter #{kind}"
+                end
+
+                if restrictions
+                  vtprs = nil
+                  restricted_supertype = nil
+                  vt.supertypes_transitive.detect do |st|
+                    vtprs = st.all_value_type_parameter_restriction.select{|evtpr| evtpr.value_type_parameter == vtp}
+                    vtprs = nil if vtprs.empty?
+                    restricted_supertype = st
+                    trace :vtp, "Existing #{name} restriction on #{st.name} allows #{vt.name} to use #{vtprs.map(&:value).inspect}" if vtprs
+                    vtprs
+                  end
+
+                  if vtprs && vt == restricted_supertype
+                    raise "You can't change the existing restrictions on parameter #{name} of #{vt.name}"
+                  end
+
+                  trace :vtp, "Restricting parameter #{name}#{vt != vtp.value_type ? " (of #{vtp.value_type.name})" : ''} for #{vt.name} to #{restrictions.inspect}" do
+                    restrictions.each do |restriction|
+                      raise "Ranges are not allowed in value type parameters" if Array === restriction
+                      value = assert_literal_value restriction
+                      if vtprs && !vtprs.detect{|r| r.value == value}
+                        raise "value #{restriction} is restricted by #{vtprs[0].value_type.name} to #{vtprs.map(&:value).inspect}"
+                      end
+                      @constellation.ValueTypeParameterRestriction(value_type: vt, value_type_parameter: vtp, value: value)
+                    end
+                  end
+                end
+              end
+            end
           end
 
           vt

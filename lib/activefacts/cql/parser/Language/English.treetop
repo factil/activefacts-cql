@@ -225,7 +225,7 @@ module ActiveFacts
 
       rule agg_of of end
       rule agg_in in end
-      rule restricted_to 'restricted' s 'to' s !alphanumeric end
+      rule restricted_to restricted s 'to' s !alphanumeric end
       # any is optionally used in an identifying role_list
       rule any one / a end
 
@@ -254,6 +254,7 @@ module ActiveFacts
       rule some 'some' !alphanumeric end
 
       # >>>>>>>>>>>>>>>>>>>> External vocabulary <<<<<<<<<<<<<<<<<<<<
+      rule accepts 'accepts' !alphanumeric end
       rule according_to 'according' S to end
       rule acyclic 'acyclic' !alphanumeric end
       rule alias 'alias' !alphanumeric end
@@ -294,6 +295,8 @@ module ActiveFacts
       rule personal 'personal' !alphanumeric end
       rule radix_point '.' end
       rule reflexive 'reflexive' !alphanumeric end
+      rule restricted 'restricted' !alphanumeric end
+      rule restricts 'restricts' !alphanumeric end
       rule returning 'returning' !alphanumeric end
       rule schema 'schema' !alphanumeric end
       rule separate 'separate' !alphanumeric end
@@ -312,11 +315,12 @@ module ActiveFacts
       rule true 'true' !alphanumeric end
       rule version 'version' !alphanumeric end
       rule vocabulary 'vocabulary' !alphanumeric end
+      rule was 'was' !alphanumeric end
       rule when 'when' !alphanumeric end
       rule where 'where' !alphanumeric end
       rule which 'which' !alphanumeric end
-      rule was 'was' !alphanumeric end
       rule who 'who' !alphanumeric end
+      rule with 'with' !alphanumeric end
 
     end
   end

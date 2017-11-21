@@ -44,6 +44,24 @@ module ActiveFacts
           :term
         end
       end
+
+      module ValueTypeParameterSetting
+        def value
+          [:setting, parameter_name.value, literal.value]
+        end
+      end
+
+      module ValueTypeParameterDefinition
+        def value
+          [:definition, parameter_name.value, value_type.ast, vc.empty? ? nil : vc.ast]
+        end
+      end
+
+      module ValueTypeParameterRestriction
+        def value
+          [:restriction, parameter_name.value, range_list.ranges]
+        end
+      end
     end
   end
 end
