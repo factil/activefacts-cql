@@ -31,8 +31,8 @@ module ActiveFacts
       end
 
       rule prescan
-	informally_prescan
-	/
+        informally_prescan
+        /
         s each?
         s (
           term_definition_name mapping_pragmas entity_prefix
@@ -52,7 +52,7 @@ module ActiveFacts
         prescan_rest
         &{|s|
           # Wipe any terminal failures that were added:
-	  forget_failures_to_here
+          forget_failures_to_here
 
           # puts "========== prescan is complete on #{(s.map{|e|e.text_value}*" ").inspect} =========="
           false
@@ -61,16 +61,16 @@ module ActiveFacts
 
       rule informally_prescan
         informally s ',' s
-	  informal_description_subject_prescan s
+          informal_description_subject_prescan s
           informal_description_body
           informal_description_closer
       end
 
       rule informal_description_subject_prescan
-	each S term_definition_name       # Informal definition of an object type
-	/
-	when S phrase+ s ','		  # or a fact type; we can't forward-reference these
-					  # This could memoize a bad parse for 'phrase'!!!
+        each S term_definition_name       # Informal definition of an object type
+        /
+        when S phrase+ s ','              # or a fact type; we can't forward-reference these
+                                          # This could memoize a bad parse for 'phrase'!!!
       end
 
       # Do a first-pass mainly lexical analysis, looking for role name definitions and adjectives,
@@ -90,7 +90,7 @@ module ActiveFacts
           # / literal # REVISIT: Literals might contain "(as Foo)" and mess things up
           / range                           # Covers all numbers and strings
           / S                               # White space and comments, must precede / and *
-	  / .				    # Skip anything else, we want the prescan to finish
+          / [^;]                            # Skip anything else, we want the prescan to finish
         )* [?;] s
       end
 
