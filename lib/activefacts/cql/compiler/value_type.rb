@@ -208,13 +208,14 @@ module ActiveFacts
                 end
 
                 if restrictions
+                  # Find all ValueTypeParameterRestrictions for this parameter in this type's closest restricted supertype
                   vtprs = nil
                   restricted_supertype = nil
                   vt.supertypes_transitive.detect do |st|
                     vtprs = st.all_value_type_parameter_restriction.select{|evtpr| evtpr.value_type_parameter == vtp}
                     vtprs = nil if vtprs.empty?
                     restricted_supertype = st
-                    trace :vtp, "Existing #{name} restriction on #{st.name} allows #{vt.name} to use #{vtprs.map(&:value).inspect}" if vtprs
+                    trace :vtp, "Existing #{name} restriction on #{st.name} allows #{vt.name} to use #{vtprs.map(&:value_range).inspect}" if vtprs
                     vtprs
                   end
 
@@ -224,12 +225,18 @@ module ActiveFacts
 
                   trace :vtp, "Restricting parameter #{name}#{vt != vtp.value_type ? " (of #{vtp.value_type.name})" : ''} for #{vt.name} to #{restrictions.inspect}" do
                     restrictions.each do |restriction|
-                      raise "Ranges are not allowed in value type parameters" if Array === restriction
-                      value = assert_literal_value restriction
-                      if vtprs && !vtprs.detect{|r| r.value == value}
-                        raise "value #{restriction} is restricted by #{vtprs[0].value_type.name} to #{vtprs.map(&:value).inspect}"
+
+                      min, max = Array === restriction ? restriction : [restriction, restriction]
+                      value_range = @constellation.ValueRange(
+                        min && @constellation.Bound(:value => assert_literal_value(min), :is_inclusive => true),
+                        max && @constellation.Bound(:value => assert_literal_value(max), :is_inclusive => true)
+                      )
+
+                      # This restriction may not widen the supertype's restriction:
+                      if vtprs && !vtprs.detect{|r| r.value_range.includes?(value_range)}
+                        raise "value #{restriction} is restricted by #{vtprs[0].value_type.name} to #{vtprs.map(&:value_range).inspect}"
                       end
-                      @constellation.ValueTypeParameterRestriction(value_type: vt, value_type_parameter: vtp, value: value)
+                      @constellation.ValueTypeParameterRestriction(value_type: vt, value_type_parameter: vtp, value_range: value_range)
                     end
                   end
                 end

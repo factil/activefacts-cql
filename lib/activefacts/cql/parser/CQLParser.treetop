@@ -160,21 +160,32 @@ module ActiveFacts
 
       rule informal_description
         informally s ',' s
-          subject:(
-            signifier:each S term         # Informal definition of an object type
-            /
-            signifier:when S reading:phrase+ s ','       # or a fact type
-          ) s
-          text:(!(!. / '.' [ \t\r]* "\n") (string / .))*  # Allow . inside a string
-          (!. / '.' [ \t\r]* "\n")          # The description terminates in a fullstop at the end of a line, or EOF
+	  subject:informal_description_subject s
+          informal_description_body
+          informal_description_closer
         {
           def ast
             kind = subject.signifier.text_value.to_sym
             subject_name = (kind == :each ? subject.term.text_value : subject.reading.text_value)
             phrases = subject.reading.elements.map(&:ast) if kind == :when
-            Compiler::InformalDefinition.new(kind, subject_name, phrases, text.text_value)
+            Compiler::InformalDefinition.new(kind, subject_name, phrases, informal_description_body.text_value)
           end
         }
+      end
+
+      rule informal_description_subject
+	signifier:each S term         # Informal definition of an object type
+	/
+	signifier:when S reading:phrase+ s ','       # or a fact type
+      end
+
+      rule informal_description_body
+	(!informal_description_closer (string / .))*  # Allow . inside a string
+      end
+
+      # The description terminates in a fullstop at the end of a line, or EOF
+      rule informal_description_closer
+	(!. / '.' [ \t\r]* "\n")
       end
 
       rule constraint
