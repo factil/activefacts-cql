@@ -285,7 +285,9 @@ module ActiveFacts
       rule it 'it' !alphanumeric end
       rule its 'its' !alphanumeric end
       rule masculine 'masculine' !alphanumeric end
+      rule max 'max' !alphanumeric end
       rule maybe 'maybe' !alphanumeric end
+      rule min 'min' !alphanumeric end
       rule only 'only' !alphanumeric end
       rule or 'or' !alphanumeric end
       rule of 'of' !alphanumeric end

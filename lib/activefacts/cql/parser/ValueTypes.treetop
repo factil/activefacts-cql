@@ -85,9 +85,9 @@ module ActiveFacts
           parameter_name ':' s literal:parameter_literal
         ) <Parser::ValueTypeParameterSetting>
         /	# Define a new parameter
-        accepts s parameter_name as value_type:term s vc:value_constraint? <Parser::ValueTypeParameterDefinition>
+        accepts s parameter_name as value_type:term s vr:(restricted s to s parameter_restriction)? <Parser::ValueTypeParameterDefinition>
         /	# Restrict values for a parameter
-        restricts s parameter_name to s range_list <Parser::ValueTypeParameterRestriction>
+        restricts s parameter_name to s parameter_restriction <Parser::ValueTypeParameterRestriction>
       end
 
       rule parameter_name
@@ -99,6 +99,14 @@ module ActiveFacts
 	number
 	/   # We need the text_value of a string here, not the result of parsing it
 	string { def value; text_value; end }
+      end
+
+      rule parameter_restriction
+	range_list s
+	  { def values; range_list.ranges; end}
+	/
+	parameter_literal s direction:(min / max)? s
+	  { def values; [:value, parameter_literal.value, direction.text_value]; end}
       end
 
       rule unit_definition
