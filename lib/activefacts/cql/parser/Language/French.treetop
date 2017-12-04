@@ -283,7 +283,9 @@ module ActiveFacts
       rule is est end                   # Called from ObjectTypes.treetop in "is identified by"
       rule its ('sa' / 'son') !alphanumeric end
       rule masculine 'masculin' !alphanumeric end 
+      rule max 'max' !alphanumeric end
       rule maybe 'peut-être' !alphanumeric end                  # REVISIT: eventuellement = possibly?
+      rule min 'min' !alphanumeric end
       rule only 'que' !alphanumeric end                 # REVISIT: Used in constraints
       rule or 'ou' !alphanumeric end 
       rule ordering_prefix by s (ascending/descending)? s end

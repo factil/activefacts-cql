@@ -134,7 +134,7 @@ module ActiveFacts
               start_line = @string.line_of(node.interval.first)
               end_line = @string.line_of(node.interval.last-1)
               lines = start_line != end_line ? "s #{start_line}-#{end_line}" : " #{start_line.to_s}"
-              ne = StandardError.new("at line#{lines} #{e.message.strip}")
+              ne = StandardError.new("at line#{lines}, #{e.message.strip}")
               ne.set_backtrace(e.backtrace)
               raise ne
             end

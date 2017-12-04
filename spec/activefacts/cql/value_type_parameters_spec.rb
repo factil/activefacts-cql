@@ -28,6 +28,7 @@ def compile cql
       "#{vt.name}(#{vt.all_value_type_parameter_restriction.map{|vtpr| "#{vtpr.value_type_parameter.name}=#{vtpr.value_range}"}*', '})"
     end*"\n"
   rescue => e
+    # puts e.backtrace[0,8]*"\n\t"; debugger
     e.message
   end
 end
@@ -55,7 +56,7 @@ END
     # Changing the base restrictions disallows assignments that use the old value
     actual = compile(cql.sub(/{'ASCII'/, "{'ascii'"))
     # puts 'v'*40; puts actual; puts '^'*40
-    expected = %q{at line 10 value 'ASCII' is restricted by Name to [1..4, 'ascii'..'blarf', 'latin1', 'utf8']}
+    expected = %q{at line 10, Encoding of Company Name may not be set to 'ASCII' because Name restricts it to 1..4, 'ascii'..'blarf', 'latin1', 'utf8'}
     expect(actual).to be_like(expected), "Output '#{actual}' doesn't match expected"
   end
 
@@ -63,7 +64,7 @@ END
     # Changing the base restrictions disallows assignments that use the old value
     actual = compile(cql.sub(/Encoding: 4/, "Encoding: 5"))
     # puts 'v'*40; puts actual; puts '^'*40
-    expected = %q{at line 9 value 5 is restricted by Name to [1..4, 'ASCII'..'blarf', 'latin1', 'utf8']}
+    expected = %q{at line 9, Encoding of Farnarkle Name may not be set to 5 because Name restricts it to 1..4, 'ASCII'..'blarf', 'latin1', 'utf8'}
     expect(actual).to be_like(expected), "Output '#{actual}' doesn't match expected"
   end
 
@@ -71,7 +72,7 @@ END
     # Removing the word "Company" makes it look like we're re-assigning the restrictions on Name:
     actual = compile(cql.sub(%r{Company }, ""))
     # puts 'v'*40; puts actual; puts '^'*40
-    expected = %q{at line 10 You can't change the existing restrictions on parameter Encoding of Name}
+    expected = %q{at line 10, You can't change the existing restrictions on parameter Encoding of Name}
     expect(actual).to be_like(expected), "Output '#{actual}' doesn't match expected"
   end
 
@@ -79,7 +80,7 @@ END
     # Change the restriction on Personal Name:
     actual = compile(cql.sub(/{'latin1',/, "{'iso-8859-1',"))
     # puts 'v'*40; puts actual; puts '^'*40
-    expected = %q{at line 11 value 'iso-8859-1' is restricted by Name to [1..4, 'ASCII'..'blarf', 'latin1', 'utf8']}
+    expected = %q{at line 11, Encoding of Personal Name may not be set to 'iso-8859-1' because Name restricts it to 1..4, 'ASCII'..'blarf', 'latin1', 'utf8'}
     expect(actual).to be_like(expected), "Output '#{actual}' doesn't match expected"
   end
 

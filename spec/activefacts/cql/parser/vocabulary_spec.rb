@@ -2,7 +2,7 @@
 # ActiveFacts tests: Test the CQL parser by looking at its parse trees.
 # Copyright (c) 2008 Clifford Heath. Read the LICENSE file.
 #
-require_relative '../../../spec_helper'
+require 'spec_helper'
 
 describe "Vocabulary definitions" do
   Vocabularies = [

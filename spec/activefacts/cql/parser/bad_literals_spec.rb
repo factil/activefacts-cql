@@ -7,12 +7,12 @@ require 'spec_helper'
 describe "Parsing Invalid Numbers and Strings" do
   it "should fail to parse an octal number containing non-octal digits" do
     expect("aa is written as b(08);").
-    to fail_to_parse /Expected (.|\n)* at .* after aa is written as b\(0$/
+    to fail_to_parse /Expected one of .* after aa is written as b\($/
   end
 
   it "should fail to parse a hexadecimal number containing non-hexadecimal digits" do
     expect("aa is written as b(0xDice);").
-    to fail_to_parse /Expected \[0-9A-Fa-f\] at .* after aa is written as b\(0xD$/
+    to fail_to_parse /Expected one of .* after aa is written as b\($/
   end
 
   it "should fail to parse a negative number with an intervening space" do
@@ -47,27 +47,27 @@ describe "Parsing Invalid Numbers and Strings" do
 
   it "should fail to parse a number with illegal whitespace before the exponent" do
     expect("inch converts to 1 inch; aa is written as b() inch ^2 ; ").
-    to fail_to_parse /Expected .* after aa is written as b\(\) inch/
+    to fail_to_parse /Expected .* after aa is written as b\(\) $/
   end
 
   it "should fail to parse a number with illegal whitespace around the exponent" do
     expect("inch converts to 1 inch; aa is written as b() inch^ 2 ; ").
-    to fail_to_parse /Expected .* after aa is written as b\(\) inch/
+    to fail_to_parse /Expected .* after aa is written as b\(\) $/
   end
 
   it "should fail to parse a string with an illegal octal escape" do
     expect("aa is written as b() restricted to { '\\7a' };").
-    to fail_to_parse /Expected .* aa is written as b\(\) restricted to \{ '/
+    to fail_to_parse /Expected .* aa is written as b\(\) restricted to $/
   end
 
   it "should fail to parse a string with a control character" do
     expect("aa is written as b() restricted to { '\001' };").
-    to fail_to_parse /Expected .* aa is written as b\(\) restricted to \{ '/
+    to fail_to_parse /Expected .* aa is written as b\(\) restricted to $/
   end
 
   it "should fail to parse a string with a control character" do
     expect("aa is written as b() restricted to { '\n' };").
-    to fail_to_parse /Expected .* aa is written as b\(\) restricted to \{ '/
+    to fail_to_parse /Expected .* aa is written as b\(\) restricted to $/
   end
 
   it "should fail to parse a cross-typed range" do

@@ -53,13 +53,13 @@ module ActiveFacts
 
       module ValueTypeParameterDefinition
         def value
-          [:definition, parameter_name.value, value_type.ast, vc.empty? ? nil : vc.ast]
+          [:definition, parameter_name.value, value_type.ast, vr.empty? ? nil : vr.parameter_restriction.values]
         end
       end
 
       module ValueTypeParameterRestriction
         def value
-          [:restriction, parameter_name.value, range_list.ranges]
+          [:restriction, parameter_name.value, parameter_restriction.values]
         end
       end
     end
