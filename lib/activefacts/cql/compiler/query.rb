@@ -39,13 +39,16 @@ module ActiveFacts
         def build_step query, clause, roles_by_binding = {}, parent_variable = nil
           return unless clause.refs.size > 0  # Empty clause... really?
 
-          step = @constellation.Step(
-              query, query.all_step.size,
-              :fact_type => clause.fact_type,
-              :alternative_set => nil,
-              :is_disallowed => clause.certainty == false,
-              :is_optional => clause.certainty == nil
-            )
+          # A bare object type is a valid clause, but it contains no fact type hence no step
+          if clause.fact_type
+            step = @constellation.Step(
+                query, query.all_step.size,
+                :fact_type => clause.fact_type,
+                :alternative_set => nil,
+                :is_disallowed => clause.certainty == false,
+                :is_optional => clause.certainty == nil
+              )
+          end
 
           trace :query, "Creating Plays for #{clause.inspect} with #{clause.refs.size} refs" do
             is_input = true
