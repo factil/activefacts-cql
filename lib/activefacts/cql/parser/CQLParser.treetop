@@ -54,7 +54,8 @@ module ActiveFacts
       rule definition_body
         vocabulary_definition
         / import_definition
-        / prescan           # Always fails, but its side-effects are needed in the following
+       # Magic here to avoid a Treetop bug with sem-preds, which require a sequence (this doesn't need to make a sequence)
+        / '' &{|s| _nt_prescan; false }           # Always fails, but its side-effects are needed in the following
         / constraint
         / unit_definition   # REVISIT: Move this above the prescan?
         / object_type
