@@ -48,12 +48,12 @@ module ActiveFacts
         @pending_import_topic = nil
         @pending_import_role = ''
         @pending_import_file_name = ''
-        trace :file, "Parsing '#{@filename}'"
+        trace :file, "Parsing '#{@filepath}'"
       end
 
       def compile_file filepath
         old_filepath = @filepath
-        @filepath = filename
+        @filepath = filepath
         File.open(filepath) do |f|
           compile(f.read)
         end
