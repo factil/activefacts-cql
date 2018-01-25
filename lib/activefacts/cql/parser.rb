@@ -261,6 +261,10 @@ module ActiveFacts
             raise failure_reason || "not all input was understood" unless @index == input.size
             return nil  # No input, or no more input
           end
+          unless @vocabulary_seen || !node.ast
+            @vocabulary_seen = Compiler::Vocabulary === node.ast
+            raise "CQL files must begin with a vocabulary, schema or transform definition" unless @vocabulary_seen
+          end
           if @block
             @block.call(node)
           else
