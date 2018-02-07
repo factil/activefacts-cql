@@ -285,6 +285,7 @@ describe "Valid Numbers, Strings and Ranges" do
 
   before :each do
     @parser = TestParser.new
+    @parser.parse_all("schema test;", :definition)
   end
 
   ValidNumbersEtc.each do |c|

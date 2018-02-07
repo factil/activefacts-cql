@@ -16,6 +16,7 @@ describe "Value Types" do
 
   before :each do
     @parser = TestParser.new
+    @parser.parse_all("schema test;", :definition)
   end
 
   ValueTypes.each do |c|
