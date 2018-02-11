@@ -79,6 +79,7 @@ describe "Entity Types" do
 
   before :each do
     @parser = TestParser.new
+    @parser.parse_all("schema test;", :definition)
     @parser.parse_all("c is written as b;", :definition)
   end
 

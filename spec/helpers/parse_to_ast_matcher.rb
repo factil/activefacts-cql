@@ -15,6 +15,7 @@ RSpec::Matchers.define :parse_to_ast do |*expected_asts|
 
   match do |actual|
     @parser = TestParser.new
+    @parser.parse_all("schema test;", :definition)
     @result = @parser.parse_all(actual, :definition)
 
     # If the expected_asts is "false", treat this test as pending:

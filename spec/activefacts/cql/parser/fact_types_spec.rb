@@ -28,6 +28,7 @@ describe "Fact Types" do
 
   before :each do
     @parser = TestParser.new
+    @parser.parse_all("schema test;", :definition)
   end
 
   FactTypes.each do |c|
