@@ -14,14 +14,16 @@ Gem::Specification.new do |spec|
   spec.homepage      = "http://github.com/cjheath/activefacts-cql"
   spec.license       = "MIT"
 
-  spec.files         = `git ls-files -z`.split("\x0").reject { |f| f.match(%r{^(test|spec|features)/}) }
+  spec.files         = `git ls-files -z`.
+    split("\x0").
+    reject { |f| f.match(%r{^(test|spec|features)/}) }.
+    map{|file| file.sub(/\.treetop$/,'.rb')}
   spec.bindir        = "exe"
   spec.executables   = spec.files.grep(%r{^exe/}) { |f| File.basename(f) }
   spec.require_paths = ["lib"]
-  spec.extensions << 'lib/activefacts/cql/Rakefile'
 
   spec.add_development_dependency "bundler", ">= 1.10"
-  spec.add_development_dependency "rake", "~> 10.0"
+  spec.add_development_dependency "rake", "> 10"
   spec.add_development_dependency "rspec", "~> 3.3"
 
   spec.add_runtime_dependency "activefacts-metamodel", "~> 1", ">= 1.9.22"
