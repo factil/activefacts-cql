@@ -120,7 +120,7 @@ module ActiveFacts
         end
       end
 
-      class Vocabulary < Definition
+      class Schema < Definition
         def initialize name, is_transform, version_number
           @name = name
           @is_transform = is_transform

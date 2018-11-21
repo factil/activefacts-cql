@@ -262,7 +262,7 @@ module ActiveFacts
             return nil  # No input, or no more input
           end
           unless @vocabulary_seen || !node.ast
-            @vocabulary_seen = Compiler::Vocabulary === node.ast
+            @vocabulary_seen = Compiler::Schema === node.ast
             raise "CQL files must begin with a vocabulary, schema or transform definition" unless @vocabulary_seen
           end
           if @block

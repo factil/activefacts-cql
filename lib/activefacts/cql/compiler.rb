@@ -124,7 +124,7 @@ module ActiveFacts
                 topic_flood() if @topic
                 create_import_if_pending(value)
                 @topic = value
-              elsif ast.is_a?(Compiler::Vocabulary)
+              elsif ast.is_a?(Compiler::Schema)
                 topic_flood() if @topic
                 @vocabulary = value
                 @topic = @constellation.Topic(@vocabulary.name)
