@@ -75,12 +75,7 @@ module ActiveFacts
       end
 
       rule transform_definition
-        s transform S schema_name vn:version_number? s ';'
-        {
-          def ast
-            Compiler::Vocabulary.new(schema_name.value, true, vn.empty? ? nil : vn.value)
-          end
-        }
+        s transform S schema_name vn:version_number? s ';' <Parser::Transform>
       end
 
       rule schema_name
@@ -98,28 +93,18 @@ module ActiveFacts
         {
           def ast
             Compiler::Import.new(
-              import.input.parser, schema_name.value, i.empty? ? "topic" : i.value, vp.empty? ? nil : vp.value, alias_list.value
+              import.input.parser, schema_name.value, i.empty? ? "topic" : i.value, vp.empty? ? nil : vp.pattern.text_value, alias_list.value
             )
           end
         }
       end
 
       rule version_number
-        S version S version_number_string
-        {
-          def value
-            version_number_string.text_value
-          end
-        }
+        S version S value:version_number_string
       end
 
       rule version_pattern
-        S version S version_pattern_string
-        {
-          def value
-            version_pattern_string.text_value
-          end
-        }
+        S version S pattern:version_pattern_string
       end
 
       rule version_number_string

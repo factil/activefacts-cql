@@ -21,7 +21,13 @@ module ActiveFacts
 
       module Schema
         def ast
-          Compiler::Vocabulary.new(schema_name.value, false, vn.empty? ? nil : vn.value)
+          Compiler::Vocabulary.new(schema_name.value, false, vn.empty? ? nil : vn.value.text_value)
+        end
+      end
+
+      module Transform
+        def ast
+          Compiler::Vocabulary.new(schema_name.value, true, vn.empty? ? nil : vn.value.text_value)
         end
       end
 

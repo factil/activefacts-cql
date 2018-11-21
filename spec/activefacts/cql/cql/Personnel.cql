@@ -1,6 +1,6 @@
 // Example taken from Principles of Data Integration by Doan, Halevy and Ives
 
-schema Personnel;
+schema Personnel version 1.2.3-4.5;
 
 each ID is written as Auto Counter;
 each Addr is written as String;
