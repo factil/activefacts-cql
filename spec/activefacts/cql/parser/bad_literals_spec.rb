@@ -47,12 +47,12 @@ describe "Parsing Invalid Numbers and Strings" do
 
   it "should fail to parse a number with illegal whitespace before the exponent" do
     expect("inch converts to 1 inch; aa is written as b() inch ^2 ; ").
-    to fail_to_parse /Expected .* after aa is written as b\(\) $/
+    to fail_to_parse /Expected .* after /
   end
 
   it "should fail to parse a number with illegal whitespace around the exponent" do
     expect("inch converts to 1 inch; aa is written as b() inch^ 2 ; ").
-    to fail_to_parse /Expected .* after aa is written as b\(\) $/
+    to fail_to_parse /Expected .* after /
   end
 
   it "should fail to parse a string with an illegal octal escape" do
