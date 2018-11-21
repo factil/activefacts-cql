@@ -74,8 +74,9 @@ module ActiveFacts
       rule informal_description_subject_prescan
         each S term_definition_name       # Informal definition of an object type
         /
-        when S phrase+ s ','              # or a fact type; we can't forward-reference these
-                                          # This could memoize a bad parse for 'phrase'!!!
+        when S (noun_phrase / linking_word)+ s ','              # or a fact type
+					  # We can't forward-reference fact types;
+                                          # it could memoize a bad parse for 'noun_phrase'!!!
       end
 
       # Do a first-pass mainly lexical analysis, looking for role name definitions and adjectives,
@@ -183,7 +184,7 @@ module ActiveFacts
       end
 
       rule non_phrase
-        # These words are illegal in (but maybe ok following) a clause where a phrase is expected:
+        # These words are illegal in (but maybe ok following) a clause where a noun_phrase is expected:
         and
         / but
         / if

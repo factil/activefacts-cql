@@ -133,7 +133,7 @@ module ActiveFacts
         end
       end
 
-      module SimpleRole
+      module SimpleNounPhrase
         def ast
           if !q.empty? && q.quantifier.value
             quantifier = q.ast
