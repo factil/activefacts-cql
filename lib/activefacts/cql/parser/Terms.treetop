@@ -30,7 +30,12 @@ module ActiveFacts
           &{|e| input.context.object_type(e[2].value, "subtype") }
       end
 
+      # Prescan (with side-effects) then fail so we parse the text properly:
       rule prescan
+	prescan_anyway &{|s| false }
+      end
+
+      rule prescan_anyway
         informally_prescan
         /
         s each?

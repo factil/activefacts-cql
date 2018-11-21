@@ -1,0 +1,72 @@
+#
+#       ActiveFacts CQL Parser.
+#       Parse rules for Constraints
+#	The detailed verbalisations for constraints are language-specific.
+#
+# Copyright (c) 2018 Clifford Heath. Read the LICENSE file.
+#
+module ActiveFacts
+  module CQL
+    grammar Constraints
+      # Adding enforcement to a constraint makes it deontic
+      rule enforcement
+        s '(' s
+          otherwise s
+          action:id s   # An enforcement action, like SMS, email, log, alarm, etc.
+          agent:agent? s
+        ')' s
+          {
+            def ast; Compiler::Enforcement.new(action.text_value, agent.empty? ? nil : agent.text_value); end
+          }
+        /
+	null_enforcement
+      end
+
+      rule null_enforcement
+        ''
+          {
+            def ast; nil; end
+          }
+      end
+
+      # presence constraint:
+      rule presence_constraint
+        (each_occurs_in_clauses / either_or)
+        {
+          def ast
+            Compiler::PresenceConstraint.new c, enforcement.ast, clauses_ast, role_list_ast, quantifier_ast
+          end
+        }
+      end
+
+      # set (exclusion, mandatory exclusion, complex equality) constraint
+      rule set_constraint
+        (for_each_how_many / either_or_not_both)
+          {
+            def ast
+              Compiler::SetExclusionConstraint.new c, enforcement.ast, clauses_ast, role_list_ast, quantifier_ast
+            end
+          }
+      end
+
+      rule subset_constraint
+        (a_only_if_b / if_b_then_a)
+        {
+          def ast
+            Compiler::SubsetConstraint.new c, enforcement.ast, [clauses.ast, r2.ast]
+          end
+        }
+      end
+
+      rule equality_constraint
+        if_and_only_if
+        {
+          def ast
+            all_clauses = [clauses.ast, *tail.elements.map{|e| e.clauses.ast }]
+            Compiler::SetEqualityConstraint.new c, enforcement.ast, all_clauses
+          end
+        }
+      end
+    end
+  end
+end

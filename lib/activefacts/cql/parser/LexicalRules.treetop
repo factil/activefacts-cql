@@ -148,10 +148,6 @@ module ActiveFacts
         '0' [0-7]*
       end
 
-      rule mul_op
-        '/' / '%' / '*'
-      end
-
       rule id
         alpha alphanumeric*
         { def value; text_value; end }
