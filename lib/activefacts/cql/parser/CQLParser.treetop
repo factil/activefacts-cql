@@ -52,7 +52,13 @@ module ActiveFacts
       end
 
       rule statement
-          constraint_definition
+        ( # constraint definition group
+	  subset_constraint
+        / equality_constraint
+        / set_constraint
+        / presence_constraint
+        # REVISIT: These are always defined inline at present: / value_constraint
+	)
         / unit_definition
         / object_type
         / fact_type
@@ -60,14 +66,6 @@ module ActiveFacts
         / query
         / transform_rule
 	/ empty_statement
-      end
-
-      rule constraint_definition
-          subset_constraint
-        / equality_constraint
-        / set_constraint
-        / presence_constraint
-        # REVISIT: These are always defined inline at present: / value_constraint
       end
 
       rule schema_definition

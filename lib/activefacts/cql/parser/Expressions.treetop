@@ -35,6 +35,7 @@ module ActiveFacts
       end
 
       rule derived_variable
+	# REVISIT: Need to be able to include some/that here
         derived:term
 	s role_id:(role_name / subscript)?
         {
