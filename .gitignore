@@ -16,3 +16,7 @@ clj
 *.rej
 *.orig
 *.diff
+*.cql
+*.forml
+*.patch
+log
