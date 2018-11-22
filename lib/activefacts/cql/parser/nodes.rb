@@ -59,8 +59,13 @@ module ActiveFacts
       module AnonymousFactType
         def ast
           clauses_ast = query_clauses.ast
-          conditions_ast = !conditions.empty? ? conditions.a.ast : []
-          returning = respond_to?(:returning_clause) ? returning_clause.ast : nil
+          conditions_ast =
+            if !conditions.empty?
+              returning = conditions.returning_clause.ast if conditions.respond_to?(:returning_clause)
+              conditions.a.ast
+            else
+              []
+            end
           value_derivation = clauses_ast.detect{|r| r.is_equality_comparison}
           if !value_derivation and
               conditions_ast.empty? and

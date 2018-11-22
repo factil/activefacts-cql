@@ -24,8 +24,9 @@ module ActiveFacts
 
       rule anonymous_fact_type
         query_clauses
-	  conditions:((':' / where) s a:query_clauses s)?
-          returning_clause?
+	  conditions:((':' / where) s a:query_clauses s
+	    returning_clause?
+	  )?
         s ';' <Parser::AnonymousFactType>
       end
 
