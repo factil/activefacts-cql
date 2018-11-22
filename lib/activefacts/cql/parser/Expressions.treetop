@@ -21,7 +21,7 @@ module ActiveFacts
 
       rule factor
 	literal_factor
-        / derived_variable
+        / variable
 	/ parenthesised_expression
       end
 
@@ -34,7 +34,7 @@ module ActiveFacts
 	{ def ast; sum.ast; end }
       end
 
-      rule derived_variable
+      rule variable
 	# REVISIT: Need to be able to include some/that here
         derived:term
 	s role_id:(role_name / subscript)?

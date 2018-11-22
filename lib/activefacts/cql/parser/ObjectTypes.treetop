@@ -29,12 +29,12 @@ module ActiveFacts
           }
         m2:mapping_pragmas
         c2:context_note?
-        ec:entity_clauses?
+        ec:(where s query_clauses)?
         ';'
         {
           def ast
             name = term_definition_name.value
-            clauses_ast = ec.empty? ? [] : ec.ast
+            clauses_ast = ec.empty? ? [] : ec.query_clauses.ast
             pragmas = m1.value+m2.value
             pragmas << 'independent' if sup.independent
             context_note = !c.empty? ? c.ast : (!c2.empty? ? c2.ast : nil)
@@ -131,13 +131,6 @@ module ActiveFacts
         }
       end
 
-      rule unary_text
-        (s !any !non_phrase !term id)*
-        {
-          def node_type; :linking; end
-        }
-      end
-
       rule term_or_unary
         pre_text:unary_text s term post_text:unary_text s ss:subscript?
           {
@@ -161,6 +154,13 @@ module ActiveFacts
               Compiler::Reference.new(id.text_value, nil, nil, nil, nil, ss.empty? ? nil : ss.value)
             end
           }
+      end
+
+      rule unary_text
+        (s !any !non_phrase !term id)*
+        {
+          def node_type; :linking; end
+        }
       end
 
       rule mapping_pragmas
@@ -190,15 +190,6 @@ module ActiveFacts
         {   # A sequence of one or more words denoting a pragma:
           def value
             ([head]+tail.elements.map(&:id)).map(&:text_value)
-          end
-        }
-      end
-
-      rule entity_clauses
-        (':' / where) s query_clauses
-        {
-          def ast
-            query_clauses.ast
           end
         }
       end

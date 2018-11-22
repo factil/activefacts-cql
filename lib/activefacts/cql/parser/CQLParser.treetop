@@ -159,7 +159,7 @@ module ActiveFacts
       rule informal_description_subject
 	signifier:each S term         # Informal definition of an object type
 	/
-	signifier:when S reading:phrase+ s ','       # or a fact type
+	signifier:when S reading:(simple_noun_phrase / linking_word)+ s ','       # or a fact type
       end
 
       rule informal_description_body

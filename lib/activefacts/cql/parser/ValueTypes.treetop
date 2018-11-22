@@ -71,7 +71,7 @@ module ActiveFacts
       end
 
       rule parameter
-	number / named_parameter
+	ordered_parameter / named_parameter
       end
 
       rule ordered_parameter

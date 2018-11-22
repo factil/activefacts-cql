@@ -17,8 +17,10 @@ module ActiveFacts
       end
 
       rule fact_type
-        s each:(each)?	    # Chew the "each" or it will get accepted as a quantifier
-	name:(s term_definition_name mapping_pragmas is_where)?	  # Name of objectifying entity type
+	name:(
+	  s each?	    # Chew the "each" or it will get accepted as a quantifier
+	  s term_definition_name mapping_pragmas is_where
+	)?	  # Name of objectifying entity type
         anonymous_fact_type <Parser::FactType>
       end
 
@@ -53,7 +55,7 @@ module ActiveFacts
       end
 
       rule return
-        ordering_prefix? noun_phrase+
+        ordering_prefix? noun_phrase
       end
 
       rule qualified_clauses
@@ -146,7 +148,7 @@ module ActiveFacts
 
       rule contraction
         reading_contraction /
-        condition_contraction
+        comparison_contraction
       end
 
       rule reading_contraction
@@ -170,7 +172,7 @@ module ActiveFacts
         }
       end
 
-      rule condition_contraction
+      rule comparison_contraction
         noun_phrase pq:post_qualifiers? certainty s comparator s e2:expression
           !(noun_phrase / linking_word)	# The contracted_clauses must not continue here!
         {
@@ -234,28 +236,28 @@ module ActiveFacts
         simple_noun_phrase
       end
 
-      rule aggregate_operation
-	id
-      end
-
       rule aggregate
         aggregate_operation s agg_of s term_or_unary s agg_in s '(' qualified_clauses s ')' <Parser::Aggregate>
 	# REVISIT: Need examples to verify that qualified_clauses is the right level (not query_clauses, etc)
       end
 
-      rule role_quantifier
-        quantifier mapping_pragmas enforcement cn:context_note? <Parser::RoleQuantifier>
+      rule aggregate_operation
+	id
       end
 
       rule simple_noun_phrase
         q:role_quantifier?		  # e.g. "at most one"
-        player:derived_variable		  # e.g. "Height"
+        player:variable		          # e.g. "Height"
         lr:(
 	  literal u:unit?		  # e.g. "27 inches"
 	  / value_constraint enforcement  # e.g. "restricted to {1..4}"
 	)?
         oj:objectification_step?	  # "(in which <sub-expression>)"
         <Parser::SimpleNounPhrase>
+      end
+
+      rule role_quantifier
+        quantifier mapping_pragmas enforcement cn:context_note? <Parser::RoleQuantifier>
       end
 
       rule objectification_step

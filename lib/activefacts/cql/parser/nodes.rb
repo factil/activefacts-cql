@@ -40,17 +40,6 @@ module ActiveFacts
             pragmas = name.mapping_pragmas.value
             pragmas << 'independent' if name.is_where.independent
             ft.pragmas = pragmas
-          elsif !each.empty?
-            # Handle the implied mandatory constraint on the appropriate role
-            first_reading = ft.clauses[0]
-            refs = first_reading.refs
-            raise "Ambiguous 'each' implies mandatory on fact type of arity #{refs.size}" unless refs.size == 2
-            q = refs[-1].quantifier
-            if q
-              q.min = 1  # Make the existing quantifier mandatory
-            else
-              refs[-1].quantifier = q = Compiler::Quantifier.new(1, nil)
-            end
           end
           ft
         end

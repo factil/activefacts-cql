@@ -220,7 +220,7 @@ module ActiveFacts
       end
 
       rule negative_prefix
-        s it s is s not s the s case s that s
+        s it s is s not s (the s case / true) s that s
       end
 
       rule agg_of of end
