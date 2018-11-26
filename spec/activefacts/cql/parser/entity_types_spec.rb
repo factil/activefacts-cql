@@ -39,9 +39,6 @@ describe "Entity Types" do
     [ " aa is written as b ( ) ; e is identified by aa where d ; ",
       ["ValueType: aa is written as b;", "EntityType: e [{aa}] where [\"d\"];"]
     ],
-    [ "e is written as b; aa is identified by e where maybe d;",
-      ["ValueType: e is written as b;", "EntityType: aa [{e}] where [maybe \"d\"];"]
-    ],
   ]
 
   EntityTypes_Objectified = [

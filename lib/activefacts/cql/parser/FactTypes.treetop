@@ -119,6 +119,30 @@ module ActiveFacts
         }
       end
 
+      rule definition_clauses
+	definition_clause
+	tail:(',' s definition_clause)*
+	{
+	  def ast
+	    definition_clause.ast + tail.elements.flat_map{|e| e.definition_clause.ast(',') }
+	  end
+	}
+      end
+
+      rule definition_clause
+	clause:(noun_phrase / linking_word)+
+	pq:post_qualifiers? s context:context_note?
+	{
+	  def ast(conjunction = nil)
+
+	    phrase_asts = clause.elements.map(&:ast)
+	    clause = Compiler::Clause.new(phrase_asts, pq.empty? ? nil : pq.list, context.empty? ? nil : context.ast)
+	    clause.conjunction = conjunction
+	    [clause]
+	  end
+	}
+      end
+
       rule contracted_clauses
         comparison
         /
