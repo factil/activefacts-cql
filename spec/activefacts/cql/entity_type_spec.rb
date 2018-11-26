@@ -167,6 +167,24 @@ describe "When compiling an entity type, " do
           PreferredIdentifierRolePlayedBy('Thong'),
     ],
 
+    [
+      %q{Thong is written as String;},
+      %q{Thing is identified by Thong where Thing has one Thong that is of at most one Thing;},
+      SingleFact() do |fact_type|
+        Readings(fact_type).size.should == 2
+        PresenceConstraints(fact_type).size.should == 2
+      end,
+      ObjectType('Thong') do |object_type|
+        object_type.class.should == ActiveFacts::Metamodel::ValueType
+        # REVISIT: Figure out how WrittenAs can access the constellation.
+        WrittenAs('String')
+      end,
+      ObjectTypeCount(2+BaseObjectTypes),
+      ObjectType('Thing'),
+        PreferredIdentifier(1),
+          PreferredIdentifierRolePlayedBy('Thong'),
+    ],
+
     [ # Auto-create Id and Thing Id:
       %q{Thing is identified by its Id;},
       SingleFact() do |fact_type|

@@ -25,6 +25,11 @@ module ActiveFacts
           @phrases.select{|r| r.is_a?(ActiveFacts::CQL::Compiler::Reference)}
         end
 
+        def prepend_ref ref
+          @phrases.prepend ref
+          ref.clause = self
+        end
+
         # A clause that contains only the name of a ObjectType and no literal or reading text
         # refers only to the existence of that ObjectType (as opposed to an instance of the object_type).
         def is_existential_type

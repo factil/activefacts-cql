@@ -130,15 +130,24 @@ module ActiveFacts
       end
 
       rule definition_clause
-	clause:(noun_phrase / linking_word)+
+	phrases:(!contraction phrase:(noun_phrase / linking_word))+
 	pq:post_qualifiers? s context:context_note?
+	contraction:reading_contraction?
 	{
 	  def ast(conjunction = nil)
+	    contracted_noun, qualifiers, *contracted_clauses = *(
+	      if contraction.empty?
+		[ nil, (pq.empty? ? nil : pq.list) ]
+	      else
+		contraction.ast
+	      end
+	    )
 
-	    phrase_asts = clause.elements.map(&:ast)
-	    clause = Compiler::Clause.new(phrase_asts, pq.empty? ? nil : pq.list, context.empty? ? nil : context.ast)
+	    phrase_asts = phrases.elements.map{|p| p.phrase.ast}
+	    phrase_asts.push contracted_noun if contracted_noun
+	    clause = Compiler::Clause.new(phrase_asts, qualifiers, context.empty? ? nil : context.ast)
 	    clause.conjunction = conjunction
-	    [clause]
+	    [clause] + contracted_clauses
 	  end
 	}
       end
@@ -184,7 +193,7 @@ module ActiveFacts
             # * attach the qualifiers
             clauses_ast = contracted_clauses.ast
             clauses_ast[0].conjunction = conjunction.text_value
-            clauses_ast[0].phrases.unshift(noun_phrase.ast)
+            clauses_ast[0].prepend_ref(noun_phrase.ast)
             clauses_ast[0].certainty = certainty.value
 
             # A contraction returns an array containing:
