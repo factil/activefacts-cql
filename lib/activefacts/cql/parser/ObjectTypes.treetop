@@ -29,12 +29,12 @@ module ActiveFacts
           }
         m2:mapping_pragmas
         c2:context_note?
-        ec:(where s definition_clauses)?
+        ec:(where s reading_clauses)?
         ';'
         {
           def ast
             name = term_definition_name.value
-            clauses_ast = ec.empty? ? [] : ec.definition_clauses.ast
+            clauses_ast = ec.empty? ? [] : ec.reading_clauses.ast
             pragmas = m1.value+m2.value
             pragmas << 'independent' if sup.independent
             context_note = !c.empty? ? c.ast : (!c2.empty? ? c2.ast : nil)

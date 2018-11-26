@@ -25,7 +25,7 @@ module ActiveFacts
       end
 
       rule anonymous_fact_type
-        query_clauses
+        reading_clauses
 	  conditions:((':' / where) s a:query_clauses s
 	    returning_clause?
 	  )?
@@ -98,17 +98,17 @@ module ActiveFacts
         }
       end
 
-      rule definition_clauses
-	definition_clause
-	tail:(',' s definition_clause)*
+      rule reading_clauses
+	reading_clause
+	tail:(',' s reading_clause)*
 	{
 	  def ast
-	    definition_clause.ast + tail.elements.flat_map{|e| e.definition_clause.ast(',') }
+	    reading_clause.ast + tail.elements.flat_map{|e| e.reading_clause.ast(',') }
 	  end
 	}
       end
 
-      rule definition_clause
+      rule reading_clause
 	phrases:(!contraction phrase:(noun_phrase / linking_word))+
 	pq:post_qualifiers? s context:context_note?
 	contraction:reading_contraction?

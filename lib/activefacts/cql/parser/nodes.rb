@@ -72,7 +72,7 @@ module ActiveFacts
 
       module AnonymousFactType
         def ast
-          clauses_ast = query_clauses.ast
+          clauses_ast = reading_clauses.ast
           conditions_ast =
             if !conditions.empty?
               returning = conditions.returning_clause.ast if conditions.respond_to?(:returning_clause)
