@@ -87,7 +87,7 @@ module ActiveFacts
       end
 
       rule clauses
-	# REVISIT: We should contract on "or" as well:
+	# REVISIT: We cannot contract on "or" as well, as this is used in either/or constraints
         contracted_clauses s tail:( and s contracted_clauses s )*
         {
           def ast
@@ -146,7 +146,7 @@ module ActiveFacts
             asts = elements.map{ |r| r.ast }
             contracted_clauses = []
             qualifiers = []
-            if asts[-1].is_a?(Array)        # A contraction (Array of [noun_phrase, qualifiers, *clauses])
+            if asts[-1].is_a?(Array)        # A contraction (Array of [noun_phrase, qualifiers, *contracted_clauses])
               contracted_clauses = asts.pop         # Pull off the contracted_clauses
               contracted_noun_phrase = contracted_clauses.shift
               qualifiers = contracted_clauses.shift
