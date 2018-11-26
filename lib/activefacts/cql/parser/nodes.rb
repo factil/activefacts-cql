@@ -45,6 +45,31 @@ module ActiveFacts
         end
       end
 
+      module QueryClauses
+        def ast
+          clauses_ast = qualified_clauses.ast
+          ftail.elements.each{|e|
+            conjunction = e.conjunction.text_value
+            # conjunction = 'and' if conjunction == ','   # ',' means AND, but disallows left-contractions
+            clauses_ast += e.qualified_clauses.ast(conjunction)
+          }
+          clauses_ast
+        end
+      end
+
+      module QualifiedClauses
+        def ast(conjunction = nil)
+          r = contracted_clauses.ast  # An array of clause asts
+          r[0].conjunction = conjunction
+          # pre-qualifiers apply to the first clause, post_qualifiers and context_note to the last
+          # REVISIT: This may be incorrect where the last is a nested clause
+          r[0].certainty = certainty.value
+          r[-1].qualifiers += p.list unless p.empty?
+          r[-1].context_note = c.ast unless c.empty?
+          r
+        end
+      end
+
       module AnonymousFactType
         def ast
           clauses_ast = query_clauses.ast
