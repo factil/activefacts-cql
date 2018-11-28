@@ -20,3 +20,5 @@ clj
 *.forml
 *.patch
 log
+.byebug_history
+*-hide

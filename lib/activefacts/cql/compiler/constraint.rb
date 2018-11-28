@@ -104,7 +104,7 @@ module ActiveFacts
         def warn_ignored_queries
           # Warn about ignored queries
           @clauses_lists.each do |clauses_list|
-            fact_types = clauses_list.map{|clauses| (rr = clauses.refs[0].role_ref) && rr.role.fact_type}.compact.uniq
+            fact_types = clauses_list.map{|clauses| (rr = clauses.nps[0].role_ref) && rr.role.fact_type}.compact.uniq
             if fact_types.size > 1
               raise "------->>>> join ignored in #{self.class}: #{fact_types.map{|ft| ft.preferred_reading.expand}*' and '}"
             end
@@ -116,28 +116,28 @@ module ActiveFacts
           trace :binding, "Loose binding on #{self.class.name}" do
             @clauses_lists.each do |clauses_list|
               clauses_list.each do |clause|
-                clause.refs.each_with_index do |ref, i|
-                  next if ref.binding.refs.size > 1
+                clause.nps.each_with_index do |np, i|
+                  next if np.binding.nps.size > 1
 #                  if clause.side_effects && !clause.side_effects.role_side_effects[i].residual_adjectives
-#                    trace :binding, "Discounting #{ref.inspect} as needing loose binding because it has no residual_adjectives"
+#                    trace :binding, "Discounting #{np.inspect} as needing loose binding because it has no residual_adjectives"
 #                    next
 #                  end
-                  # This ref didn't match any other ref. Have a scout around for a suitable partner
+                  # This np didn't match any other np. Have a scout around for a suitable partner
                   candidates = @context.bindings.
                     select do |key, binding|
-                      binding.player == ref.binding.player and
-                        binding != ref.binding and
-                        binding.role_name == ref.binding.role_name and  # Both will be nil if they match
+                      binding.player == np.binding.player and
+                        binding != np.binding and
+                        binding.role_name == np.binding.role_name and  # Both will be nil if they match
                         # REVISIT: Don't bind to a binding with a role occurrence in the same clause
-                        !binding.refs.detect{|vr|
+                        !binding.nps.detect{|vr|
                           x = vr.clause == clause
-                          # puts "Discounting binding #{binding.inspect} as a match for #{ref.inspect} because it's already bound to a player in #{ref.clause.inspect}" if x
+                          # puts "Discounting binding #{binding.inspect} as a match for #{np.inspect} because it's already bound to a player in #{np.clause.inspect}" if x
                           x
                         }
                     end.map{|k,b| b}
                   next if candidates.size != 1  # Fail
-                  trace :binding, "Loose binding #{ref.inspect} to #{candidates[0].inspect}"
-                  ref.rebind_to(@context, candidates[0].refs[0])
+                  trace :binding, "Loose binding #{np.inspect} to #{candidates[0].inspect}"
+                  np.rebind_to(@context, candidates[0].nps[0])
                 end
               end
             end
@@ -147,28 +147,28 @@ module ActiveFacts
         def loose_bind
           # Apply loose binding over applicable @roles:
           trace :binding, "Check for loose bindings on #{@roles.size} roles in #{self.class.name}" do
-            @roles.each do |ref|
-              if ref.binding.refs.size < @clauses_lists.size+1
-                trace :binding, "Insufficient bindings for #{ref.inspect} (#{ref.binding.refs.size}, expected #{@clauses_lists.size+1}), attempting loose binding" do
+            @roles.each do |np|
+              if np.binding.nps.size < @clauses_lists.size+1
+                trace :binding, "Insufficient bindings for #{np.inspect} (#{np.binding.nps.size}, expected #{@clauses_lists.size+1}), attempting loose binding" do
                   @clauses_lists.each do |clauses_list|
                     candidates = []
                     next if clauses_list.
                       detect do |clause|
                         trace :binding, "Checking #{clause.inspect}"
-                        clause.refs.
+                        clause.nps.
                           detect do |vr|
-                            already_bound = vr.binding == ref.binding
-                            if !already_bound && vr.player == ref.player
+                            already_bound = vr.binding == np.binding
+                            if !already_bound && vr.player == np.player
                               candidates << vr
                             end
                             already_bound
                           end
                       end
-                    trace :binding, "Attempting loose binding for #{ref.inspect} in #{clauses_list.inspect}, from the following candidates: #{candidates.inspect}"
+                    trace :binding, "Attempting loose binding for #{np.inspect} in #{clauses_list.inspect}, from the following candidates: #{candidates.inspect}"
 
                     if candidates.size == 1
-                      trace :binding, "Rebinding #{candidates[0].inspect} to #{ref.inspect}"
-                      candidates[0].rebind_to(@context, ref)
+                      trace :binding, "Rebinding #{candidates[0].inspect} to #{np.inspect}"
+                      candidates[0].rebind_to(@context, np)
                     end
                   end
                 end
@@ -189,35 +189,35 @@ module ActiveFacts
       end
 
       class PresenceConstraint < Constraint
-        def initialize context_note, enforcement, clauses_lists, refs, quantifier
+        def initialize context_note, enforcement, clauses_lists, nps, quantifier
           super context_note, enforcement, clauses_lists
-          @refs = refs || []
+          @nps = nps || []
           @quantifier = quantifier
         end
 
         def compile
           @clauses = @clauses_lists.map do |clauses_list|
             raise "REVISIT: join presence constraints not supported yet" if clauses_list.size > 1 or
-              clauses_list.detect{|clause| clause.refs.detect{|vr| vr.nested_clauses } }
+              clauses_list.detect{|clause| clause.nps.detect{|vr| vr.nested_clauses } }
             clauses_list[0]
           end
 
-          bind_clauses @refs
+          bind_clauses @nps
 
-          if @refs.size > 0
+          if @nps.size > 0
             bind_constrained_roles
           else
             cb = common_bindings
             raise "Either/or must have only one duplicated role, not #{cb.inspect}" unless cb.size == 1
-            @refs = cb[0].refs.reverse # REVISIT: Should have order these by clause, not like this
+            @nps = cb[0].nps.reverse # REVISIT: Should have order these by clause, not like this
           end
 
           role_sequence = @constellation.RoleSequence(:new)
-          @refs.each do |ref|
-            raise "The constrained role #{ref.inspect} was not found in the invoked fact types" if ref.binding.refs.size == 1
-            (ref.binding.refs-[ref]).each do |ref|
-              role = (ref.role_ref && ref.role_ref.role) || ref.role
-              raise "FactType role not found for #{ref.inspect}" unless role
+          @nps.each do |np|
+            raise "The constrained role #{np.inspect} was not found in the invoked fact types" if np.binding.nps.size == 1
+            (np.binding.nps-[np]).each do |np|
+              role = (np.role_ref && np.role_ref.role) || np.role
+              raise "FactType role not found for #{np.inspect}" unless role
               @constellation.RoleRef(role_sequence, role_sequence.all_role_ref.size, :role => role)
             end
           end
@@ -249,23 +249,23 @@ module ActiveFacts
         end
 
         def bind_constrained_roles
-          @refs.each do |ref|
-            if ref.binding.refs.size == 1
+          @nps.each do |np|
+            if np.binding.nps.size == 1
               # Apply loose binding over the constrained roles
               candidates =
                 @clauses.map do |clause|
-                  clause.refs.select{ |vr| vr.player == ref.player }
+                  clause.nps.select{ |vr| vr.player == np.player }
                 end.flatten
               if candidates.size == 1
-                trace :binding, "Rebinding #{ref.inspect} to #{candidates[0].inspect} in presence constraint"
-                ref.rebind_to(@context, candidates[0])
+                trace :binding, "Rebinding #{np.inspect} to #{candidates[0].inspect} in presence constraint"
+                np.rebind_to(@context, candidates[0])
               end
             end
           end
         end
 
         def to_s
-          "#{super} #{@quantifier.min}-#{@quantifier.max} over (#{@refs.map{|vr| vr.inspect}*', '})"
+          "#{super} #{@quantifier.min}-#{@quantifier.max} over (#{@nps.map{|vr| vr.inspect}*', '})"
         end
       end
 
@@ -285,7 +285,7 @@ module ActiveFacts
             # Does this clauses_list involve a query?
             if clauses_list.size > 1 or
               clauses_list.detect do |clause|
-                clause.refs.detect{|ref| ref.nested_clauses } or
+                clause.nps.detect{|np| np.nested_clauses } or
                 clause.includes_literals
               end
 
@@ -319,11 +319,11 @@ module ActiveFacts
               @common_bindings.each do |binding|
                 roles = clauses_list.
                   map do |clause|
-                    clause.refs.detect{|vr| vr.binding == binding }
+                    clause.nps.detect{|vr| vr.binding == binding }
                   end.
                   compact.  # A query clause will probably not have the common binding
-                  map do |ref|
-                    ref.role_ref && ref.role_ref.role or ref.role
+                  map do |np|
+                    np.role_ref && np.role_ref.role or np.role
                   end.
                   compact
                 # REVISIT: Should use clause side effects to preserve residual adjectives here.
@@ -568,4 +568,3 @@ module ActiveFacts
     end
   end
 end
-

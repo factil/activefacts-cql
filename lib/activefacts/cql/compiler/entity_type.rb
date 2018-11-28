@@ -99,7 +99,7 @@ module ActiveFacts
           @identification.map do |id|
             if id.is_a?(NounPhrase)
               binding = id.binding
-              roles = binding.refs.map{|r|r.role || (rr=r.role_ref and rr.role)}.compact.uniq
+              roles = binding.nps.map{|r|r.role || (rr=r.role_ref and rr.role)}.compact.uniq
               raise "Looking for an occurrence of identifying role #{id.inspect}, but found #{roles.size == 0 ? "none" : roles.size}" if roles.size != 1
               roles[0]
             else
@@ -158,7 +158,7 @@ module ActiveFacts
           fact_types = []
           # Categorise the clauses into fact types according to the roles they play.
           @clauses.inject({}) do |hash, clause|
-            players_key = clause.refs.map{|vr| vr.key.compact}.sort
+            players_key = clause.nps.map{|vr| vr.key.compact}.sort
             (hash[players_key] ||= []) << clause
             hash
           end.each do |players_key, clauses|
@@ -182,7 +182,7 @@ module ActiveFacts
           any_matched = existing_clauses.size > 0
 
           operation = any_matched ? 'Objectifying' : 'Creating'
-          player_names = clauses[0].refs.map{|vr| vr.key.compact*'-'}
+          player_names = clauses[0].nps.map{|vr| vr.key.compact*'-'}
           trace :matching, "#{operation} fact type for #{clauses.size} clauses over (#{player_names*', '})" do
             if any_matched  # There's an existing fact type we must be objectifying
               fact_type = objectify_existing_fact_type(existing_clauses[0].fact_type)

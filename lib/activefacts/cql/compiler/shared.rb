@@ -12,7 +12,7 @@ module ActiveFacts
       # and one or more NounPhrases with no adjectives - this is called "loose binding".
       class Binding
         attr_reader :player             # The ObjectType (object type)
-        attr_reader :refs               # an array of the NounPhrases
+        attr_reader :nps               # an array of the NounPhrases
         attr_accessor :role_name
         attr_accessor :rebound_to       # Loose binding may set this to another binding
         attr_reader :variable
@@ -21,7 +21,7 @@ module ActiveFacts
         def initialize player, role_name = nil
           @player = player
           @role_name = role_name
-          @refs = []
+          @nps = []
         end
 
         def inspect
@@ -40,13 +40,13 @@ module ActiveFacts
           @variable = v   # A place for a breakpoint :)
         end
 
-        def add_ref ref
-          @refs << ref
-          ref
+        def add_np np
+          @nps << np
+          np
         end
 
-        def delete_ref ref
-          @refs.delete ref
+        def delete_np np
+          @nps.delete np
         end
       end
 

@@ -125,7 +125,7 @@ module ActiveFacts
             # Extract readings for link fact types
             @link_fact_type_clauses, @clauses =
               @clauses.partition do |clause|
-                clause.refs.size == 2 and clause.refs.detect{|ref| ref.player == @entity_type}
+                clause.nps.size == 2 and clause.nps.detect{|np| np.player == @entity_type}
               end
           end
 
@@ -200,10 +200,10 @@ module ActiveFacts
 
         def create_link_fact_type_readings(ifts)
           @link_fact_type_clauses.each do |clause|
-            #next false unless clause.refs.size == 2 and clause.refs.detect{|r| r.role.object_type == @entity_type }
-            other_ref = clause.refs.detect{|ref| ref.player != @entity_type}
+            #next false unless clause.nps.size == 2 and clause.nps.detect{|r| r.role.object_type == @entity_type }
+            other_np = clause.nps.detect{|np| np.player != @entity_type}
             ift = ifts.detect do |ift|
-              other_ref.binding.refs.map{|r| r.role}.include?(ift.implying_role)
+              other_np.binding.nps.map{|r| r.role}.include?(ift.implying_role)
             end
             unless ift
               raise "Clause #{clause} in unmatched in definition of objectified fact type #{@name}"
@@ -221,11 +221,11 @@ module ActiveFacts
 
         def project_clause_roles(clause)
           # Attach the clause's role references to the projected roles of the query
-          clause.refs.each_with_index do |ref, i|
-            role, play = @roles_by_binding[ref.binding]
-            raise "#{ref} must be a role projected from the conditions" unless role
-            raise "#{ref} has already-projected play!" if play.role_ref
-            ref.role_ref.play = play
+          clause.nps.each_with_index do |np, i|
+            role, play = @roles_by_binding[np.binding]
+            raise "#{np} must be a role projected from the conditions" unless role
+            raise "#{np} has already-projected play!" if play.role_ref
+            np.role_ref.play = play
           end
         end
 
@@ -233,8 +233,8 @@ module ActiveFacts
         def is_projected_role(rr)
           # rr is a RoleRef on one side of the comparison.
           # If its binding contains a reference from our readings, it's projected.
-          rr.binding.refs.detect do |ref|
-            @readings.include?(ref.reading)
+          rr.binding.nps.detect do |np|
+            @readings.include?(np.reading)
           end
         end
 
@@ -287,8 +287,8 @@ module ActiveFacts
 
           # If there's an existing presence constraint that can be converted into a PC, do that:
           @clauses.each do |clause|
-            ref = clause.refs[-1] or next
-            epc = ref.embedded_presence_constraint or next
+            np = clause.nps[-1] or next
+            epc = np.embedded_presence_constraint or next
             epc.max_frequency == 1 or next
             next if epc.enforcement
             trace :constraint, "Converting UC into PI for #{@fact_type.entity_type ? @fact_type.entity_type.name : fact_type.default_reading}"
@@ -344,12 +344,12 @@ module ActiveFacts
         end
 
         def verify_matching_roles
-          refs_by_clause_and_key = {}
-          clauses_by_refs =
+          nps_by_clause_and_key = {}
+          clauses_by_nps =
             @clauses.inject({}) do |hash, clause|
-              keys = clause.refs.map do |ref|
-                key = ref.key.compact
-                refs_by_clause_and_key[[clause, key]] = ref
+              keys = clause.nps.map do |np|
+                key = np.key.compact
+                nps_by_clause_and_key[[clause, key]] = np
                 key
               end.sort_by{|a| a.map{|k|k.to_s}}
               raise "Fact types may not have duplicate roles" if keys.uniq.size < keys.size
@@ -357,14 +357,14 @@ module ActiveFacts
               hash
             end
 
-          if clauses_by_refs.size != 1 and @conditions.empty?
+          if clauses_by_nps.size != 1 and @conditions.empty?
             # Attempt loose binding here; it might merge some Compiler::References to share the same Variables
-            variants = clauses_by_refs.keys
-            (clauses_by_refs.size-1).downto(1) do |m|   # Start with the last one
+            variants = clauses_by_nps.keys
+            (clauses_by_nps.size-1).downto(1) do |m|   # Start with the last one
               0.upto(m-1) do |l|                              # Try to rebind onto any lower one
                 common = variants[m]&variants[l]
-                clauses_l = clauses_by_refs[variants[l]]
-                clauses_m = clauses_by_refs[variants[m]]
+                clauses_l = clauses_by_nps[variants[l]]
+                clauses_m = clauses_by_nps[variants[m]]
                 l_keys = variants[l]-common
                 m_keys = variants[m]-common
                 trace :binding, "Try to collapse variant #{m} onto #{l}; diffs are #{l_keys.inspect} -> #{m_keys.inspect}"
@@ -374,16 +374,16 @@ module ActiveFacts
                   candidates = []
                   (0...m_keys.size).each do |j|
                     m_key = m_keys[j]
-                    l_ref = refs_by_clause_and_key[[clauses_l[0], l_key]]
-                    m_ref = refs_by_clause_and_key[[clauses_m[0], m_key]]
-                    trace :binding, "Can we match #{l_ref.inspect} (#{i}) with #{m_ref.inspect} (#{j})?"
-                    next if m_ref.player != l_ref.player
-                    if has_more_adjectives(m_ref, l_ref)
-                      trace :binding, "can rebind #{m_ref.inspect} to #{l_ref.inspect}"
-                      candidates << [m_ref, l_ref]
-                    elsif has_more_adjectives(l_ref, m_ref)
-                      trace :binding, "can rebind #{l_ref.inspect} to #{m_ref.inspect}"
-                      candidates << [l_ref, m_ref]
+                    l_np = nps_by_clause_and_key[[clauses_l[0], l_key]]
+                    m_np = nps_by_clause_and_key[[clauses_m[0], m_key]]
+                    trace :binding, "Can we match #{l_np.inspect} (#{i}) with #{m_np.inspect} (#{j})?"
+                    next if m_np.player != l_np.player
+                    if has_more_adjectives(m_np, l_np)
+                      trace :binding, "can rebind #{m_np.inspect} to #{l_np.inspect}"
+                      candidates << [m_np, l_np]
+                    elsif has_more_adjectives(l_np, m_np)
+                      trace :binding, "can rebind #{l_np.inspect} to #{m_np.inspect}"
+                      candidates << [l_np, m_np]
                     end
                   end
 
@@ -402,7 +402,7 @@ module ActiveFacts
                 else
                   # No point continuing, we failed on this one.
                   raise "All readings in a fact type definition must have matching role players, compare (#{
-                      clauses_by_refs.keys.map do |keys|
+                      clauses_by_nps.keys.map do |keys|
                         keys.map{|key| key*'-' }*", "
                       end*") with ("
                     })"

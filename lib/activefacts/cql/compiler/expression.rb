@@ -59,7 +59,7 @@ module ActiveFacts
 
         def identify_players_with_role_name context
           # Just recurse, there's no way (yet: REVISIT?) to add a role name to the result of an expression
-          refs.each { |o|
+          nps.each { |o|
             o.identify_players_with_role_name(context)
           }
           # As yet, an operation cannot have a role name:
@@ -68,21 +68,21 @@ module ActiveFacts
 
         def identify_other_players context
           # Just recurse, there's no way (yet: REVISIT?) to add a role name to the result of an expression
-          refs.each { |o|
+          nps.each { |o|
             o.identify_other_players(context)
           }
           identify_player context
         end
 
         def bind context
-          refs.each do |o|
+          nps.each do |o|
             o.bind context
           end
           name = result_type_name(context)
           @player = result_value_type(context, name)
           key = "#{name} #{object_id}"  # Every Operation result is a unique Binding
           @binding = (context.bindings[key] ||= Binding.new(@player))
-          @binding.refs << self
+          @binding.nps << self
           @binding
         end
 
@@ -102,13 +102,13 @@ module ActiveFacts
         end
 
         def match_existing_fact_type context
-          opnds = refs
-          result_ref = NounPhrase.new(@binding.player.name)
-          result_ref.player = @binding.player
-          result_ref.binding = @binding
-          @binding.refs << result_ref
+          opnds = nps
+          result_np = NounPhrase.new(@binding.player.name)
+          result_np.player = @binding.player
+          result_np.binding = @binding
+          @binding.nps << result_np
           clause_ast = Clause.new(
-            [result_ref, '='] +
+            [result_np, '='] +
               (opnds.size > 1 ? [opnds[0]] : []) +
               [operator, opnds[-1]]
           )
@@ -155,12 +155,12 @@ module ActiveFacts
           @operator, @e1, @e2, @certainty, @qualifiers = operator, e1, e2, certainty, []
         end
 
-        def refs
+        def nps
           [@e1, @e2]
         end
 
         def bind context
-          refs.each do |o|
+          nps.each do |o|
             o.bind context
           end
 
@@ -171,7 +171,7 @@ module ActiveFacts
           @player = result_value_type(context, name)
           key = "#{name} #{object_id}"  # Every Comparison result is a unique Binding
           @binding = (context.bindings[key] ||= Binding.new(@player))
-          @binding.refs << self
+          @binding.nps << self
           @binding
         end
 
@@ -232,7 +232,7 @@ module ActiveFacts
           @terms = terms
         end
 
-        def refs
+        def nps
           @terms
         end
 
@@ -287,7 +287,7 @@ module ActiveFacts
           @factors = factors
         end
 
-        def refs
+        def nps
           @factors
         end
 
@@ -345,7 +345,7 @@ module ActiveFacts
           '1/'
         end
 
-        def refs
+        def nps
           [@divisor]
         end
 
@@ -446,7 +446,7 @@ module ActiveFacts
           @factors = factors
         end
 
-        def refs
+        def nps
           @factors
         end
 
@@ -496,7 +496,7 @@ module ActiveFacts
           @factors = factors
         end
 
-        def refs
+        def nps
           @factors
         end
 
@@ -548,7 +548,7 @@ module ActiveFacts
           @false_value = false_value
         end
 
-        def refs
+        def nps
           [@condition, @true_value, @false_value]
         end
 
@@ -587,7 +587,7 @@ module ActiveFacts
           @aggregand = aggregand
         end
 
-        def refs
+        def nps
           [@operation, @aggregand]
         end
 
@@ -664,7 +664,7 @@ module ActiveFacts
           @binding || begin
             key = "#{@player.name} #{@literal}"
             @binding = (context.bindings[key] ||= Binding.new(@player))
-            @binding.refs << self
+            @binding.nps << self
           end
         end
 

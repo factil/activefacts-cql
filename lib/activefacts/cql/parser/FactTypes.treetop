@@ -172,7 +172,7 @@ module ActiveFacts
             # * attach the qualifiers
             clauses_ast = contracted_clauses.ast
             clauses_ast[0].conjunction = conjunction.text_value
-            clauses_ast[0].prepend_ref(noun_phrase.ast)
+            clauses_ast[0].prepend_np(noun_phrase.ast)
             clauses_ast[0].certainty = certainty.value
 
             # A contraction returns an array containing:

@@ -15,19 +15,19 @@ module ActiveFacts
 
         def initialize phrases, qualifiers = [], context_note = nil
           @phrases = phrases
-          refs.each { |ref| ref.clause = self }
+          nps.each { |np| np.clause = self }
           @certainty = true
           @qualifiers = qualifiers
           @context_note = context_note
         end
 
-        def refs
+        def nps
           @phrases.select{|r| r.is_a?(ActiveFacts::CQL::Compiler::NounPhrase)}
         end
 
-        def prepend_ref ref
-          @phrases.prepend ref
-          ref.clause = self
+        def prepend_np np
+          @phrases.prepend np
+          np.clause = self
         end
 
         # A clause that contains only the name of a ObjectType and no literal or reading text
@@ -91,21 +91,21 @@ module ActiveFacts
         end
 
         def identify_players_with_role_name context
-          refs.each do |ref|
-            ref.identify_players_with_role_name(context)
+          nps.each do |np|
+            np.identify_players_with_role_name(context)
           end
         end
 
         def identify_other_players context
-          refs.each do |ref|
-            ref.identify_other_players(context)
+          nps.each do |np|
+            np.identify_other_players(context)
             # Include players in nested clauses, if any
-            ref.nested_clauses.each{|clause| clause.identify_other_players(context)} if ref.nested_clauses
+            np.nested_clauses.each{|clause| clause.identify_other_players(context)} if np.nested_clauses
           end
         end
 
         def includes_literals
-          refs.detect{|ref| ref.literal || (ja = ref.nested_clauses and ja.detect{|jr| jr.includes_literals })}
+          nps.detect{|np| np.literal || (ja = np.nested_clauses and ja.detect{|jr| jr.includes_literals })}
         end
 
         def is_equality_comparison
@@ -113,7 +113,7 @@ module ActiveFacts
         end
 
         def bind context
-          role_names = refs.map{ |ref| ref.role_name }.compact
+          role_names = nps.map{ |np| np.role_name }.compact
 
           # Check uniqueness of role names and subscripts within this clause:
           role_names.each do |rn|
@@ -121,8 +121,8 @@ module ActiveFacts
             raise "Duplicate role #{rn.is_a?(Integer) ? "subscript" : "name"} '#{rn}' in clause"
           end
 
-          refs.each do |ref|
-            ref.bind context
+          nps.each do |np|
+            np.bind context
           end
         end
 
@@ -147,21 +147,21 @@ module ActiveFacts
         # no change is made to this Clause object - those will be done later.
         #
         def match_existing_fact_type context, options = {}
-          raise "Cannot match a clause that contains no object types for #{self.inspect}" if refs.size == 0
+          raise "Cannot match a clause that contains no object types for #{self.inspect}" if nps.size == 0
           raise "Internal error, clause already matched, should not match again" if @fact_type
 
           if is_naked_object_type
-            ref = refs[0]       # "There can be only one"
-            return true unless ref.nested_clauses
-            ref.nested_clauses.each do |nested|
+            np = nps[0]       # "There can be only one"
+            return true unless np.nested_clauses
+            np.nested_clauses.each do |nested|
               ft = nested.match_existing_fact_type(context)
               raise "Unrecognised fact type #{nested.display} nested under #{inspect}" unless ft
-              if (ft.entity_type == ref.player)
-                ref.objectification_of = ft
-                nested.objectified_as = ref
+              if (ft.entity_type == np.player)
+                np.objectification_of = ft
+                nested.objectified_as = np
               end
             end
-            raise "#{ref.inspect} contains objectification steps that do not objectify it" unless ref.objectification_of
+            raise "#{np.inspect} contains objectification steps that do not objectify it" unless np.objectification_of
             return true
           end
 
@@ -178,7 +178,7 @@ module ActiveFacts
           context.left_contraction_conjunction = new_conjunction ? nil : @conjunction
 
           phrases = @phrases
-          vrs = []+refs
+          vrs = []+nps
 
           # A left contraction is where the first player in the previous clause continues as first player of this clause
           contracted_left = false
@@ -187,7 +187,7 @@ module ActiveFacts
           right_insertion = nil
           supposed_roles = []   # Arrange to unbind incorrect noun_phrases supposed due to contraction
           contract_left = proc do
-            contracted_from = left_contract_this_onto.refs[0]
+            contracted_from = left_contract_this_onto.nps[0]
             contraction_player = contracted_from.player
             contracted_role = NounPhrase.new(
               term: contraction_player.name,
@@ -207,7 +207,7 @@ module ActiveFacts
           end
 
           contract_right = proc do
-            contracted_from = left_contract_this_onto.refs[-1]
+            contracted_from = left_contract_this_onto.nps[-1]
             contraction_player = contracted_from.player
             contracted_role = NounPhrase.new(
               term: contraction_player.name,
@@ -229,7 +229,7 @@ module ActiveFacts
             players = vrs.map{|vr| vr.player}
 
             if players.size == 0
-              can_contract_right = left_contract_this_onto.refs.size == 2
+              can_contract_right = left_contract_this_onto.nps.size == 2
               contract_left.call
               redo
             end
@@ -245,33 +245,33 @@ module ActiveFacts
               # Match existing fact types in nested clauses first:
               # (not for contractions) REVISIT: Why not?
               if !contracted_left
-                vrs.each do |ref|
-                  next if ref.is_a?(Operation)
-                  next unless steps = ref.nested_clauses and !steps.empty?
-                  ref.nested_clauses.each do |nested|
+                vrs.each do |np|
+                  next if np.is_a?(Operation)
+                  next unless steps = np.nested_clauses and !steps.empty?
+                  np.nested_clauses.each do |nested|
                     ft = nested.match_existing_fact_type(context)
                     raise "Unrecognised fact type #{nested.display}" unless ft
-                    if (ft && ft.entity_type == ref.player)
-                      ref.objectification_of = ft
-                      nested.objectified_as = ref
+                    if (ft && ft.entity_type == np.player)
+                      np.objectification_of = ft
+                      nested.objectified_as = np
                     end
                   end
-                  raise "#{ref.inspect} contains objectification steps that do not objectify it" unless ref.objectification_of
+                  raise "#{np.inspect} contains objectification steps that do not objectify it" unless np.objectification_of
                 end
               end
 
               # For each role player, find the compatible types (the set of all subtypes and supertypes).
               # For a player that's an objectification, we don't allow implicit supertype steps
               player_related_types =
-                vrs.zip(players).map do |ref, player|
-                  disallow_subtyping = ref && ref.objectification_of || options[:exact_type]
+                vrs.zip(players).map do |np, player|
+                  disallow_subtyping = np && np.objectification_of || options[:exact_type]
                   ((disallow_subtyping ? [] : player.supertypes_transitive) +
                     player.subtypes_transitive).uniq
                 end
 
               trace :matching, "Players must match '#{player_related_types.map{|pa| pa.map{|p|p.name}}.inspect}'"
 
-              start_obj = player_related_types[0] || [left_contract_this_onto.refs[-1].player]
+              start_obj = player_related_types[0] || [left_contract_this_onto.nps[-1].player]
               # The candidate fact types have the right number of role players of related types.
               # If any role is played by a supertype or subtype of the required type, there's an implicit subtyping steps
               # REVISIT: A double contraction results in player_related_types being empty here
@@ -368,7 +368,7 @@ module ActiveFacts
         # Find whether the phrases of this clause match the fact type reading,
         # which may require absorbing unmarked adjectives.
         #
-        # If it does match, make the required changes and set @ref to the matching role ref.
+        # If it does match, make the required changes and set @np to the matching role np.
         # Adjectives that were used to match are removed (and leaving any additional adjectives intact).
         #
         # Approach:
@@ -392,7 +392,7 @@ module ActiveFacts
           # because a free Party variable is required, but the join step is still disallowed.
           # REVISIT: I'll create the free variable when I implement some/that binding
           # REVISIT: the verbaliser will need to know about a negated step to a free variable
-          implicitly_negated = true if refs.detect{|ref| q = ref.quantifier and q.is_zero }
+          implicitly_negated = true if nps.detect{|np| q = np.quantifier and q.is_zero }
 
           trace :matching_fails, "Does '#{phrases.inspect}' match '#{reading.expand}'" do
             phrase_num = 0
@@ -519,7 +519,7 @@ module ActiveFacts
 =end
 
               residual_adjectives ||= role_has_residual_adjectives
-              if residual_adjectives && next_player_phrase.binding.refs.size == 1
+              if residual_adjectives && next_player_phrase.binding.nps.size == 1
                 # This makes matching order-dependent, because there may be no "other purpose"
                 # until another reading has been matched and the roles rebound.
                 trace :matching_fails, "Residual adjectives have no other purpose, so this match fails"
@@ -576,7 +576,7 @@ module ActiveFacts
               phrase = side_effect.phrase
 
               # We re-use the role_ref if possible (no extra adjectives were used, no rolename or step, etc).
-              trace :matching, "side-effect means binding #{phrase.inspect} matches role ref #{side_effect.role_ref.role.object_type.name}"
+              trace :matching, "side-effect means binding #{phrase.inspect} matches role np #{side_effect.role_ref.role.object_type.name}"
               phrase.role_ref = side_effect.role_ref
 
               changed = false
@@ -658,8 +658,8 @@ module ActiveFacts
                 # Otherwise we have to find the existing role via the Binding. This is pretty ugly.
                 unless phrase.role
                   # Find another binding for this phrase which already has a role_ref to the same fact type:
-                  ref = phrase.binding.refs.detect{|ref| ref.role_ref && ref.role_ref.role.fact_type == fact_type}
-                  role_ref = ref.role_ref
+                  np = phrase.binding.nps.detect{|np| np.role_ref && np.role_ref.role.fact_type == fact_type}
+                  role_ref = np.role_ref
                   phrase.role = role_ref.role
                 end
                 rr = constellation.RoleRef(@role_sequence, index, :role => phrase.role)
@@ -771,10 +771,10 @@ module ActiveFacts
         end
 
         def make_embedded_constraints vocabulary
-          refs.each do |ref|
-            next unless ref.quantifier
-            # puts "Quantifier #{ref.inspect} not implemented as a presence constraint"
-            ref.make_embedded_presence_constraint vocabulary
+          nps.each do |np|
+            next unless np.quantifier
+            # puts "Quantifier #{np.inspect} not implemented as a presence constraint"
+            np.make_embedded_presence_constraint vocabulary
           end
 
           if @qualifiers && @qualifiers.size > 0
@@ -796,7 +796,7 @@ module ActiveFacts
         end
 
         def is_naked_object_type
-          @phrases.size == 1 && refs.size == 1
+          @phrases.size == 1 && nps.size == 1
         end
 
       end
@@ -1033,14 +1033,14 @@ module ActiveFacts
             @binding = Binding.new(@player, role_name)
             context.bindings[k] = @binding
           end
-          @binding.add_ref self
+          @binding.add_np self
           @binding
         end
 
         def unbind context
           # The key has changed.
-          @binding.delete_ref self
-          if @binding.refs.empty?
+          @binding.delete_np self
+          if @binding.nps.empty?
             # Remove the binding from the context if this was the last noun phrase
             context.bindings.delete_if {|k,v| v == @binding }
           end
@@ -1052,16 +1052,16 @@ module ActiveFacts
           bind context
         end
 
-        def rebind_to(context, other_ref)
-          trace :binding, "Rebinding #{inspect} to #{other_ref.inspect}"
+        def rebind_to(context, other_np)
+          trace :binding, "Rebinding #{inspect} to #{other_np.inspect}"
 
-          old_binding = binding   # Remember to move all refs across
+          old_binding = binding   # Remember to move all nps across
           unbind(context)
 
-          new_binding = other_ref.binding
-          [self, *old_binding.refs].each do |ref|
-            ref.binding = new_binding
-            new_binding.add_ref ref
+          new_binding = other_np.binding
+          [self, *old_binding.nps].each do |np|
+            np.binding = new_binding
+            new_binding.add_np np
           end
           old_binding.rebound_to = new_binding
         end
@@ -1093,7 +1093,7 @@ module ActiveFacts
 
           trace :constraint, "Processing embedded constraint #{@quantifier.inspect} on #{@role_ref.role.object_type.name} in #{fact_type.describe}" do
             # Preserve the role order of the clause, excluding this role:
-            constrained_roles = (@clause.refs-[self]).map{|vr| vr.role_ref.role}
+            constrained_roles = (@clause.nps-[self]).map{|vr| vr.role_ref.role}
             if constrained_roles.empty?
               trace :constraint, "Quantifier over unary role has no effect"
               return
