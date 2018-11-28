@@ -89,7 +89,7 @@ module ActiveFacts
           elsif (clauses_ast.size == 1 &&
             clauses_ast[0].phrases.size == 1 &&
             (popname = clauses_ast[0].phrases[0]) &&
-            !popname.is_a?(Compiler::Reference) &&
+            !popname.is_a?(Compiler::NounPhrase) &&
             conditions_ast.detect{|r| r.includes_literals}
           )
             Compiler::Fact.new conditions_ast, popname
@@ -189,7 +189,7 @@ module ActiveFacts
             trailing_adjective = t[gt.size+1..-1]
             trailing_adjective.sub!(/ (\S*)\Z/, '-\1') if !tail.elements[-1].dbl.empty?
           end
-          Compiler::Reference.new(gt, leading_adjective, trailing_adjective, quantifier, function_call, role_name, value_constraint, literal, nested_clauses)
+          Compiler::NounPhrase.new(gt, leading_adjective, trailing_adjective, quantifier, function_call, role_name, value_constraint, literal, nested_clauses)
         end
 
         def value             # Sometimes we just want the full term name

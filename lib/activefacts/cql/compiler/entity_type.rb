@@ -53,7 +53,7 @@ module ActiveFacts
           # Create the fact types that define the identifying roles:
           fact_types = create_identifying_fact_types context
 
-          # At this point, @identification is an array of References and/or Clauses (for unary fact types)
+          # At this point, @identification is an array of NounPhrases and/or Clauses (for unary fact types)
           # Have to do this after creating the necessary fact types
           complete_reference_mode_fact_type context, fact_types
 
@@ -80,7 +80,7 @@ module ActiveFacts
             if @identification.is_a? ReferenceMode
               make_entity_type_refmode_valuetypes(name, @identification.name, @identification.parameters)
               vt_name = @reference_mode_value_type.name
-              @identification = [Compiler::Reference.new(vt_name, nil, nil, nil, nil, nil, @identification.value_constraint, nil)]
+              @identification = [Compiler::NounPhrase.new(vt_name, nil, nil, nil, nil, nil, @identification.value_constraint, nil)]
             else
               context.allowed_forward_terms = legal_forward_references(@identification)
             end
@@ -90,14 +90,14 @@ module ActiveFacts
         # Names used in the identifying roles list may be forward referenced:
         def legal_forward_references(identification_phrases)
           identification_phrases.map do |phrase|
-            phrase.is_a?(Reference) ? phrase.term : nil
+            phrase.is_a?(NounPhrase) ? phrase.term : nil
           end.compact.uniq
         end
 
         def bind_identifying_roles context
           return unless @identification
           @identification.map do |id|
-            if id.is_a?(Reference)
+            if id.is_a?(NounPhrase)
               binding = id.binding
               roles = binding.refs.map{|r|r.role || (rr=r.role_ref and rr.role)}.compact.uniq
               raise "Looking for an occurrence of identifying role #{id.inspect}, but found #{roles.size == 0 ? "none" : roles.size}" if roles.size != 1
@@ -283,7 +283,7 @@ module ActiveFacts
             begin
               @identification &&                              # There's an "identified by" clause
               @identification.size == 1 &&                    # With just one identifying role
-              (id = @identification[0]).is_a?(Reference) &&   # Which is a simple reference
+              (id = @identification[0]).is_a?(NounPhrase) &&   # Which is a simple noun phrase
               @clauses.size == 0 &&                           # No readings for this role
               id.binding.player                               # And the player is bound already
             end

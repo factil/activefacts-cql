@@ -59,7 +59,7 @@ module ActiveFacts
             ref
           end
 
-          if clause.phrases.size == 1 and (ref = clause.phrases[0]).is_a?(Compiler::Reference)
+          if clause.phrases.size == 1 and (ref = clause.phrases[0]).is_a?(Compiler::NounPhrase)
             if ref.nested_clauses
               # Assign the objectified fact type as this clause's fact type?
               clause.fact_type = ref.player.fact_type

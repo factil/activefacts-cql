@@ -8,13 +8,13 @@ module ActiveFacts
             query = @constellation.Query(:new)
             all_bindings_in_clauses(clauses_list).
               each do |binding|
-                var_name = (r = binding.refs.select{|r| r.is_a?(Reference)}.first) ? r.var_name : nil
+                var_name = (r = binding.refs.select{|r| r.is_a?(NounPhrase)}.first) ? r.var_name : nil
                 trace :query, "Creating variable #{query.all_variable.size} for #{binding.inspect} with role_name #{var_name}"
                 binding.variable = @constellation.Variable(
                   query, query.all_variable.size, :object_type => binding.player, role_name: var_name
                 )
                 if literal = binding.refs.detect{|r| r.literal}
-                  if literal.kind_of?(ActiveFacts::CQL::Compiler::Reference)
+                  if literal.kind_of?(ActiveFacts::CQL::Compiler::NounPhrase)
                     # REVISIT: Fix this crappy ad-hoc polymorphism hack
                     literal = literal.literal
                   end
@@ -53,7 +53,7 @@ module ActiveFacts
           trace :query, "Creating Plays for #{clause.inspect} with #{clause.refs.size} refs" do
             is_input = true
             clause.refs.each do |ref|
-              # These refs are the Compiler::References, which have associated Metamodel::RoleRefs,
+              # These refs are the Compiler::NounPhrases, which have associated Metamodel::RoleRefs,
               # but we need to create Plays for those roles.
               # REVISIT: Plays may need to save residual_adjectives
               binding = ref.binding
@@ -100,7 +100,7 @@ module ActiveFacts
         def all_bindings_in_clauses clauses
           clauses.map do |clause|
             clause.refs.map do |ref|
-              raise "Binding reference #{ref.inspect} is not bound to a binding" unless ref.binding
+              raise "Noun phrase #{ref.inspect} must have a binding" unless ref.binding
               [ref.binding] + (ref.nested_clauses ? all_bindings_in_clauses(ref.nested_clauses) : [])
             end
           end.

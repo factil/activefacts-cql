@@ -4,7 +4,7 @@ module ActiveFacts
 
       # An Operation is a binary or ternary fact type involving an operator,
       # a result, and one or two operands.
-      # Viewed as a result, it behaves like a Reference with a nested Clause.
+      # Viewed as a result, it behaves like a NounPhrase with a nested Clause.
       # Viewed as a fact type, it behaves like a Clause.
       #
       # The only exception here is an equality comparison, where it may
@@ -12,11 +12,11 @@ module ActiveFacts
       # the Operation is dropped from the clauses and is replaced by the
       # projected operand.
       #
-      # Each operand may be a Literal, a Reference, or another Operation,
+      # Each operand may be a Literal, a NounPhrase, or another Operation,
       # so we need to recurse down the tree to build the query.
       #
       class Operation
-        # Reference (in)compatibility:
+        # NounPhrase (in)compatibility:
         [ :term, :leading_adjective, :trailing_adjective, :role_name, :quantifier,
           :value_constraint, :embedded_presence_constraint, :literal
         ].each do |s|
@@ -47,7 +47,7 @@ module ActiveFacts
         end
         def conjunction; nil; end
         attr_reader :fact_type
-        def objectified_as; self; end   # The Reference which objectified this fact type
+        def objectified_as; self; end   # The NounPhrase which objectified this fact type
 
         def initialize
           @certainty = true       # Assume it's definite
@@ -103,7 +103,7 @@ module ActiveFacts
 
         def match_existing_fact_type context
           opnds = refs
-          result_ref = Reference.new(@binding.player.name)
+          result_ref = NounPhrase.new(@binding.player.name)
           result_ref.player = @binding.player
           result_ref.binding = @binding
           @binding.refs << result_ref

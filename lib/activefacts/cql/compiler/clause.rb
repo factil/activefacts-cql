@@ -11,7 +11,7 @@ module ActiveFacts
         attr_reader :reading, :role_sequence    # These are the Metamodel objects
         attr_reader :side_effects       # How to adjust the phrases if this fact_type match is accepted
         attr_accessor :fact             # When binding fact instances the fact goes here
-        attr_accessor :objectified_as   # The Reference which objectified this fact type
+        attr_accessor :objectified_as   # The NounPhrase which objectified this fact type
 
         def initialize phrases, qualifiers = [], context_note = nil
           @phrases = phrases
@@ -22,7 +22,7 @@ module ActiveFacts
         end
 
         def refs
-          @phrases.select{|r| r.is_a?(ActiveFacts::CQL::Compiler::Reference)}
+          @phrases.select{|r| r.is_a?(ActiveFacts::CQL::Compiler::NounPhrase)}
         end
 
         def prepend_ref ref
@@ -34,7 +34,7 @@ module ActiveFacts
         # refers only to the existence of that ObjectType (as opposed to an instance of the object_type).
         def is_existential_type
           @phrases.size == 1 and
-            @phrases[0].is_a?(Reference) and
+            @phrases[0].is_a?(NounPhrase) and
             !@phrases[0].literal
         end
 
@@ -62,7 +62,7 @@ module ActiveFacts
                 case phrase
                 when String
                   '"' + phrase.to_s + '"'
-                when Reference
+                when NounPhrase
                   phrase.to_s +
                     if phrase.nested_clauses
                       ' (in which ' +
@@ -130,8 +130,8 @@ module ActiveFacts
         # It disregards literals, which are not allowed in this context.
         def phrases_match(phrases)
           @phrases.zip(phrases).each do |mine, theirs|
-            return false if mine.is_a?(Reference) != theirs.is_a?(Reference)
-            if mine.is_a?(Reference)
+            return false if mine.is_a?(NounPhrase) != theirs.is_a?(NounPhrase)
+            if mine.is_a?(NounPhrase)
               return false unless mine.key == theirs.key
             else
               return false unless mine == theirs
@@ -185,11 +185,11 @@ module ActiveFacts
           can_contract_right = false
           left_insertion = nil
           right_insertion = nil
-          supposed_roles = []   # Arrange to unbind incorrect references supposed due to contraction
+          supposed_roles = []   # Arrange to unbind incorrect noun_phrases supposed due to contraction
           contract_left = proc do
             contracted_from = left_contract_this_onto.refs[0]
             contraction_player = contracted_from.player
-            contracted_role = Reference.new(
+            contracted_role = NounPhrase.new(
               term: contraction_player.name,
               leading_adjective: contracted_from.leading_adjective,
               trailing_adjective: contracted_from.trailing_adjective,
@@ -209,7 +209,7 @@ module ActiveFacts
           contract_right = proc do
             contracted_from = left_contract_this_onto.refs[-1]
             contraction_player = contracted_from.player
-            contracted_role = Reference.new(
+            contracted_role = NounPhrase.new(
               term: contraction_player.name,
               leading_adjective: contracted_from.leading_adjective,
               trailing_adjective: contracted_from.trailing_adjective,
@@ -834,7 +834,7 @@ module ActiveFacts
       class ClauseMatchSideEffects
         attr_reader :residual_adjectives
         attr_reader :fact_type
-        attr_reader :role_side_effects    # One array of values per Reference matched, in order
+        attr_reader :role_side_effects    # One array of values per NounPhrase matched, in order
         attr_reader :negated
         attr_reader :optional
 
@@ -881,14 +881,14 @@ module ActiveFacts
         end
       end
 
-      class Reference
+      class NounPhrase
         attr_reader :term, :function_call, :value_constraint, :literal, :nested_clauses
         attr_accessor :quantifier, :leading_adjective, :trailing_adjective, :role_name
         attr_accessor :player     # What ObjectType does the Binding denote
         attr_accessor :binding    # What Binding for that ObjectType
         attr_accessor :role       # Which Role of this ObjectType
         attr_accessor :role_ref   # Which RoleRef to that Role
-        attr_accessor :clause     # The clause that this Reference is part of
+        attr_accessor :clause     # The clause that this NounPhrase is part of
         attr_accessor :objectification_of # If nested_clauses is set, this is the fact type it objectifies
         attr_reader :embedded_presence_constraint   # This refers to the ActiveFacts::Metamodel::PresenceConstraint
 
@@ -1002,12 +1002,12 @@ module ActiveFacts
           if role_name = @role_name
             # Omit these tests to see if anything evil eventuates:
             #if @leading_adjective || @trailing_adjective
-            #  raise "Role reference may not have adjectives if it defines a role name or uses a subscript: #{inspect}"
+            #  raise "Noun phrase may not have adjectives if it defines a role name or uses a subscript: #{inspect}"
             #end
           else
             if uses_role_name?
               if @leading_adjective || @trailing_adjective
-                raise "Role reference may not have adjectives if it uses a role name: #{inspect}"
+                raise "Noun phrase may not have adjectives if it uses a role name: #{inspect}"
               end
               role_name = @term
             end
@@ -1021,7 +1021,7 @@ module ActiveFacts
                   binding_key[0...k.size] == k &&
                     binding_key[-2] == :literal ? binding : nil
                 end.compact
-              raise "Uncertain binding reference for #{to_s}, could be any of #{candidates.inspect}" if candidates.size > 1
+              raise "Ambiguous binding for #{to_s}, could be any of #{candidates.inspect}" if candidates.size > 1
               @binding = candidates[0]
             else
               # New binding has a literal, look for one without:
@@ -1041,7 +1041,7 @@ module ActiveFacts
           # The key has changed.
           @binding.delete_ref self
           if @binding.refs.empty?
-            # Remove the binding from the context if this was the last reference
+            # Remove the binding from the context if this was the last noun phrase
             context.bindings.delete_if {|k,v| v == @binding }
           end
           @binding = nil
