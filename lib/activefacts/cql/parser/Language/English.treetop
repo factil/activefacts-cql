@@ -66,7 +66,7 @@ module ActiveFacts
       # External presence constraint syntax:
       rule each_occurs_in_clauses
         s 'each' s ('combination' S)? role_list s occurs s quantifier s 'time' 's'? s enforcement 'in' s
-          clauses_list s c:context_note? ';'
+          clauses_list s context:context_note? ';'
         {
           def role_list_ast
             role_list.ast
@@ -82,7 +82,7 @@ module ActiveFacts
 
       # Alternate external presence constraint syntax:
       rule either_or
-      s either? s r1:clauses s or s r2:clauses c:context_note? enforcement ';'
+      s either? s r1:clauses s or s r2:clauses context:context_note? enforcement ';'
       {
           def role_list_ast
             nil
@@ -99,7 +99,7 @@ module ActiveFacts
       # Exclusion (at most one) and mandatory exclusion (exactly one) constraint syntax:
       rule for_each_how_many
         s 'for' s 'each' s role_list s quantifier s 'of' s 'these' s 'holds' s enforcement ':' s
-          clauses_list s c:context_note? ';'
+          clauses_list s context:context_note? ';'
         {
           def role_list_ast
             role_list.ast
@@ -115,7 +115,7 @@ module ActiveFacts
 
       # Alternate mandatory exclusion constraint syntax:
       rule either_or_not_both
-        s either? s r1:clauses s or s r2:clauses but s not s both s c:context_note? enforcement ';'
+        s either? s r1:clauses s or s r2:clauses but s not s both s context:context_note? enforcement ';'
         {
           def role_list_ast
             nil
@@ -131,7 +131,7 @@ module ActiveFacts
 
       # Subset constraint using "A only if B" syntax
       rule a_only_if_b
-        s clauses:query_clauses s only s if s r2:query_clauses s c:context_note? enforcement ';'
+        s subset:query_clauses s only s if s superset:query_clauses s context:context_note? enforcement ';'
       end
 
       rule only_if
@@ -140,13 +140,13 @@ module ActiveFacts
 
       # Subset constraint using "if A then B" syntax
       rule if_b_then_a
-        s if s clauses s then s r2:clauses s c:context_note? enforcement ';'
+        s if s subset:clauses s then s superset:clauses s context:context_note? enforcement ';'
       end
 
       # Equality constraint syntax:
       rule if_and_only_if
         s clauses s tail:( if s and s only s if s clauses s)+
-          c:context_note? enforcement ';'
+          context:context_note? enforcement ';'
       end
 
       # During the prescan we need to know where terms in a role list finish.

@@ -15,7 +15,7 @@ module ActiveFacts
                 )
                 if literal = binding.nps.detect{|r| r.literal}
                   if literal.kind_of?(ActiveFacts::CQL::Compiler::NounPhrase)
-                    # REVISIT: Fix this crappy ad-hoc polymorphism hack
+                    # REVISIT: Fix this crappy ad-hoc polymorphism hack. ActiveFacts::CQL::Compiler::Literal should look like NounPhrase
                     literal = literal.literal
                   end
                   unit = @constellation.Unit.detect{|k, v| [v.name, v.plural_name].include? literal.unit} if literal.unit

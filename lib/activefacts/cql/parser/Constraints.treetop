@@ -34,7 +34,7 @@ module ActiveFacts
         (each_occurs_in_clauses / either_or)
         {
           def ast
-            Compiler::PresenceConstraint.new c, enforcement.ast, clauses_ast, role_list_ast, quantifier_ast
+            Compiler::PresenceConstraint.new context, enforcement.ast, clauses_ast, role_list_ast, quantifier_ast
           end
         }
       end
@@ -44,7 +44,7 @@ module ActiveFacts
         (for_each_how_many / either_or_not_both)
           {
             def ast
-              Compiler::SetExclusionConstraint.new c, enforcement.ast, clauses_ast, role_list_ast, quantifier_ast
+              Compiler::SetExclusionConstraint.new context, enforcement.ast, clauses_ast, role_list_ast, quantifier_ast
             end
           }
       end
@@ -53,7 +53,7 @@ module ActiveFacts
         (a_only_if_b / if_b_then_a)
         {
           def ast
-            Compiler::SubsetConstraint.new c, enforcement.ast, [clauses.ast, r2.ast]
+            Compiler::SubsetConstraint.new context, enforcement.ast, [subset.ast, superset.ast]
           end
         }
       end
@@ -63,7 +63,7 @@ module ActiveFacts
         {
           def ast
             all_clauses = [clauses.ast, *tail.elements.map{|e| e.clauses.ast }]
-            Compiler::SetEqualityConstraint.new c, enforcement.ast, all_clauses
+            Compiler::SetEqualityConstraint.new context, enforcement.ast, all_clauses
           end
         }
       end

@@ -358,7 +358,7 @@ module ActiveFacts
             end
 
           if clauses_by_nps.size != 1 and @conditions.empty?
-            # Attempt loose binding here; it might merge some Compiler::References to share the same Variables
+            # Attempt loose binding here; it might merge some Compiler::NounPhrases to share the same Variables
             variants = clauses_by_nps.keys
             (clauses_by_nps.size-1).downto(1) do |m|   # Start with the last one
               0.upto(m-1) do |l|                              # Try to rebind onto any lower one
