@@ -108,17 +108,17 @@ module ActiveFacts
 
         # The syntax tree created from each parsed CQL statement gets passed to the block.
         # parse_all returns an array of the block's non-nil return values.
-        ok = parse_all(@string, :definition) do |node|
-          trace :parse, "Parsed '#{node.text_value.gsub(/\s+/,' ').strip}'" do
-            trace :lex, (proc { node.inspect })
+        ok = parse_all(@string, :definition) do |ast, tree|
+          trace :parse, "Parsed '#{tree.text_value.gsub(/\s+/,' ').strip}'" do
+            trace :lex, (proc { tree.inspect })
             begin
-              ast = node.ast
               next unless ast
               trace :ast, ast.inspect
-              ast.tree = node
+              # "ast" is always a Compiler::Definition or subclass
               ast.constellation = @constellation
               ast.vocabulary = @vocabulary
-              value = compile_definition ast
+
+              value = compile_definition ast, tree
               trace :definition, "Compiled to #{value.is_a?(Array) ? value.map{|v| v.verbalise}*', ' : value.verbalise}" if value
               if value.is_a?(ActiveFacts::Metamodel::Topic)
                 topic_flood() if @topic
@@ -131,8 +131,8 @@ module ActiveFacts
               end
             rescue => e
               # Augment the exception message, but preserve the backtrace
-              start_line = @string.line_of(node.interval.first)
-              end_line = @string.line_of(node.interval.last-1)
+              start_line = @string.line_of(tree.interval.first)
+              end_line = @string.line_of(tree.interval.last-1)
               lines = start_line != end_line ? "s #{start_line}-#{end_line}" : " #{start_line.to_s}"
               ne = StandardError.new("at line#{lines}, #{e.message.strip}")
               ne.set_backtrace(e.backtrace)
@@ -213,7 +213,7 @@ module ActiveFacts
         end
       end
 
-      def compile_definition ast
+      def compile_definition ast, tree
         ast.compile
       end
 

@@ -46,13 +46,16 @@ module CompileHelpers
 
   def parse string
     lambda {
-      @asts = @compiler.parse_all(string, :definition).map{ |tree|
+      @asts = []
+      @compiler.parse_all(string, :definition) do |ast, tree|
+        debugger unless tree.is_a?(Treetop::Runtime::SyntaxNode)
         trace :parse, "Parsed '#{tree.text_value.gsub(/\s+/,' ').strip}'"
-        ast = tree.ast
+        # "ast" is always a Compiler::Definition or subclass
         ast.vocabulary = @compiler.vocabulary
         ast.constellation = @compiler.vocabulary.constellation
+        @asts << ast
         ast
-      }
+      end
     }.should_not raise_error
     @asts
   end

@@ -17,7 +17,7 @@ module ActiveFacts
     end
   end
 end
-require 'activefacts/cql/parser/nodes'
+require 'activefacts/cql/parser/asts'
 
 class Treetop::Runtime::SyntaxNode
   def node_type
@@ -254,24 +254,25 @@ module ActiveFacts
         @index = 0  # Byte offset to start next parse
         @block = block
         self.consume_all_input = false
-        nodes = []
+        asts = []
         begin
-          node = parse(InputProxy.new(input, context, self), :index => @index)
-          unless node 
+          tree = parse(InputProxy.new(input, context, self), :index => @index)
+          unless tree 
             raise failure_reason || "not all input was understood" unless @index == input.size
             return nil  # No input, or no more input
           end
-          unless @vocabulary_seen || !node.ast
-            @vocabulary_seen = Compiler::Schema === node.ast
-            raise "CQL files must begin with a vocabulary, schema or transform definition" unless @vocabulary_seen
+          ast = tree.ast
+          unless @vocabulary_seen || !ast
+            @vocabulary_seen = Compiler::Schema === ast
+            raise "CQL files must begin with a schema or transform definition" unless @vocabulary_seen
           end
           if @block
-            @block.call(node)
+            @block.call(ast, tree)
           else
-            nodes << node
+            asts << ast
           end
         end until self.index == @input_length
-        @block ? true : nodes
+        @block ? true : asts
       end
     end
 
