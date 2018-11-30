@@ -37,13 +37,8 @@ module ActiveFacts
       rule variable
 	# REVISIT: Need to be able to include some/that here
         derived:term
-	s role_id:(role_name / subscript)?
-        {
-          def ast quantifier = nil, value_constraint = nil, literal = nil, nested_clauses = nil
-            role_name = role_id.empty? ? nil : role_id.value
-            derived.ast(quantifier, nil, role_name, value_constraint, literal, nested_clauses)
-          end
-        }
+	s role_id:(role_name / subscript)? s
+	<Parser::Variable>
       end
 
     end

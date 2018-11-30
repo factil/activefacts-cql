@@ -9,11 +9,7 @@ module ActiveFacts
     grammar FactTypes
       rule query
         s query_clauses r:returning_clause? '?'
-        {
-          def ast
-            Compiler::FactType.new nil, [], query_clauses.ast, (r.empty? ? nil : r)
-          end
-        }
+	<Parser::Query>
       end
 
       rule fact_type
@@ -21,7 +17,8 @@ module ActiveFacts
 	  s each?	    # Chew the "each" or it will get accepted as a quantifier
 	  s term_definition_name mapping_pragmas is_where s
 	)?	  # Name of objectifying entity type
-        anonymous_fact_type <Parser::FactType>
+        anonymous_fact_type
+	<Parser::FactType>
       end
 
       rule anonymous_fact_type
@@ -37,7 +34,7 @@ module ActiveFacts
           # REVISIT: This creates no precedence between and/or, which could cause confusion.
           # Should disallow mixed conjunctions - using a sempred?
           ftail:( conjunction:(',' / and / or ) s qualified_clauses s )*
-	    <Parser::QueryClauses>
+	  <Parser::QueryClauses>
       end
 
       rule returning_clause
@@ -49,7 +46,7 @@ module ActiveFacts
       end
 
       rule qualified_clauses
-        s certainty s contracted_clauses s p:post_qualifiers? s c:context_note?
+        s certainty s contracted_clauses s pq:post_qualifiers? s context:context_note?
 	  <Parser::QualifiedClauses>
       end
 
@@ -112,23 +109,7 @@ module ActiveFacts
 	phrases:(!contraction phrase:(noun_phrase / linking_word))+
 	pq:post_qualifiers? s context:context_note?
 	contraction:reading_contraction?
-	{
-	  def ast(conjunction = nil)
-	    contracted_noun, qualifiers, *contracted_clauses = *(
-	      if contraction.empty?
-		[ nil, (pq.empty? ? nil : pq.list) ]
-	      else
-		contraction.ast
-	      end
-	    )
-
-	    phrase_asts = phrases.elements.map{|p| p.phrase.ast}
-	    phrase_asts.push contracted_noun if contracted_noun
-	    clause = Compiler::Clause.new(phrase_asts, qualifiers, context.empty? ? nil : context.ast)
-	    clause.conjunction = conjunction
-	    [clause] + contracted_clauses
-	  end
-	}
+	<Parser::ReadingClause>
       end
 
       rule contracted_clauses
@@ -140,22 +121,7 @@ module ActiveFacts
 	  noun_phrase     # A role reference containing a term, perhaps with attached paraphernalia
 	  /
 	  linking_word	  # A word that is part of a fact type reading
-        )+
-        {
-          def ast
-            asts = elements.map{ |r| r.ast }
-            contracted_clauses = []
-            qualifiers = []
-            if asts[-1].is_a?(Array)        # A contraction (Array of [noun_phrase, qualifiers, *contracted_clauses])
-              contracted_clauses = asts.pop         # Pull off the contracted_clauses
-              contracted_noun_phrase = contracted_clauses.shift
-              qualifiers = contracted_clauses.shift
-              asts.push(contracted_noun_phrase)  # And replace it by the noun_phrase removed from the contracted_clauses
-            end
-            clause_ast = Compiler::Clause.new(asts, qualifiers)
-            [clause_ast] + contracted_clauses
-          end
-        }
+        )+ <Parser::ContractedClauses>
       end
 
       rule contraction
@@ -187,34 +153,15 @@ module ActiveFacts
       rule comparison_contraction
         noun_phrase pq:post_qualifiers? certainty s comparator s e2:expression
           !(noun_phrase / linking_word)	# The contracted_clauses must not continue here!
-        {
-          def ast
-            c = Compiler::Comparison.new(comparator.text_value, noun_phrase.ast, e2.ast, certainty.value)
-            c.conjunction = comparator.text_value
-            [ noun_phrase.ast, pq.empty? ? [] : pq.list, c ]
-          end
-        }
+	<Parser::ComparisonContraction>
       end
 
       rule comparison
         e1:expression s certainty s comparator s contraction p:post_qualifiers?
-        {
-          def ast
-            noun_phrase, qualifiers, *clauses_ast = *contraction.ast
-            clauses_ast[0].qualifiers += p.list unless p.empty? # apply post_qualifiers to the contracted clause
-            # clauses_ast[0].conjunction = 'and' # AND is implicit for a contraction
-            c = Compiler::Comparison.new(comparator.text_value, e1.ast, noun_phrase, certainty.value)
-            [c] + clauses_ast
-          end
-        }
+	<Parser::ExpressionClauseContraction>
         /
         certainty e1:expression s comparator s e2:expression # comparisons have no post-qualifiers: p:post_qualifiers?
-        {
-          def ast
-            c = Compiler::Comparison.new(comparator.text_value, e1.ast, e2.ast, certainty.value)
-            [c]
-          end
-        }
+	<Parser::ExpressionExpressionContraction>
       end
 
       rule comparator
@@ -262,14 +209,14 @@ module ActiveFacts
         player:variable		          # e.g. "Height"
         lr:(
 	  literal u:unit?		  # e.g. "27 inches"
-	  / value_constraint enforcement  # e.g. "restricted to {1..4}"
+	  / value_constraint		  # e.g. "restricted to {1..4}"
 	)?
         oj:objectification_step?	  # "(in which <sub-expression>)"
         <Parser::SimpleNounPhrase>
       end
 
       rule role_quantifier
-        quantifier mapping_pragmas enforcement cn:context_note? <Parser::RoleQuantifier>
+        quantifier mapping_pragmas enforcement context:context_note? <Parser::RoleQuantifier>
       end
 
       rule objectification_step

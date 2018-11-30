@@ -511,11 +511,12 @@ module ActiveFacts
       end
 
       class ValueConstraint < Constraint
-        def initialize ast, enforcement
+        def initialize values, context_note, enforcement
           super nil, enforcement
-          @value_ranges = ast[:ranges]
-          @units = ast[:units]
-          @regular_expression = ast[:regular_expression]
+          @value_ranges = values[:ranges]
+          @units = values[:units]
+          @regular_expression = values[:regular_expression]
+          @context_note = context_note
         end
 
         def compile
@@ -535,6 +536,7 @@ module ActiveFacts
             @constraint.regular_expression = @regular_expression
           end
           @enforcement.compile(@constellation, @constraint) if @enforcement
+          @context_note.compile(@constellation, @constraint) if @context_note 
           super
         end
 

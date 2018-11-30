@@ -38,7 +38,7 @@ module ActiveFacts
 	seq:definition* <Parser::Definitions>
       end
 
-      # Each definition has an ast() method that returns an instance of a subclass of Compiler::Definition
+      # Each definition has an ast() method that returns an instance of some subclass of Compiler::Definition
       rule definition
         definition_body s <Parser::Definition>
       end
@@ -88,13 +88,7 @@ module ActiveFacts
 
       rule import_definition
         s import i:import_role? S schema_name vp:version_pattern? alias_list ';'
-        {
-          def ast
-            Compiler::Import.new(
-              import.input.parser, schema_name.value, i.empty? ? "topic" : i.value, vp.empty? ? nil : vp.pattern.text_value, alias_list.value
-            )
-          end
-        }
+	<Parser::Import>
       end
 
       rule version_number
@@ -139,17 +133,10 @@ module ActiveFacts
 
       rule informal_description
         informally s ',' s
-	  subject:informal_description_subject s
-          informal_description_body
-          informal_description_closer
-        {
-          def ast
-            kind = subject.signifier.text_value.to_sym
-            subject_name = (kind == :each ? subject.term.text_value : subject.reading.text_value)
-            phrases = subject.reading.elements.map(&:ast) if kind == :when
-            Compiler::InformalDefinition.new(kind, subject_name, phrases, informal_description_body.text_value)
-          end
-        }
+	subject:informal_description_subject s
+	informal_description_body
+	informal_description_closer
+	<Parser::InformalDefinition>
       end
 
       rule empty_statement

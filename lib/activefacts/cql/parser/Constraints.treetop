@@ -15,9 +15,7 @@ module ActiveFacts
           action:id s   # An enforcement action, like SMS, email, log, alarm, etc.
           agent:agent? s
         ')' s
-          {
-            def ast; Compiler::Enforcement.new(action.text_value, agent.empty? ? nil : agent.text_value); end
-          }
+	<Parser::Enforcement>
         /
 	null_enforcement
       end
@@ -32,40 +30,23 @@ module ActiveFacts
       # presence constraint:
       rule presence_constraint
         (each_occurs_in_clauses / either_or)
-        {
-          def ast
-            Compiler::PresenceConstraint.new context, enforcement.ast, clauses_ast, role_list_ast, quantifier_ast
-          end
-        }
+	<Parser::PresenceConstraint>
       end
 
       # set (exclusion, mandatory exclusion, complex equality) constraint
       rule set_constraint
         (for_each_how_many / either_or_not_both)
-          {
-            def ast
-              Compiler::SetExclusionConstraint.new context, enforcement.ast, clauses_ast, role_list_ast, quantifier_ast
-            end
-          }
+	<Parser::SetConstraint>
       end
 
       rule subset_constraint
         (a_only_if_b / if_b_then_a)
-        {
-          def ast
-            Compiler::SubsetConstraint.new context, enforcement.ast, [subset.ast, superset.ast]
-          end
-        }
+	<Parser::SubsetConstraint>
       end
 
       rule equality_constraint
         if_and_only_if
-        {
-          def ast
-            all_clauses = [clauses.ast, *tail.elements.map{|e| e.clauses.ast }]
-            Compiler::SetEqualityConstraint.new context, enforcement.ast, all_clauses
-          end
-        }
+	<Parser::SetEqualityConstraint>
       end
     end
   end

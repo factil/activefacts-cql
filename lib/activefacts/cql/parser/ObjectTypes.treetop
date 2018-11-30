@@ -16,7 +16,7 @@ module ActiveFacts
         s each?
         s term_definition_name
         m1:mapping_pragmas
-        c:context_note?
+        context:context_note?
         sup:(basetype / subtype)
           &{|s|
             # There's an implicit type when we use an identification mode, register it:
@@ -28,19 +28,10 @@ module ActiveFacts
             true
           }
         m2:mapping_pragmas
-        c2:context_note?
+        context2:context_note?
         ec:(where s reading_clauses)?
         ';'
-        {
-          def ast
-            name = term_definition_name.value
-            clauses_ast = ec.empty? ? [] : ec.reading_clauses.ast
-            pragmas = m1.value+m2.value
-            pragmas << 'independent' if sup.independent
-            context_note = !c.empty? ? c.ast : (!c2.empty? ? c2.ast : nil)
-            Compiler::EntityType.new name, sup.supers, sup.ast, pragmas, clauses_ast, context_note
-          end
-        }
+	<Parser::EntityType>
       end
 
       rule basetype
@@ -73,46 +64,14 @@ module ActiveFacts
       end
 
       rule identification
-        # REVISIT: Consider distinguishing "-Id" from just "Id", and not prepending the entity type name if no "-"
-        identified_by its s i:(term/implicit_value_type_name) value_type_parameters
-        r:(value_constraint enforcement)?          # Reference Mode; value_constraint may be needed for the ValueType
-          {
-            def ast
-              if r.empty?
-                value_constraint = nil
-              else
-                value_constraint = Compiler::ValueConstraint.new(r.value_constraint.ast, r.enforcement.ast)
-              end
-              Compiler::ReferenceMode.new(i.value, value_constraint, value_type_parameters.values)
-            end
-
-            def mode
-              i.value
-            end
-          }
+        identified_by its s		# Reference Mode
+	i:(term/implicit_value_type_name) value_type_parameters
+        vc:value_constraint?
+	<Parser::ReferenceMode>
         /
         identified_by role_list	  # REVISIT: We'd like to be able to use implicit_value_type_names here too.
-          &{|s|
-            role_list = s[-1]
-            forwards = role_list.ast.
-              map do |role|
-                next nil if role.is_a?(Compiler::Clause) # Can't forward-reference unaries
-                next nil if role.leading_adjective or role.trailing_adjective
-                role.term
-              end.
-              compact
-            input.context.allowed_forward_terms(forwards)
-            true
-          }
-          {
-            def ast
-              role_list.ast
-            end
-
-            def mode
-              nil
-            end
-          }
+	  &{|s| allow_forward_terms_in s[-1].ast; true }
+	<Parser::IdentificationList>
       end
 
       # Identified by roles... also used for constraints, beware
@@ -133,27 +92,10 @@ module ActiveFacts
 
       rule term_or_unary
         pre_text:unary_text s term post_text:unary_text s ss:subscript?
-          {
-            def ast
-              t = term.ast
-              t.role_name = ss.value if !ss.empty?
-              if pre_text.elements.size == 0 && post_text.elements.size == 0
-                t
-              else
-                pre_words = pre_text.elements.map{|w| w.id.text_value}
-                post_words = post_text.elements.map{|w| w.id.text_value}
-                Compiler::Clause.new(pre_words + [t] + post_words, [], nil)
-              end
-            end
-          }
+	<Parser::UnaryTerm>
         /
         s !non_phrase id s &non_phrase s ss:subscript?
-          { # A forward-referenced entity type
-            # REVISIT: A change in this rule might allow forward-referencing a multi-word term
-            def ast
-              Compiler::NounPhrase.new(id.text_value, nil, nil, nil, nil, ss.empty? ? nil : ss.value)
-            end
-          }
+	<Parser::ForwardTerm>
       end
 
       rule unary_text

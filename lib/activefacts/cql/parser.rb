@@ -234,6 +234,17 @@ module ActiveFacts
         end
       end
 
+      def allow_forward_terms_in role_list
+        forwards = role_list.
+          map do |role|
+            next nil if role.is_a?(Compiler::Clause) # Can't forward-reference unaries
+            next nil if role.leading_adjective or role.trailing_adjective
+            role.term
+          end.
+          compact
+        context.allowed_forward_terms(forwards)
+      end
+
       def context
         @context ||= Context.new(self)
       end
