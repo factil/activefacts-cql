@@ -38,7 +38,6 @@ module ActiveFacts
 	seq:definition* <Parser::Definitions>
       end
 
-      # Each definition has an ast() method that returns an instance of some subclass of Compiler::Definition
       rule definition
         definition_body s <Parser::Definition>
       end

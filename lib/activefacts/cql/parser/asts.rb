@@ -459,6 +459,124 @@ module ActiveFacts
         end
       end
 
+      module TransformRule
+        def ast
+          Compiler::TransformRule.new(ctr.ast)
+        end
+      end
+
+      module CompoundMatching
+        def ast
+          Compiler::CompoundMatching.new(tl.ast, tq.empty? ? nil : tq.ast, tr.ast)
+        end
+      end
+
+      module SimpleMatching
+        def ast
+          Compiler::SimpleMatching.new(tl.ast, te.empty? ? nil : te.ast)
+        end
+      end
+
+      module TransformTernary
+        def ast
+          Compiler::Ternary.new(c.ast, t0.ast, t1.ast)
+        end
+      end
+
+      module TransformAggregate
+        def ast
+          Compiler::Aggregate.new(o.text_value, t.ast)
+        end
+      end
+
+      module TransformLogicalOr
+        def ast
+          if tail.empty?
+            t0.ast
+          else
+            Compiler::LogicalOr.new(([t0]+tail.elements.map(&:t1)).map(&:ast))
+          end
+        end
+      end
+
+      module TransformLogicalAnd
+        def ast
+          if tail.empty?
+            t0.ast
+          else
+            Compiler::LogicalAnd.new(([t0]+tail.elements.map(&:t1)).map(&:ast))
+          end
+        end
+      end
+
+      module TransformEquality
+        def ast
+          if operation.empty?
+            t0.ast
+          else
+            Compiler::Comparison.new(op.text_value, t0.ast, operation.t1.ast)
+          end
+        end
+      end
+
+      module TransformComparison
+        def ast
+          if operation.empty?
+            t0.ast
+          else
+            Compiler::Comparison.new(op.text_value, t0.ast, operation.t1.ast)
+          end
+        end
+      end
+
+      module TransformSum
+        def ast
+          if tail.elements.empty?
+            t0.ast
+          else
+            Compiler::Sum.new(
+              t0.ast,
+              *tail.elements.map{|e| e.op.text_value == '-' ? Compiler::Negate.new(e.t1.ast) : e.t1.ast}
+            )
+          end
+        end
+      end
+
+      module TransformProduct
+        def ast
+          if tail.elements.empty?
+            t0.ast
+          else
+            Compiler::Product.new(
+              t0.ast,
+              *tail.elements.map{|e| e.op.text_value == '/' ? Compiler::Reciprocal.new(e.t1.ast) : e.t1.ast}
+            )
+          end
+        end
+      end
+
+      module TransformUnary
+        def ast
+          if u.empty?
+            t.ast
+          else
+            u.text_value == '-' ? Compiler::Negate.new(t.ast) : Compiler::Negation.new(t.ast)
+          end
+        end
+      end
+
+      module TransformTermList
+        def ast
+          Compiler::ExpressionTermList.new(tl.ast)
+        end
+      end
+
+      module TransformLiteral
+        def ast
+          Compiler::Literal.new(l.value, nil)
+        end
+      end
+
     end
   end
 end
