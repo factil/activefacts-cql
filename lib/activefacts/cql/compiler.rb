@@ -4,6 +4,7 @@
 #
 require 'activefacts/metamodel'
 require 'activefacts/cql/parser'
+require 'activefacts/cql/compiler/asts'
 require 'activefacts/cql/compiler/shared'
 require 'activefacts/cql/compiler/value_type'
 require 'activefacts/cql/compiler/entity_type'

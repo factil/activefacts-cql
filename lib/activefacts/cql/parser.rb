@@ -17,7 +17,6 @@ module ActiveFacts
     end
   end
 end
-require 'activefacts/cql/parser/asts'
 
 class Treetop::Runtime::SyntaxNode
   def node_type

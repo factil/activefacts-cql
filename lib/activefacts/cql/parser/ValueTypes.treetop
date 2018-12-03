@@ -139,12 +139,27 @@ module ActiveFacts
 
       # In a unit definition, we may use undefined base units; this is the only way to get fundamental units
       rule units
-        !non_unit maybe_unit s tail:(!non_unit maybe_unit s)* div:('/' s maybe_unit s tail:(!non_unit maybe_unit s)*)?
+	unit_numerator div:unit_denominator?
         { def value
-            tail.elements.inject([maybe_unit.value]) { |a, e| a << e.maybe_unit.value } +
-              (div.text_value.empty? ? [] : div.tail.elements.inject([div.maybe_unit.inverse]) { |a, e| a << e.maybe_unit.inverse })
+	    unit_numerator.value + (div.text_value.empty? ? [] : div.value)
           end
         }
+      end
+
+      rule unit_numerator
+        !non_unit maybe_unit s tail:(!non_unit maybe_unit s)*
+        { def value
+            tail.elements.inject([maybe_unit.value]) { |a, e| a << e.maybe_unit.value }
+	  end
+	}
+      end
+
+      rule unit_denominator
+        '/' s maybe_unit s tail:(!non_unit maybe_unit s)*
+	{ def value
+	    tail.elements.inject([maybe_unit.inverse]) { |a, e| a << e.maybe_unit.inverse }
+	  end
+	}
       end
 
       rule non_unit
