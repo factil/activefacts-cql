@@ -294,13 +294,20 @@ module ActiveFacts
 
       module RoleQuantifier
         def ast
+          return nil unless quantifier.min || quantifier.max
           Compiler::Quantifier.new(
-            quantifier.value[0],
-            quantifier.value[1],
+            quantifier.min,
+            quantifier.max,
             enforcement.ast,
             context.empty? ? nil : context.ast,
             mapping_pragmas.value
           )
+        end
+      end
+
+      module Quantifier
+        def ast
+          Compiler::Quantifier.new(min, max)
         end
       end
 
@@ -321,9 +328,7 @@ module ActiveFacts
 
       module SimpleNounPhrase
         def ast
-          if !q.empty? && q.quantifier.value
-            quantifier = q.ast
-          end
+          quantifier = q.ast unless q.empty?
           if !lr.empty?
             if lr.respond_to?(:literal)
               literal = Compiler::Literal.new(lr.literal.value, lr.u.empty? ? nil : lr.u.text_value)
@@ -397,13 +402,13 @@ module ActiveFacts
 
       module PresenceConstraint
         def ast
-          Compiler::PresenceConstraint.new context, enforcement.ast, clauses_ast, role_list_ast, quantifier_ast
+          Compiler::PresenceConstraint.new context, enforcement.ast, clauses_ast, role_list_ast, Compiler::Quantifier.new(quantifier_min, quantifier_max)
         end
       end
 
       module SetConstraint
         def ast
-          Compiler::SetExclusionConstraint.new context, enforcement.ast, clauses_ast, role_list_ast, quantifier_ast
+          Compiler::SetExclusionConstraint.new context, enforcement.ast, clauses_ast, role_list_ast, Compiler::Quantifier.new(quantifier_min, quantifier_max)
         end
       end
 

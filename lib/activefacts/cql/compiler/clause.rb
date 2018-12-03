@@ -1100,7 +1100,7 @@ module ActiveFacts
             end
             constraint = find_pc_over_roles(constrained_roles)
             if constraint
-              raise "Conflicting maximum frequency for constraint" if constraint.max_frequency && constraint.max_frequency != @quantifier.max
+              raise "Conflicting maximum frequency for constraint over (#{constrained_roles.map(&:name)*', '})" if constraint.max_frequency && constraint.max_frequency != @quantifier.max
               trace :constraint, "Setting max frequency to #{@quantifier.max} for existing constraint #{constraint.object_id} over #{constraint.role_sequence.describe} in #{fact_type.describe}" unless constraint.max_frequency
               constraint.max_frequency = @quantifier.max
               raise "Conflicting minimum frequency for constraint" if constraint.min_frequency && constraint.min_frequency != @quantifier.min
