@@ -7,26 +7,43 @@
 module ActiveFacts
   module CQL
     grammar Terms
-      rule term_definition_name
-        id s t:(!non_term_def id s)*
-          <Parser::TermDefinitionNameNode>
+      rule new_term_name
+        id s t:(!non_term_name id s)*
+          <Parser::NewTermName>
       end
 
-      rule non_term_def
-        mapping_pragmas entity_prefix
-        / mapping_pragmas written_as                          # Value type
-        / mapping_pragmas is_where                            # Objectified type
+      # Words or phrases that cannot occur inside a term:
+      rule non_term_name
+        mapping_pragmas entity_prefix	# Entity type definition
+        / mapping_pragmas written_as    # Value type definition
+        / mapping_pragmas is_where      # Objectified type definition
         / non_phrase
-        / identified_by                                       # as in: "a kind of X identified by..."
+        / identified_by                 # as in: "a kind of X identified by..."
         / in_units
         / auto_assignment
         / value_constraint
       end
 
+      # Words that cannot occur in (but maybe ok following) a clause where a noun_phrase is expected:
+      rule non_phrase
+        and
+        / but
+        / if
+        / role_list_constraint_followers
+        / only_if
+        / or
+        / quantifier
+        / returning
+        / then
+        / value_constraint
+        / where
+      end
+
       rule entity_prefix
         is s (independent s )? identified_by
         /
-        subtype_prefix (independent s )? term_definition_name
+        subtype_prefix (independent s)? new_term_name
+	  # The supertype name may not yet be defined. Allow the forward reference.
           &{|e| input.context.object_type(e[2].value, "subtype") }
       end
 
@@ -40,28 +57,21 @@ module ActiveFacts
         /
         s each?
         s (
-          term_definition_name mapping_pragmas entity_prefix
+          new_term_name mapping_pragmas entity_prefix
                 &{|e| input.context.object_type(e[0].value, "entity type") }
           /
-          t1:term_definition_name mapping_pragmas written_as any? s t2:term_definition_name
+          t1:new_term_name mapping_pragmas written_as any? s t2:new_term_name
                 &{|e|
-                  new_term = e[0].value
-                  input.context.object_type(new_term, "value type")
-                  base_term = e[5].value
-                  input.context.object_type(base_term, "value type")
+                  input.context.object_type(new_term = e[0].value, "value type")
+                  input.context.object_type(base_term = e[5].value, "value type")
                 }
           /
-          term_definition_name s mapping_pragmas is_where
+          new_term_name s mapping_pragmas is_where
                 &{|e| input.context.object_type(e[0].value, "objectified_fact_type") }
         )?
         prescan_rest
-        &{|s|
-          # Wipe any terminal failures that were added:
-          forget_failures_to_here
-
-          # puts "========== prescan is complete on #{(s.map{|e|e.text_value}*" ").inspect} =========="
-          false
-        }
+		# Wipe any terminal failures that were added:
+		&{|s| forget_failures_to_here; false }
       end
 
       rule informally_prescan
@@ -72,11 +82,11 @@ module ActiveFacts
       end
 
       rule informal_description_subject_prescan
-        each S term_definition_name       # Informal definition of an object type
+        each S new_term_name     # Informal definition of an object type
         /
         when S (noun_phrase / linking_word)+ s ','              # or a fact type
-					  # We can't forward-reference fact types;
-                                          # it could memoize a bad parse for 'noun_phrase'!!!
+					# We can't forward-reference fact types;
+                                        # it could memoize a bad parse for 'noun_phrase'!!!
       end
 
       # Do a first-pass mainly lexical analysis, looking for role name definitions and adjectives,
@@ -84,19 +94,19 @@ module ActiveFacts
       rule prescan_rest
         &{|s| input.context.reset_role_names }
         (
-          context_note                      # Context notes have different lexical conventions
-          / '(' as S term_definition_name s ')' s    # Prepare for a Role Name
+          context_note                  # Context notes have different lexical conventions
+          / '(' as S new_term_name s ')' s    # Prepare for a Role Name
             &{|s| input.context.role_name(s[3].value) }
-          / new_derived_value               # Prepare for a derived term
-          / new_adjective_term              # Prepare for an existing term with new Adjectives
+          / new_derived_value           # Prepare for a derived term
+          / new_adjective_term          # Prepare for an existing term with new Adjectives
         # The remaining rules exist to correctly eat up anything that doesn't match the above:
-          / global_term                     # If we see A B - C D, don't recognise B as a new adjective for C D.
+          / global_term                 # If we see A B - C D, don't recognise B as a new adjective for C D.
           / prescan_aggregate
           / id
           # / literal # REVISIT: Literals might contain "(as Foo)" and mess things up
-          / range                           # Covers all numbers and strings
-          / S                               # White space and comments, must precede / and *
-          / [^;]                            # Skip anything else, we want the prescan to finish
+          / range                       # Covers all numbers and strings
+          / S                           # White space and comments, must precede / and *
+          / [^;]                        # Skip anything else, we want the prescan to finish
         )* [?;] s
       end
 
@@ -132,14 +142,16 @@ module ActiveFacts
 
       # Used during the pre-scan, match a term with new adjective(s)
       rule new_adjective_term
-        !global_term adj:id '-' '-'? lead_intervening s global_term       # Definitely a new leading adjective for this term
+	# A new leading adjective for this term
+        !global_term adj:id '-' '-'? lead_intervening s global_term
           &{|s| adj = [s[1].text_value, s[4].value].compact*" "; input.context.new_leading_adjective_term(adj, s[6].text_value) }
         /
-        global_term s trail_intervening '-' '-'? !global_term adj:id      # Definitely a new trailing adjective for this term
+	# A new trailing adjective for this term
+        global_term s trail_intervening '-' '-'? !global_term adj:id
           &{|s| adj = [s[2].value, s[6].text_value].compact*" "; input.context.new_trailing_adjective_term(adj, s[0].text_value) }
       end
 
-      rule lead_intervening     # Words intervening between a new adjective and the term
+      rule lead_intervening		# Words intervening between a new adjective and the term
         (S !global_term id)*
         {
           def value
@@ -148,7 +160,7 @@ module ActiveFacts
         }
       end
 
-      rule trail_intervening    # Words intervening between a new adjective and the term
+      rule trail_intervening		# Words intervening between a new adjective and the term
         (!global_term id S)*
         {
           def value
@@ -181,21 +193,6 @@ module ActiveFacts
             tail.elements.inject(head.value) { |t, e| "#{t} #{e.w.value}" }
           end
         }
-      end
-
-      rule non_phrase
-        # These words are illegal in (but maybe ok following) a clause where a noun_phrase is expected:
-        and
-        / but
-        / if
-        / role_list_constraint_followers
-        / only_if
-        / or
-        / quantifier
-        / returning
-        / then
-        / value_constraint
-        / where
       end
 
     end

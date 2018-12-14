@@ -9,7 +9,7 @@ module ActiveFacts
     grammar ValueTypes
       rule value_type
         s each?
-        s term_definition_name
+        s new_term_name
         m1:mapping_pragmas
         # REVISIT: ORM2 would allow (subtype_prefix term)?
         written_as
@@ -71,9 +71,11 @@ module ActiveFacts
           parameter_name ':' s literal:parameter_literal
         ) <Parser::ValueTypeParameterSetting>
         /	# Define a new parameter
-        accepts s parameter_name as value_type:term s vr:(restricted s to s parameter_restriction)? <Parser::ValueTypeParameterDefinition>
+        accepts s parameter_name as value_type:term s vr:(restricted s to s parameter_restriction)?
+	  <Parser::ValueTypeParameterDefinition>
         /	# Restrict values for a parameter
-        restricts s parameter_name to s parameter_restriction <Parser::ValueTypeParameterRestriction>
+        restricts s parameter_name to s parameter_restriction
+	  <Parser::ValueTypeParameterRestriction>
       end
 
       rule parameter_name

@@ -15,7 +15,7 @@ module ActiveFacts
       rule fact_type
 	name:(
 	  s each?	    # Chew the "each" or it will get accepted as a quantifier
-	  s term_definition_name mapping_pragmas is_where s
+	  s new_term_name mapping_pragmas is_where s
 	)?	  # Name of objectifying entity type
         anonymous_fact_type
 	<Parser::FactType>
@@ -71,6 +71,10 @@ module ActiveFacts
 
       rule post_qualifier
         static / transient /
+	ring_qualifier
+      end
+
+      rule ring_qualifier
         intransitive / stronglyintransitive / transitive / acyclic / symmetric / asymmetric / antisymmetric / reflexive / irreflexive
       end
 
@@ -88,9 +92,7 @@ module ActiveFacts
         contracted_clauses s tail:( and s contracted_clauses s )*
         {
           def ast
-            clauses = contracted_clauses.ast
-            tail.elements.map{|e| clauses += e.contracted_clauses.ast }
-            clauses
+            contracted_clauses.ast + tail.elements.flat_map{|e| e.contracted_clauses.ast }
           end
         }
       end

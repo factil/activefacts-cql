@@ -14,14 +14,13 @@ module ActiveFacts
 
       rule entity_type
         s each?
-        s term_definition_name
+        s new_term_name
         m1:mapping_pragmas
         context:context_note?
         sup:(basetype / subtype)
-          &{|s|
-            # There's an implicit type when we use an identification mode, register it:
-            mode = s[6].identification_mode
-            if mode
+          &{|s|	  # s[6] has not yet been named "sup"
+            # There's an implicit type when we use an identification mode, register the name with the term recogniser:
+            if mode = s[6].identification_mode
               input.context.object_type(s[3].value+mode, "identification mode type")
               input.context.object_type(s[3].value+' '+mode, "identification mode type")
             end
