@@ -50,7 +50,7 @@ module ActiveFacts
 
       module EntityType
         def ast
-          name = new_term_name.value
+          name = term.value
           clauses_ast = ec.empty? ? [] : ec.reading_clauses.ast
           pragmas = m1.value+m2.value
           pragmas << 'independent' if sup.independent
@@ -104,7 +104,7 @@ module ActiveFacts
 
       module ValueType
         def ast
-          name = new_term_name.value
+          name = term.value
           params = value_type_parameters.values
           value_constraint = vc.empty? ? nil : vc.ast
           units = u.empty? ? [] : u.units.value
@@ -144,7 +144,7 @@ module ActiveFacts
           ft = anonymous_fact_type.ast
           if !name.empty?
             # "each" is often used, and doesn't imply uniqueness
-            ft.name = name.new_term_name.value
+            ft.name = name.term.value
             pragmas = name.mapping_pragmas.value
             pragmas << 'independent' if name.is_where.independent
             ft.pragmas = pragmas

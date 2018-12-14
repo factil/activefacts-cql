@@ -9,7 +9,7 @@ module ActiveFacts
     grammar ValueTypes
       rule value_type
         s each?
-        s new_term_name
+        s term
         m1:mapping_pragmas
         # REVISIT: ORM2 would allow (subtype_prefix term)?
         written_as

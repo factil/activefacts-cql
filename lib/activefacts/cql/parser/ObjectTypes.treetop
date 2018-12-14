@@ -14,7 +14,7 @@ module ActiveFacts
 
       rule entity_type
         s each?
-        s new_term_name
+        s term
         m1:mapping_pragmas
         context:context_note?
         sup:(basetype / subtype)

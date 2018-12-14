@@ -139,7 +139,7 @@ module ActiveFacts
         result
       end
 
-      def global_term_starts?(s, context_saver)
+      def prescan_term_starts?(s, context_saver)
         @term = @global_term = nil
 
         @term_part = s
@@ -161,7 +161,7 @@ module ActiveFacts
         t
       end
 
-      def global_term_continues?(s)
+      def prescan_term_continues?(s)
         @term_part = "#{@term_part} #{s}"
         t = @terms[@term_part]
         if t

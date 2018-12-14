@@ -15,7 +15,7 @@ module ActiveFacts
       rule fact_type
 	name:(
 	  s each?	    # Chew the "each" or it will get accepted as a quantifier
-	  s new_term_name mapping_pragmas is_where s
+	  s term mapping_pragmas is_where s
 	)?	  # Name of objectifying entity type
         anonymous_fact_type
 	<Parser::FactType>
