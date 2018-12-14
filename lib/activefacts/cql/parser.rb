@@ -8,7 +8,6 @@ require 'rubygems'
 require 'treetop'
 
 # These are Treetop files, which Polyglot will compile on the fly if precompiled ones aren't found:
-
 require 'activefacts/cql/parser/CQLParser'
 
 module ActiveFacts

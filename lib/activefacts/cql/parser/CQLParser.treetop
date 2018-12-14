@@ -51,13 +51,11 @@ module ActiveFacts
       end
 
       rule statement
-        ( # constraint definition group
 	  subset_constraint
         / equality_constraint
         / set_constraint
         / presence_constraint
         # REVISIT: These are always defined inline at present: / value_constraint
-	)
         / unit_definition
         / object_type
         / fact_type
