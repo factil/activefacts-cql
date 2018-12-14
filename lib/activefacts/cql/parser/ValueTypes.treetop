@@ -169,7 +169,7 @@ module ActiveFacts
       end
 
       rule unit
-        maybe_unit &{|s| input.context.unit?(s[0].unit_name.text_value) }
+        maybe_unit &{|s| input.parser.unit?(s[0].unit_name.text_value) }
       end
 
       rule maybe_unit

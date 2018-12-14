@@ -21,8 +21,8 @@ module ActiveFacts
           &{|s|	  # s[6] has not yet been named "sup"
             # There's an implicit type when we use an identification mode, register the name with the term recogniser:
             if mode = s[6].identification_mode
-              input.context.object_type(s[3].value+mode, "identification mode type")
-              input.context.object_type(s[3].value+' '+mode, "identification mode type")
+              input.parser.new_object_type_name(s[3].value+mode, "identification mode type")
+              input.parser.new_object_type_name(s[3].value+' '+mode, "identification mode type")
             end
             true
           }

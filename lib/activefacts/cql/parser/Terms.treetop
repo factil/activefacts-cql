@@ -44,7 +44,7 @@ module ActiveFacts
         /
         subtype_prefix (independent s)? new_term_name
 	  # The supertype name may not yet be defined. Allow the forward reference.
-          &{|e| input.context.object_type(e[2].value, "subtype") }
+          &{|e| input.parser.new_object_type_name(e[2].value, "subtype") }
       end
 
       # Prescan (with side-effects) then fail so we parse the text properly:
@@ -58,16 +58,16 @@ module ActiveFacts
         s each?
         s (
           new_term_name mapping_pragmas entity_prefix
-                &{|e| input.context.object_type(e[0].value, "entity type") }
+                &{|e| input.parser.new_object_type_name(e[0].value, "entity type") }
           /
           t1:new_term_name mapping_pragmas written_as any? s t2:new_term_name
                 &{|e|
-                  input.context.object_type(new_term = e[0].value, "value type")
-                  input.context.object_type(base_term = e[5].value, "value type")
+                  input.parser.new_object_type_name(new_term = e[0].value, "value type")
+                  input.parser.new_object_type_name(base_term = e[5].value, "value type")
                 }
           /
           new_term_name s mapping_pragmas is_where
-                &{|e| input.context.object_type(e[0].value, "objectified_fact_type") }
+                &{|e| input.parser.new_object_type_name(e[0].value, "objectified_fact_type") }
         )?
         prescan_rest
 		# Wipe any terminal failures that were added:
@@ -92,11 +92,11 @@ module ActiveFacts
       # Do a first-pass mainly lexical analysis, looking for role name definitions and adjectives,
       # for use in detecting terms later.
       rule prescan_rest
-        &{|s| input.context.reset_role_names }
+        &{|s| input.parser.reset_role_names }
         (
           context_note                  # Context notes have different lexical conventions
           / '(' as S new_term_name s ')' s    # Prepare for a Role Name
-            &{|s| input.context.role_name(s[3].value) }
+            &{|s| input.parser.new_role_name(s[3].value) }
           / new_derived_value           # Prepare for a derived term
           / new_adjective_term          # Prepare for an existing term with new Adjectives
         # The remaining rules exist to correctly eat up anything that doesn't match the above:
@@ -119,13 +119,13 @@ module ActiveFacts
         !global_term id derived_value_continuation? s '='
           &{|s|
             name = [s[1].text_value] + (s[2].empty? ? [] : s[2].value)
-            input.context.object_type(name*' ', "derived value type")
+            input.parser.new_object_type_name(name*' ', "derived value type")
           }
         /
         '=' s !global_term id derived_value_continuation? s (that/who)
           &{|s|
             name = [s[3].text_value] + (s[4].empty? ? [] : s[4].value)
-            input.context.object_type(name*' ', "derived value type")
+            input.parser.new_object_type_name(name*' ', "derived value type")
           }
       end
 
@@ -144,11 +144,11 @@ module ActiveFacts
       rule new_adjective_term
 	# A new leading adjective for this term
         !global_term adj:id '-' '-'? lead_intervening s global_term
-          &{|s| adj = [s[1].text_value, s[4].value].compact*" "; input.context.new_leading_adjective_term(adj, s[6].text_value) }
+          &{|s| adj = [s[1].text_value, s[4].value].compact*" "; input.parser.new_leading_adjective_term(adj, s[6].text_value) }
         /
 	# A new trailing adjective for this term
         global_term s trail_intervening '-' '-'? !global_term adj:id
-          &{|s| adj = [s[2].value, s[6].text_value].compact*" "; input.context.new_trailing_adjective_term(adj, s[0].text_value) }
+          &{|s| adj = [s[2].value, s[6].text_value].compact*" "; input.parser.new_trailing_adjective_term(adj, s[0].text_value) }
       end
 
       rule lead_intervening		# Words intervening between a new adjective and the term
@@ -171,10 +171,10 @@ module ActiveFacts
 
       # This is the rule to use after the prescan; it only succeeds on a complete term or role reference
       rule term
-        s head:id x               &{|s| w = s[1].text_value; input.context.term_starts?(w, s[2]) }
+        s head:id x               &{|s| w = s[1].text_value; input.parser.term_starts?(w, s[2]) }
         tail:(
-          s '-'? dbl:'-'? s w:id  &{|s| w = s[4].text_value; input.context.term_continues?(w) }
-        )*                        &{|s| input.context.term_complete? }
+          s '-'? dbl:'-'? s w:id  &{|s| w = s[4].text_value; input.parser.term_continues?(w) }
+        )*                        &{|s| input.parser.term_complete? }
           <Parser::TermNode>
         /
         s head:id '-' '-'? s term       &{|s| s[5].ast.leading_adjective == nil }
@@ -187,8 +187,8 @@ module ActiveFacts
 
       rule global_term
         # This rule shouldn't be used outside the prescan, it will memoize the wrong things.
-        head:id x    &{|s| input.context.global_term_starts?(s[0].text_value, s[1]) }
-        tail:(s w:id &{|s| input.context.global_term_continues?(s[1].text_value) } )*
+        head:id x    &{|s| input.parser.global_term_starts?(s[0].text_value, s[1]) }
+        tail:(s w:id &{|s| input.parser.global_term_continues?(s[1].text_value) } )*
         { def value
             tail.elements.inject(head.value) { |t, e| "#{t} #{e.w.value}" }
           end
