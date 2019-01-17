@@ -119,7 +119,7 @@ module ActiveFacts
         (
           context_note                  # Context notes have different lexical conventions
           / '(' as S prescan_term_name s ')' s    # Prepare for a Role Name
-            &{|s| input.parser.new_role_name(s[3].value) }
+            &{|s| input.parser.new_local_name(s[3].value, 'role-name') }
           / new_derived_value           # Prepare for a derived term
           / new_adjective_term          # Prepare for an existing term with new Adjectives
         # The remaining rules exist to correctly eat up anything that doesn't match the above:

@@ -108,8 +108,8 @@ module ActiveFacts
         true
       end
 
-      def new_role_name(name)
-        index_name(@role_names, name) && trace(:terms, "new role '#{name}'")
+      def new_local_name(name, kind)
+        index_name(@role_names, name) && trace(:terms, "new #{kind} '#{name}'")
         true
       end
 
