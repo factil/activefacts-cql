@@ -142,13 +142,13 @@ module ActiveFacts
         !prescan_term id derived_value_continuation? s '='
           &{|s|
             name = [s[1].text_value] + (s[2].empty? ? [] : s[2].value)
-            input.parser.new_object_type_name(name*' ', "derived value type")
+            input.parser.new_local_name(name*' ', 'derived value type')
           }
         /
         '=' s !prescan_term id derived_value_continuation? s (that/who)
           &{|s|
             name = [s[3].text_value] + (s[4].empty? ? [] : s[4].value)
-            input.parser.new_object_type_name(name*' ', "derived value type")
+            input.parser.new_local_name(name*' ', 'derived value type')
           }
       end
 

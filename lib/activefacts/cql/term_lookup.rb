@@ -99,17 +99,17 @@ module ActiveFacts
       end
 
       def new_leading_adjective_term(adj, term)
-        index_name(@role_names, "#{adj} #{term}", term) && trace(:terms, "new compound term '#{adj}- #{term}'")
+        new_local_name("#{adj} #{term}", "new compound term '#{adj}- #{term}'", term)
         true
       end
 
       def new_trailing_adjective_term(adj, term)
-        index_name(@role_names, "#{term} #{adj}", term) && trace(:terms, "new compound term '#{term} -#{adj}'")
+        new_local_name("#{term} #{adj}", "new compound term '#{term} -#{adj}'", term)
         true
       end
 
-      def new_local_name(name, kind)
-        index_name(@role_names, name) && trace(:terms, "new #{kind} '#{name}'")
+      def new_local_name(name, kind, value = true)
+        index_name(@role_names, name, value) && trace(:terms, "new #{kind} '#{name}'")
         true
       end
 
