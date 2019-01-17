@@ -30,7 +30,7 @@ module ActiveFacts
         context2:context_note?
         ec:(where s reading_clauses)?
         ';'
-	<Parser::EntityType>
+	<AST::EntityType>
       end
 
       rule basetype
@@ -66,11 +66,11 @@ module ActiveFacts
         identified_by its s		# Reference Mode
 	i:(term/implicit_value_type_name) value_type_parameters
         vc:value_constraint?
-	<Parser::ReferenceMode>
+	<AST::ReferenceMode>
         /
         identified_by role_list	  # REVISIT: We'd like to be able to use implicit_value_type_names here too.
 	  &{|s| allow_forward_terms_in s[-1].ast; true }
-	<Parser::IdentificationList>
+	<AST::IdentificationList>
       end
 
       # Identified by roles... also used for constraints, beware
@@ -91,10 +91,10 @@ module ActiveFacts
 
       rule term_or_unary
         pre_text:unary_text s term post_text:unary_text s ss:subscript?
-	<Parser::UnaryTerm>
+	<AST::UnaryTerm>
         /
         s !non_phrase id s &non_phrase s ss:subscript?
-	<Parser::ForwardTerm>
+	<AST::ForwardTerm>
       end
 
       rule unary_text

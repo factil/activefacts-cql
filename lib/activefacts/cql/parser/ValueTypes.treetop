@@ -23,7 +23,7 @@ module ActiveFacts
         m2:mapping_pragmas
         context2:context_note?
         s ';' s
-	<Parser::ValueType>
+	<AST::ValueType>
       end
 
       rule in_units
@@ -69,13 +69,13 @@ module ActiveFacts
           with s parameter_name as s literal:parameter_literal
           /
           parameter_name ':' s literal:parameter_literal
-        ) <Parser::ValueTypeParameterSetting>
+        ) <AST::ValueTypeParameterSetting>
         /	# Define a new parameter
         accepts s parameter_name as value_type:term s vr:(restricted s to s parameter_restriction)?
-	  <Parser::ValueTypeParameterDefinition>
+	  <AST::ValueTypeParameterDefinition>
         /	# Restrict values for a parameter
         restricts s parameter_name to s parameter_restriction
-	  <Parser::ValueTypeParameterRestriction>
+	  <AST::ValueTypeParameterRestriction>
       end
 
       rule parameter_name
@@ -109,7 +109,7 @@ module ActiveFacts
         )
         q:(approximately '' / ephemera s url )? s
         ';'
-	<Parser::UnitDefinition>
+	<AST::UnitDefinition>
       end
 
       rule unit_name
@@ -187,7 +187,7 @@ module ActiveFacts
 
       rule value_constraint
         restricted_to restricted_values context:context_note? enforcement
-	<Parser::ValueConstraint>
+	<AST::ValueConstraint>
         # REVISIT: "where the possible value/s of that <Term> is/are value (, ...)"
       end
 

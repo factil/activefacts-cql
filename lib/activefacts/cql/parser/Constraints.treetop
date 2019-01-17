@@ -15,7 +15,7 @@ module ActiveFacts
           action:id s   # An enforcement action, like SMS, email, log, alarm, etc.
           agent:agent? s
         ')' s
-	<Parser::Enforcement>
+	<AST::Enforcement>
         /
 	null_enforcement
       end
@@ -30,23 +30,23 @@ module ActiveFacts
       # presence constraint:
       rule presence_constraint
         (each_occurs_in_clauses / either_or)
-	<Parser::PresenceConstraint>
+	<AST::PresenceConstraint>
       end
 
       # set (exclusion, mandatory exclusion, complex equality) constraint
       rule set_constraint
         (for_each_how_many / either_or_not_both)
-	<Parser::SetConstraint>
+	<AST::SetConstraint>
       end
 
       rule subset_constraint
         (a_only_if_b / if_b_then_a)
-	<Parser::SubsetConstraint>
+	<AST::SubsetConstraint>
       end
 
       rule equality_constraint
         if_and_only_if
-	<Parser::SetEqualityConstraint>
+	<AST::SetEqualityConstraint>
       end
     end
   end

@@ -35,11 +35,11 @@ module ActiveFacts
       end
       
       rule definitions
-	seq:definition* <Parser::Definitions>
+	seq:definition* <AST::Definitions>
       end
 
       rule definition
-        definition_body s <Parser::Definition>
+        definition_body s <AST::Definition>
       end
 
       rule definition_body
@@ -66,11 +66,11 @@ module ActiveFacts
       end
 
       rule schema_definition
-        s ( schema / topic / vocabulary ) S schema_name vn:version_number? s ';' <Parser::Schema>
+        s ( schema / topic / vocabulary ) S schema_name vn:version_number? s ';' <AST::Schema>
       end
 
       rule transform_definition
-        s transform S schema_name vn:version_number? s ';' <Parser::Transform>
+        s transform S schema_name vn:version_number? s ';' <AST::Transform>
       end
 
       rule schema_name
@@ -85,7 +85,7 @@ module ActiveFacts
 
       rule import_definition
         s import i:import_role? S schema_name vp:version_pattern? alias_list ';'
-	<Parser::Import>
+	<AST::Import>
       end
 
       rule version_number
@@ -133,7 +133,7 @@ module ActiveFacts
 	subject:informal_description_subject s
 	informal_description_body
 	informal_description_closer
-	<Parser::InformalDefinition>
+	<AST::InformalDefinition>
       end
 
       rule empty_statement

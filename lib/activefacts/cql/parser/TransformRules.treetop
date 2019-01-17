@@ -10,17 +10,17 @@ module ActiveFacts
 
       rule transform_rule
         ctr:compound_matching s ';'
-        <Parser::TransformRule>
+        <AST::TransformRule>
       end
 
       rule compound_matching
         s tl:term_list s '<==' s tq:transform_query? s '{' tr:transform_matchings s '}'
-	<Parser::CompoundMatching>
+	<AST::CompoundMatching>
       end
 
       rule simple_matching
         s tl:term_list s '<--' s te:transform_expr?
-	<Parser::SimpleMatching>
+	<AST::SimpleMatching>
       end
 
       rule transform_query
@@ -53,9 +53,9 @@ module ActiveFacts
 
       rule transform_expr
         s c:logical_texpr s '?' s t0:logical_texpr s ':' s t1:logical_texpr
-	  <Parser::TransformTernary>
+	  <AST::TransformTernary>
         / s o:aggregate_op S agg_of s t:logical_texpr
-	  <Parser::TransformAggregate>
+	  <AST::TransformAggregate>
         / logical_texpr
       end
 
@@ -65,17 +65,17 @@ module ActiveFacts
 
       rule logical_texpr
         s t0:logical_and_texpr tail:(s op:or s t1:logical_and_texpr)*
-	<Parser::TransformLogicalOr>
+	<AST::TransformLogicalOr>
       end
 
       rule logical_and_texpr
         s t0:equality_texpr tail:(s op:and s t1:equality_texpr)*
-	<Parser::TransformLogicalAnd>
+	<AST::TransformLogicalAnd>
       end
 
       rule equality_texpr
         s t0:relational_texpr operation:(s op:equality_op s t1:relational_texpr)?
-	<Parser::TransformEquality>
+	<AST::TransformEquality>
       end
 
       rule equality_op
@@ -84,7 +84,7 @@ module ActiveFacts
 
       rule relational_texpr
         s t0:additive_texpr operation:(s op:relational_op s t1:additive_texpr)?
-	<Parser::TransformComparison>
+	<AST::TransformComparison>
       end
 
       rule relational_op
@@ -93,7 +93,7 @@ module ActiveFacts
 
       rule additive_texpr
         s t0:multiplicative_texpr tail:(s op:additive_op s t1:multiplicative_texpr)*
-	<Parser::TransformSum>
+	<AST::TransformSum>
       end
 
       rule additive_op
@@ -102,7 +102,7 @@ module ActiveFacts
 
       rule multiplicative_texpr
         s t0:unary_texpr tail:(s op:multiplicative_op s t1:unary_texpr)*
-	<Parser::TransformProduct>
+	<AST::TransformProduct>
       end
 
       rule multiplicative_op
@@ -111,7 +111,7 @@ module ActiveFacts
 
       rule unary_texpr
         s u:unary_op? s t:primary_texpr
-	<Parser::TransformUnary>
+	<AST::TransformUnary>
       end
 
       rule unary_op
@@ -120,9 +120,9 @@ module ActiveFacts
 
       rule primary_texpr
         tl:term_list
-	<Parser::TransformTermList>
+	<AST::TransformTermList>
         / l:literal
-	<Parser::TransformLiteral>
+	<AST::TransformLiteral>
         # / '(' source_expr ')'
         # / id '(' source_expr (s ',' s source_expr) * ')'
       end

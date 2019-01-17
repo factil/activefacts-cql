@@ -9,7 +9,7 @@ module ActiveFacts
     grammar FactTypes
       rule query
         s query_clauses r:returning_clause? '?'
-	<Parser::Query>
+	<AST::Query>
       end
 
       rule fact_type
@@ -18,7 +18,7 @@ module ActiveFacts
 	  s term mapping_pragmas is_where s
 	)?	  # Name of objectifying entity type
         anonymous_fact_type
-	<Parser::FactType>
+	<AST::FactType>
       end
 
       rule anonymous_fact_type
@@ -26,7 +26,7 @@ module ActiveFacts
 	  conditions:((':' / where) s a:query_clauses s
 	    returning_clause?
 	  )?
-        s ';' <Parser::AnonymousFactType>
+        s ';' <AST::AnonymousFactType>
       end
 
       rule query_clauses
@@ -34,7 +34,7 @@ module ActiveFacts
           # REVISIT: This creates no precedence between and/or, which could cause confusion.
           # Should disallow mixed conjunctions - using a sempred?
           ftail:( conjunction:(',' / and / or ) s qualified_clauses s )*
-	  <Parser::QueryClauses>
+	  <AST::QueryClauses>
       end
 
       rule returning_clause
@@ -47,7 +47,7 @@ module ActiveFacts
 
       rule qualified_clauses
         s certainty s contracted_clauses s pq:post_qualifiers? s context:context_note?
-	  <Parser::QualifiedClauses>
+	  <AST::QualifiedClauses>
       end
 
       rule certainty
@@ -111,7 +111,7 @@ module ActiveFacts
 	phrases:(!contraction phrase:(noun_phrase / linking_word))+
 	pq:post_qualifiers? s context:context_note?
 	contraction:reading_contraction?
-	<Parser::ReadingClause>
+	<AST::ReadingClause>
       end
 
       rule contracted_clauses
@@ -123,7 +123,7 @@ module ActiveFacts
 	  noun_phrase     # A role reference containing a term, perhaps with attached paraphernalia
 	  /
 	  linking_word	  # A word that is part of a fact type reading
-        )+ <Parser::ContractedClauses>
+        )+ <AST::ContractedClauses>
       end
 
       rule contraction
@@ -155,15 +155,15 @@ module ActiveFacts
       rule comparison_contraction
         noun_phrase pq:post_qualifiers? certainty s comparator s e2:expression
           !(noun_phrase / linking_word)	# The contracted_clauses must not continue here!
-	<Parser::ComparisonContraction>
+	<AST::ComparisonContraction>
       end
 
       rule comparison
         e1:expression s certainty s comparator s contraction p:post_qualifiers?
-	<Parser::ExpressionClauseContraction>
+	<AST::ExpressionClauseContraction>
         /
         certainty e1:expression s comparator s e2:expression # comparisons have no post-qualifiers: p:post_qualifiers?
-	<Parser::ExpressionExpressionContraction>
+	<AST::ExpressionExpressionContraction>
       end
 
       rule comparator
@@ -198,7 +198,7 @@ module ActiveFacts
       end
 
       rule aggregate
-        aggregate_operation s agg_of s term_or_unary s agg_in s '(' qualified_clauses s ')' <Parser::Aggregate>
+        aggregate_operation s agg_of s term_or_unary s agg_in s '(' qualified_clauses s ')' <AST::Aggregate>
 	# REVISIT: Need examples to verify that qualified_clauses is the right level (not query_clauses, etc)
       end
 
@@ -214,11 +214,11 @@ module ActiveFacts
 	  / value_constraint		  # e.g. "restricted to {1..4}"
 	)?
         oj:objectification_step?	  # "(in which <sub-expression>)"
-        <Parser::SimpleNounPhrase>
+        <AST::SimpleNounPhrase>
       end
 
       rule role_quantifier
-        quantifier mapping_pragmas enforcement context:context_note? <Parser::RoleQuantifier>
+        quantifier mapping_pragmas enforcement context:context_note? <AST::RoleQuantifier>
       end
 
       rule objectification_step

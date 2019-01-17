@@ -12,11 +12,11 @@ module ActiveFacts
       end
 
       rule sum
-        t0:product s tail:(op:('+' / '-') s t1:product s)* <Parser::SumExpression>
+        t0:product s tail:(op:('+' / '-') s t1:product s)* <AST::SumExpression>
       end
 
       rule product
-        f0:factor s tail:(op:('/' / '%' / '*') s f1:factor s)* <Parser::ProductExpression>
+        f0:factor s tail:(op:('/' / '%' / '*') s f1:factor s)* <AST::ProductExpression>
       end
 
       rule factor
@@ -26,7 +26,7 @@ module ActiveFacts
       end
 
       rule literal_factor
-        literal u:unit? s <Parser::LiteralFactor>
+        literal u:unit? s <AST::LiteralFactor>
       end
 
       rule parenthesised_expression
@@ -38,7 +38,7 @@ module ActiveFacts
 	# REVISIT: Need to be able to include some/that here
         derived:term
 	s role_id:(role_name / subscript)? s
-	<Parser::Variable>
+	<AST::Variable>
       end
 
     end

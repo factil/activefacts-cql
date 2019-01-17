@@ -168,7 +168,7 @@ module ActiveFacts
       end
 
       rule quantifier
-	quantifier1 <Parser::Quantifier>
+	quantifier1 <AST::Quantifier>
       end
 
       # >>>>>>>>>>>>>>>>>>>> Quantifiers <<<<<<<<<<<<<<<<<<<<

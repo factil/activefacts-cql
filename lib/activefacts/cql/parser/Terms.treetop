@@ -14,19 +14,19 @@ module ActiveFacts
     grammar Terms
       # This is the rule to use after the prescan; it only succeeds on a complete term or role reference
       rule term
-        s head:id x               &{|s| w = s[1].text_value; input.parser.term_starts?(w, s[2]) }
+        s lead_id                 &{|s| w = s[1].text_value; input.parser.term_starts?(w, s[1]) }
         tail:(
           s '-'? dbl:'-'? s w:id  &{|s| w = s[4].text_value; input.parser.term_continues?(w) }
         )*                        &{|s| input.parser.term_complete? }
 	s
-          <Parser::TermNode>
+          <AST::TermNode>
         /
-        s head:id '-' '-'? s term s      &{|s| s[5].ast.leading_adjective == nil }
-          <Parser::TermLANode>
+        s lead_id '-' '-'? s term s      &{|s| s[5].ast.leading_adjective == nil }
+          <AST::TermLANode>
       end
 
-      rule x
-        '' <SavedContext>
+      rule lead_id
+	id <AST::LeadID>
       end
 
       # Prescan (with side-effects) then fail so we parse the text properly:
@@ -74,7 +74,7 @@ module ActiveFacts
       # This rule matches anything that looks like a term
       rule prescan_term_name
         id s t:(!non_term_name id s)*
-          <Parser::NewTermName>
+          <AST::NewTermName>
       end
 
       # Words or phrases that cannot occur inside a term:
@@ -194,10 +194,10 @@ module ActiveFacts
 
       rule prescan_term
         # This rule shouldn't be used outside the prescan, it will memoize the wrong things.
-        head:id x    &{|s| input.parser.prescan_term_starts?(s[0].text_value, s[1]) }
+        '' lead_id                &{|s| input.parser.prescan_term_starts?(s[1].text_value, s[1]) }
         tail:(s w:id &{|s| input.parser.prescan_term_continues?(s[1].text_value) } )*
         { def value
-            tail.elements.inject(head.value) { |t, e| "#{t} #{e.w.value}" }
+            tail.elements.inject(value) { |t, e| "#{t} #{e.w.value}" }
           end
         }
       end
