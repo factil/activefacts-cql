@@ -18,14 +18,6 @@ module ActiveFacts
         m1:mapping_pragmas
         context:context_note?
         sup:(basetype / subtype)
-          &{|s|	  # s[6] has not yet been named "sup"
-            # There's an implicit type when we use an identification mode, register the name with the term recogniser:
-            if mode = s[6].identification_mode
-              input.parser.new_object_type_name(s[3].value+mode, "identification mode type")
-              input.parser.new_object_type_name(s[3].value+' '+mode, "identification mode type")
-            end
-            true
-          }
         m2:mapping_pragmas
         context2:context_note?
         ec:(where s reading_clauses)?
@@ -64,11 +56,11 @@ module ActiveFacts
 
       rule identification
         identified_by its s		# Reference Mode
-	i:(term/implicit_value_type_name) value_type_parameters
+	term value_type_parameters
         vc:value_constraint?
 	<AST::ReferenceMode>
         /
-        identified_by role_list	  # REVISIT: We'd like to be able to use implicit_value_type_names here too.
+        identified_by role_list
 	  &{|s| allow_forward_terms_in s[-1].ast; true }
 	<AST::IdentificationList>
       end

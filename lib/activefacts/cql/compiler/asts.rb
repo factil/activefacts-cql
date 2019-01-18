@@ -62,11 +62,11 @@ module ActiveFacts
       module ReferenceMode
         def ast
           value_constraint = vc.empty? ? nil : vc.ast
-          Compiler::ReferenceMode.new(i.value, value_constraint, value_type_parameters.values)
+          Compiler::ReferenceMode.new(term.value, value_constraint, value_type_parameters.values)
         end
 
         def mode
-          i.value
+          term.value
         end
       end
 

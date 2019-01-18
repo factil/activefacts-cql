@@ -21,7 +21,7 @@ module ActiveFacts
 	s
           <AST::TermNode>
         /
-        s lead_id '-' '-'? s term s      &{|s| s[5].ast.leading_adjective == nil }
+        s id '-' '-'? s term s      &{|s| s[5].ast.leading_adjective == nil }
           <AST::TermLANode>
       end
 
@@ -45,15 +45,29 @@ module ActiveFacts
 		&{|s| forget_failures_to_here; false }
       end
 
+      rule prescan_entity_body
+	( is s (independent s )? identified_by refmode:prescan_reference_mode?
+	/ subtype_prefix (independent s)? prescan_new_term
+	    sub_ref:(identified_by refmode:prescan_reference_mode)?
+	    # The supertype name may not yet be defined. Allow the forward reference.
+	    &{|e| input.parser.new_object_type_name(e[2].value, "supertype") }
+	    { def refmode; sub_ref.empty? ? sub_ref : sub_ref.refmode; end }
+	)
+      end
+
       rule prescan_object_type_definition
 	# Entity type:
-	prescan_new_term mapping_pragmas
-	  ( is s (independent s )? identified_by
-	  / subtype_prefix (independent s)? prescan_new_term
-	      # The supertype name may not yet be defined. Allow the forward reference.
-	      &{|e| input.parser.new_object_type_name(e[2].value, "supertype") }
-	  )
-	      &{|e| input.parser.new_object_type_name(e[0].value, "entity type") }
+	prescan_new_term mapping_pragmas prescan_entity_body
+	      &{|e| term = e[0].value;
+		input.parser.new_object_type_name(term, "entity type")
+		rm = e[2].refmode
+		if !rm.empty?
+		  # The reference mode value type names may be implicitly recognised:
+		  input.parser.new_object_type_name("#{term} #{rm.prescan_new_term.value}", "implicit value type")
+		  input.parser.new_object_type_name("#{term}#{rm.prescan_new_term.value}", "implicit value type")
+		end
+		true
+	      }
 	/
 	# Value type:
 	t1:prescan_new_term mapping_pragmas written_as any? s t2:prescan_new_term
@@ -65,6 +79,11 @@ module ActiveFacts
 	# Objectified Fact type:
 	prescan_new_term s mapping_pragmas is_where
 	      &{|e| input.parser.new_object_type_name(e[0].value, "objectified_fact_type") }
+      end
+
+      rule prescan_reference_mode
+	its s prescan_new_term
+	  &{|e| input.parser.new_object_type_name(e[2].value, "reference mode") }
       end
 
       rule prescan_informally
@@ -84,12 +103,12 @@ module ActiveFacts
 
       # This rule matches anything that looks like a (non-hyphenated) term
       rule prescan_new_term
-        id s t:(!prescan_non_term_name id s)*
+        id s t:(!prescan_non_term id s)*
           <AST::NewTermName>
       end
 
       # Words or phrases that cannot occur inside a term:
-      rule prescan_non_term_name
+      rule prescan_non_term
         mapping_pragmas prescan_entity_prefix	# Entity type definition
         / mapping_pragmas written_as    # Value type definition
         / mapping_pragmas is_where      # Objectified type definition
@@ -118,7 +137,7 @@ module ActiveFacts
       rule prescan_entity_prefix
         is s (independent s )? identified_by
         /
-        subtype_prefix (independent s)? prescan_new_term
+        subtype_prefix (independent s)? prescan_new_term  # Note that multiple supertypes may not be forward referenced
 	  # The supertype name may not yet be defined. Allow the forward reference.
           &{|e| input.parser.new_object_type_name(e[2].value, "supertype") }
       end

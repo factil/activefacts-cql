@@ -14,7 +14,7 @@ module ActiveFacts
         # REVISIT: ORM2 would allow (subtype_prefix term)?
         written_as
         any? s
-        base:(term/implicit_value_type_name) s
+        base:term s
         value_type_parameters
         u:in_units?
         a:auto_assignment?
@@ -28,16 +28,6 @@ module ActiveFacts
 
       rule in_units
         in S units
-      end
-
-      # A ValueType name that might not yet have been identified or registered as a Term
-      # REVISIT: We'd like to support multi-word terms here (cannot include "where", "and", or anything that could follow in the value_type definition)
-      # REVISIT: We'd like these to be forward-referenced ObjectTypes too, not immediately created as ValueTypes
-      rule implicit_value_type_name
-        id
-        {
-          def node_type; :term; end
-        }
       end
 
       rule value_type_parameters
