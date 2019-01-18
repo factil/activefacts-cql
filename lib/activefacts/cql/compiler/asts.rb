@@ -350,9 +350,19 @@ module ActiveFacts
         end
       end
 
-      module TermNode # < Treetop::Runtime::SyntaxNode
+      module TermNode
         def ast quantifier = nil, function_call = nil, role_name = nil, value_constraint = nil, literal = nil, nested_clauses = nil
           Compiler::NounPhrase.new(global_term, leading_adjective, trailing_adjective, quantifier, function_call, role_name, value_constraint, literal, nested_clauses)
+        end
+      end
+
+      module TermLANode
+        include TermNode
+
+        def ast quantifier = nil, function_call = nil, role_name = nil, value_constraint = nil, literal = nil, nested_clauses = nil
+          ast = term.ast(quantifier, function_call, role_name, value_constraint, literal, nested_clauses)
+          ast.leading_adjective = lead_id.text_value
+          ast
         end
       end
 
