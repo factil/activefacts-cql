@@ -12,54 +12,33 @@ module ActiveFacts
       end
 
       rule sum
-        t0:product s tail:( op:add_op s t1:product s )*
-        {
-          def ast
-            if tail.elements.empty?
-              t0.ast
-            else
-              Compiler::Sum.new(t0.ast, *tail.elements.map{|e| e.op.text_value == '-' ? Compiler::Negate.new(e.t1.ast) : e.t1.ast})
-            end
-          end
-        }
-      end
-
-      rule add_op
-        '+' / '-'
+        t0:product s tail:(op:('+' / '-') s t1:product s)* <AST::SumExpression>
       end
 
       rule product
-        f0:factor s tail:( op:mul_op s f1:factor s )*
-        {
-          def ast
-            if tail.elements.empty?
-              f0.ast
-            else
-              Compiler::Product.new(f0.ast, *tail.elements.map{|e| e.op.text_value != '*' ? Compiler::Reciprocal.new(e.op.text_value, e.f1.ast) : e.f1.ast})
-            end
-          end
-        }
+        f0:factor s tail:(op:('/' / '%' / '*') s f1:factor s)* <AST::ProductExpression>
       end
 
       rule factor
-        literal u:unit? s
-            {
-              def ast
-                Compiler::Literal.new(literal.value, u.empty? ? nil : u.text_value)
-              end
-            }
-        / derived_variable
-        / !context_note '(' s sum s ')' s                   { def ast; sum.ast; end }
+	literal_factor
+        / variable
+	/ parenthesised_expression
       end
 
-      rule derived_variable
-        derived:term s role_id:(role_name / subscript )?
-        {
-          def ast quantifier = nil, value_constraint = nil, literal = nil, nested_clauses = nil
-            role_name = role_id.empty? ? nil : role_id.value
-            derived.ast(quantifier, nil, role_name, value_constraint, literal, nested_clauses)
-          end
-        }
+      rule literal_factor
+        literal u:unit? s <AST::LiteralFactor>
+      end
+
+      rule parenthesised_expression
+        !context_note '(' s sum s ')' s
+	{ def ast; sum.ast; end }
+      end
+
+      rule variable
+	# REVISIT: Need to be able to include some/that here
+        derived:term
+	s role_id:(role_name / subscript)? s
+	<AST::Variable>
       end
 
     end

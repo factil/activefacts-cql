@@ -1,65 +1,92 @@
 #
 #       ActiveFacts CQL Parser.
-#       Parse rules relating to Term names
+#       Parse rules relating to Terms (object type and role names)
+#
+# Most of the work here is in prescanning a statement to detect new terms being defined,
+# so they can be added ahead of time into a table of terms that will be recognised.
+#
+# The rules named prescan_XXX should not be used outside the prescan - they may have false memos.
 #
 # Copyright (c) 2009 Clifford Heath. Read the LICENSE file.
 #
 module ActiveFacts
   module CQL
     grammar Terms
-      rule term_definition_name
-        id s t:(!non_term_def id s)*
-          <Parser::TermDefinitionNameNode>
-      end
-
-      rule non_term_def
-        mapping_pragmas entity_prefix
-        / mapping_pragmas written_as                          # Value type
-        / mapping_pragmas is_where                            # Objectified type
-        / non_phrase
-        / identified_by                                       # as in: "a kind of X identified by..."
-        / in_units
-        / auto_assignment
-        / value_constraint
-      end
-
-      rule entity_prefix
-        is s (independent s )? identified_by
+      # This is the rule to use after the prescan; it only succeeds on a complete term or role reference
+      rule term
+        s lead_id                 &{|s| w = s[1].text_value; input.parser.term_starts?(w, s[1]) }
+        tail:(
+          s '-'? dbl:'-'? s w:id  &{|s| w = s[4].text_value; input.parser.term_continues?(w) }
+        )*                        &{|s| input.parser.term_complete? }
+	s
+          <AST::TermNode>
         /
-        subtype_prefix (independent s )? term_definition_name
-          &{|e| input.context.object_type(e[2].value, "subtype") }
+        s id '-' '-'? s term s      &{|s| s[5].ast.leading_adjective == nil }
+          <AST::TermLANode>
       end
 
+      rule lead_id
+	id <AST::LeadID>
+      end
+
+      # Prescan (with side-effects) then fail so we parse the text properly:
       rule prescan
-        informally_prescan
-        /
-        s each?
-        s (
-          term_definition_name mapping_pragmas entity_prefix
-                &{|e| input.context.object_type(e[0].value, "entity type") }
-          /
-          t1:term_definition_name mapping_pragmas written_as any? s t2:term_definition_name
-                &{|e|
-                  new_term = e[0].value
-                  input.context.object_type(new_term, "value type")
-                  base_term = e[5].value
-                  input.context.object_type(base_term, "value type")
-                }
-          /
-          term_definition_name s mapping_pragmas is_where
-                &{|e| input.context.object_type(e[0].value, "objectified_fact_type") }
-        )?
-        prescan_rest
-        &{|s|
-          # Wipe any terminal failures that were added:
-          forget_failures_to_here
-
-          # puts "========== prescan is complete on #{(s.map{|e|e.text_value}*" ").inspect} =========="
-          false
-        }
+	prescan_and_forget &{|s| false }
       end
 
-      rule informally_prescan
+      # When we prescan, we need to remove the packrat memos and error position
+      # because the subsequent parse may proceed differently.
+      rule prescan_and_forget
+        ( prescan_informally
+	  /
+	  s each? s prescan_object_type_definition? prescan_rest
+	)
+		# Wipe any terminal failures that were added:
+		&{|s| forget_failures_to_here; false }
+      end
+
+      rule prescan_entity_body
+	( is s (independent s )? identified_by refmode:prescan_reference_mode?
+	/ subtype_prefix (independent s)? prescan_new_term
+	    sub_ref:(identified_by refmode:prescan_reference_mode)?
+	    # The supertype name may not yet be defined. Allow the forward reference.
+	    &{|e| input.parser.new_object_type_name(e[2].value, "supertype") }
+	    { def refmode; sub_ref.empty? ? sub_ref : sub_ref.refmode; end }
+	)
+      end
+
+      rule prescan_object_type_definition
+	# Entity type:
+	prescan_new_term mapping_pragmas prescan_entity_body
+	      &{|e| term = e[0].value;
+		input.parser.new_object_type_name(term, "entity type")
+		rm = e[2].refmode
+		if !rm.empty?
+		  # The reference mode value type names may be implicitly recognised:
+		  input.parser.new_object_type_name("#{term} #{rm.prescan_new_term.value}", "implicit value type")
+		  input.parser.new_object_type_name("#{term}#{rm.prescan_new_term.value}", "implicit value type")
+		end
+		true
+	      }
+	/
+	# Value type:
+	t1:prescan_new_term mapping_pragmas written_as any? s t2:prescan_new_term
+	      &{|e|
+		input.parser.new_object_type_name(new_term = e[0].value, "value type")
+		input.parser.new_object_type_name(base_term = e[5].value, "value type")
+	      }
+	/
+	# Objectified Fact type:
+	prescan_new_term s mapping_pragmas is_where
+	      &{|e| input.parser.new_object_type_name(e[0].value, "objectified_fact_type") }
+      end
+
+      rule prescan_reference_mode
+	its s prescan_new_term
+	  &{|e| input.parser.new_object_type_name(e[2].value, "reference mode") }
+      end
+
+      rule prescan_informally
         informally s ',' s
           informal_description_subject_prescan s
           informal_description_body
@@ -67,118 +94,33 @@ module ActiveFacts
       end
 
       rule informal_description_subject_prescan
-        each S term_definition_name       # Informal definition of an object type
+        each S prescan_new_term     # Informal definition of an object type
         /
-        when S phrase+ s ','              # or a fact type; we can't forward-reference these
-                                          # This could memoize a bad parse for 'phrase'!!!
+        when S (noun_phrase / linking_word)+ s ','              # or a fact type
+					# We can't forward-reference fact types;
+                                        # it could memoize a bad parse for 'noun_phrase'!!!
       end
 
-      # Do a first-pass mainly lexical analysis, looking for role name definitions and adjectives,
-      # for use in detecting terms later.
-      rule prescan_rest
-        &{|s| input.context.reset_role_names }
-        (
-          context_note                      # Context notes have different lexical conventions
-          / '(' as S term_definition_name s ')' s    # Prepare for a Role Name
-            &{|s| input.context.role_name(s[3].value) }
-          / new_derived_value               # Prepare for a derived term
-          / new_adjective_term              # Prepare for an existing term with new Adjectives
-        # The remaining rules exist to correctly eat up anything that doesn't match the above:
-          / global_term                     # If we see A B - C D, don't recognise B as a new adjective for C D.
-          / prescan_aggregate
-          / id
-          # / literal # REVISIT: Literals might contain "(as Foo)" and mess things up
-          / range                           # Covers all numbers and strings
-          / S                               # White space and comments, must precede / and *
-          / [^;]                            # Skip anything else, we want the prescan to finish
-        )* [?;] s
+      # This rule matches anything that looks like a (non-hyphenated) term
+      rule prescan_new_term
+        id s t:(!prescan_non_term id s)*
+          <AST::NewTermName>
       end
 
-      # Not sure this is even needed, but it doesn't seem to hurt:
-      rule prescan_aggregate
-        aggregate_type:id s agg_of s global_term agg_in s &'('
+      # Words or phrases that cannot occur inside a term:
+      rule prescan_non_term
+        mapping_pragmas prescan_entity_prefix	# Entity type definition
+        / mapping_pragmas written_as    # Value type definition
+        / mapping_pragmas is_where      # Objectified type definition
+        / non_phrase
+        / identified_by                 # as in: "a kind of X identified by..."
+        / in_units
+        / auto_assignment
+        / value_constraint
       end
 
-      rule new_derived_value
-        !global_term id derived_value_continuation? s '='
-          &{|s|
-            name = [s[1].text_value] + (s[2].empty? ? [] : s[2].value)
-            input.context.object_type(name*' ', "derived value type")
-          }
-        /
-        '=' s !global_term id derived_value_continuation? s (that/who)
-          &{|s|
-            name = [s[3].text_value] + (s[4].empty? ? [] : s[4].value)
-            input.context.object_type(name*' ', "derived value type")
-          }
-      end
-
-      # Derived values are new terms introduced by an = sign before an expression
-      # This rule handles trailing words of a multi-word derived value
-      rule derived_value_continuation
-        s '-' tail:(s !global_term !(that/who) id)*
-        {
-          def value
-            tail.elements.map{|e| e.id.text_value}
-          end
-        }
-      end
-
-      # Used during the pre-scan, match a term with new adjective(s)
-      rule new_adjective_term
-        !global_term adj:id '-' '-'? lead_intervening s global_term       # Definitely a new leading adjective for this term
-          &{|s| adj = [s[1].text_value, s[4].value].compact*" "; input.context.new_leading_adjective_term(adj, s[6].text_value) }
-        /
-        global_term s trail_intervening '-' '-'? !global_term adj:id      # Definitely a new trailing adjective for this term
-          &{|s| adj = [s[2].value, s[6].text_value].compact*" "; input.context.new_trailing_adjective_term(adj, s[0].text_value) }
-      end
-
-      rule lead_intervening     # Words intervening between a new adjective and the term
-        (S !global_term id)*
-        {
-          def value
-            elements.size == 0 ? nil : elements.map{|e| e.id.text_value}*" "
-          end
-        }
-      end
-
-      rule trail_intervening    # Words intervening between a new adjective and the term
-        (!global_term id S)*
-        {
-          def value
-            elements.size == 0 ? nil : elements.map{|e| e.id.text_value}*" "
-          end
-        }
-      end
-
-      # This is the rule to use after the prescan; it only succeeds on a complete term or role reference
-      rule term
-        s head:id x               &{|s| w = s[1].text_value; input.context.term_starts?(w, s[2]) }
-        tail:(
-          s '-'? dbl:'-'? s w:id  &{|s| w = s[4].text_value; input.context.term_continues?(w) }
-        )*                        &{|s| input.context.term_complete? }
-          <Parser::TermNode>
-        /
-        s head:id '-' '-'? s term       &{|s| s[5].ast.leading_adjective == nil }
-          <Parser::TermLANode>
-      end
-
-      rule x
-        '' <SavedContext>
-      end
-
-      rule global_term
-        # This rule shouldn't be used outside the prescan, it will memoize the wrong things.
-        head:id x    &{|s| input.context.global_term_starts?(s[0].text_value, s[1]) }
-        tail:(s w:id &{|s| input.context.global_term_continues?(s[1].text_value) } )*
-        { def value
-            tail.elements.inject(head.value) { |t, e| "#{t} #{e.w.value}" }
-          end
-        }
-      end
-
+      # Words that cannot occur in (but maybe ok following) a clause where a noun_phrase is expected:
       rule non_phrase
-        # These words are illegal in (but maybe ok following) a clause where a phrase is expected:
         and
         / but
         / if
@@ -190,6 +132,108 @@ module ActiveFacts
         / then
         / value_constraint
         / where
+      end
+
+      rule prescan_entity_prefix
+        is s (independent s )? identified_by
+        /
+        subtype_prefix (independent s)? prescan_new_term  # Note that multiple supertypes may not be forward referenced
+	  # The supertype name may not yet be defined. Allow the forward reference.
+          &{|e| input.parser.new_object_type_name(e[2].value, "supertype") }
+      end
+
+      # Do a first-pass mainly lexical analysis, looking for role name definitions and adjectives,
+      # for use in detecting terms later.
+      rule prescan_rest
+        &{|s| input.parser.reset_role_names }
+        (
+          context_note                  # Context notes have different lexical conventions
+	  / prescan_local_term_phrase
+        # The remaining rules exist to correctly eat up anything that doesn't match the above:
+          / prescan_term_prefix         # If we see A B - C D, don't recognise B as a new adjective for C D.
+          / id				# Other words
+          / literal			# Literals might contain "(as Foo)" and mess things up
+          / range                       # Covers all numbers and strings
+          / S                           # White space and comments, must precede / and *
+          / [^;]                        # Skip anything else, we want the prescan to finish
+        )* [?;] s
+      end
+
+      # The phrases matched by this rule define new local terms that should be recognised elsewhere in the same definition
+      rule prescan_local_term_phrase
+	prescan_role_name		# A role name, like (as Foo) defines a local term
+	/ prescan_derived_value       # A derived term, like Net Value = <expr>
+	/ prescan_adjective_term      # An existing term, but with adjectives hyphen-bound to it
+      end
+
+      rule prescan_role_name
+	'(' as S prescan_new_term s ')' s    # Prepare for a Role Name
+	  &{|s| input.parser.new_local_name(s[3].value, 'role-name') }
+      end
+
+      rule prescan_derived_value
+        !prescan_term_prefix            # REVISIT: Why can't a derived value name start with the prefix of an existing term?
+	id derived_value_continuation? s '='
+          &{|s|
+            name = [s[1].text_value] + (s[2].empty? ? [] : s[2].value)
+            input.parser.new_local_name(name*' ', 'derived value type')
+          }
+        /
+        '=' s !prescan_term_prefix id derived_value_continuation? s (that/who)
+          &{|s|
+            name = [s[3].text_value] + (s[4].empty? ? [] : s[4].value)
+            input.parser.new_local_name(name*' ', 'derived value type')
+          }
+      end
+
+      # Derived values are new terms introduced by an = sign before an expression
+      # This rule handles trailing words of a multi-word derived value
+      rule derived_value_continuation
+        s '-' tail:(s !prescan_term_prefix !(that/who) id)*
+        {
+          def value
+            tail.elements.map{|e| e.id.text_value}
+          end
+        }
+      end
+
+      # Used during the pre-scan, match a term with new adjective(s)
+      rule prescan_adjective_term
+	# A new leading adjective for this term
+        !prescan_term_prefix adj:id '-' '-'? lead_intervening s prescan_term_prefix
+          &{|s| adj = [s[1].text_value, s[4].value].compact*" "; input.parser.new_leading_adjective_term(adj, s[6].text_value) }
+        /
+	# A new trailing adjective for this term
+        prescan_term_prefix s trail_intervening '-' '-'? !prescan_term_prefix adj:id
+          &{|s| adj = [s[2].value, s[6].text_value].compact*" "; input.parser.new_trailing_adjective_term(adj, s[0].text_value) }
+      end
+
+      rule lead_intervening		# Words intervening between a new adjective and the term
+        (S !prescan_term_prefix id)*
+        {
+          def value
+            elements.size == 0 ? nil : elements.map{|e| e.id.text_value}*" "
+          end
+        }
+      end
+
+      rule trail_intervening		# Words intervening between a new adjective and the term
+        (!prescan_term_prefix id S)*
+        {
+          def value
+            elements.size == 0 ? nil : elements.map{|e| e.id.text_value}*" "
+          end
+        }
+      end
+
+      rule prescan_term_prefix
+        # This rule shouldn't be used outside the prescan, it will memoize the wrong things.
+        '' lead_id                &{|s| input.parser.prescan_term_starts?(s[1].text_value, s[1]) }
+        tail:(s w:id &{|s| input.parser.prescan_term_continues?(s[1].text_value) } )*
+        { def value
+            tail.elements.inject(value) { |t, e| "#{t} #{e.w.value}" }
+          end
+        }
       end
 
     end

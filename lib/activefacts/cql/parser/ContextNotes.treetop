@@ -1,26 +1,17 @@
 #
 #       ActiveFacts CQL Parser.
-#       Parse rules relating to definition context.
+#       Parse rules relating to business context notes.
 #
 # Copyright (c) 2009 Clifford Heath. Read the LICENSE file.
 #
 module ActiveFacts
   module CQL
-    grammar Context
+    grammar ContextNotes
       rule context_note
         '('
         s w:who_says? s context_type description agreed:(',' a:as_agreed_by)? s
         ')' s
-        {
-          def value
-            [ w.empty? ? nil : w.value, context_type.value, description.text_value, agreed.empty? ? [] : agreed.a.value]
-          end
-          def ast
-            who = w.empty? ? nil : w.value
-            ag = agreed.empty? ? [] : agreed.a.value
-            Compiler::ContextNote.new context_type.value, description.text_value, who, ag
-          end
-        }
+	<AST::ContextNote>
       end
 
       rule who_says

@@ -39,9 +39,6 @@ describe "Entity Types" do
     [ " aa is written as b ( ) ; e is identified by aa where d ; ",
       ["ValueType: aa is written as b;", "EntityType: e [{aa}] where [\"d\"];"]
     ],
-    [ "e is written as b; aa is identified by e where maybe d;",
-      ["ValueType: e is written as b;", "EntityType: aa [{e}] where [maybe \"d\"];"]
-    ],
   ]
 
   EntityTypes_Objectified = [
@@ -84,16 +81,16 @@ describe "Entity Types" do
   end
 
   EntityTypes.each do |c|
-    source, ast = *c
+    source, expected_ast = *c
     it "should parse #{source.inspect}" do
-      result = @parser.parse_all(source, :definition)
+      asts = @parser.parse_all(source, :definition)
 
-      puts @parser.failure_reason unless result
-      expect(result).to_not be_nil
+      puts @parser.failure_reason unless asts
+      expect(asts).to_not be_nil
 
-      canonical_form = result.map{|d| d.ast.to_s}
-      if ast
-        expect(canonical_form).to eq ast
+      canonical_form = asts.map(&:to_s)
+      if expected_ast
+        expect(canonical_form).to eq expected_ast
       else
         puts "#{source.inspect} should compile to"
         puts "\t#{canonical_form}"

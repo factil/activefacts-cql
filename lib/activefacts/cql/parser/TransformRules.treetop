@@ -10,29 +10,17 @@ module ActiveFacts
 
       rule transform_rule
         ctr:compound_matching s ';'
-        {
-          def ast
-            Compiler::TransformRule.new(ctr.ast)
-          end
-        }
+        <AST::TransformRule>
       end
 
       rule compound_matching
         s tl:term_list s '<==' s tq:transform_query? s '{' tr:transform_matchings s '}'
-        {
-          def ast
-            Compiler::CompoundMatching.new(tl.ast, tq.empty? ? nil : tq.ast, tr.ast)
-          end
-        }
+	<AST::CompoundMatching>
       end
 
       rule simple_matching
         s tl:term_list s '<--' s te:transform_expr?
-        {
-          def ast
-            Compiler::SimpleMatching.new(tl.ast, te.empty? ? nil : te.ast)
-          end
-        }
+	<AST::SimpleMatching>
       end
 
       rule transform_query
@@ -42,11 +30,11 @@ module ActiveFacts
 
       rule transform_matchings
         s r0:transform_matching tail:(s ',' s r1:transform_matching)*
-        {
-          def ast
-            [r0.ast, *tail.elements.map{|e| e.r1.ast }]
-          end
-        }
+	{
+	  def ast
+	    [r0.ast, *tail.elements.map{|e| e.r1.ast }]
+	  end
+	}
       end
 
       rule transform_matching
@@ -58,29 +46,17 @@ module ActiveFacts
         s t0:term tail:(s '.' s t1:term_list)*
         {
           def ast
-            if tail.elements.empty?
-              [t0.ast]
-            else
-              [t0.ast, *tail.elements.map{|t| t.t1.ast }]
-            end
+	    ([t0]+tail.elements.map(&:t1)).map(&:ast)
           end
         }
       end
 
       rule transform_expr
         s c:logical_texpr s '?' s t0:logical_texpr s ':' s t1:logical_texpr
-          {
-            def ast
-              Compiler::Ternary.new(c.ast, t0.ast, t1.ast)
-            end
-          }
+	  <AST::TransformTernary>
         / s o:aggregate_op S agg_of s t:logical_texpr
-          {
-            def ast
-              Compiler::Aggregate.new(o.text_value, t.ast)
-            end
-          }
-        / s t0:logical_texpr    { def ast; t0.ast; end; }
+	  <AST::TransformAggregate>
+        / logical_texpr
       end
 
       rule aggregate_op
@@ -89,41 +65,17 @@ module ActiveFacts
 
       rule logical_texpr
         s t0:logical_and_texpr tail:(s op:or s t1:logical_and_texpr)*
-        {
-          def ast
-            if tail.elements.empty?
-              t0.ast
-            else
-              Compiler::LogicalOr.new(t0.ast, *tail.elements.map{|e| e.t1.ast})
-            end
-          end
-        }
+	<AST::TransformLogicalOr>
       end
 
       rule logical_and_texpr
         s t0:equality_texpr tail:(s op:and s t1:equality_texpr)*
-        {
-          def ast
-            if tail.elements.empty?
-              t0.ast
-            else
-              Compiler::LogicalAnd.new(t0.ast, *tail.elements.map{|e| e.t1.ast})
-            end
-          end
-        }
+	<AST::TransformLogicalAnd>
       end
 
       rule equality_texpr
         s t0:relational_texpr operation:(s op:equality_op s t1:relational_texpr)?
-        {
-          def ast
-            if operation.empty?
-              t0.ast
-            else
-              Compiler::Comparison.new(op.text_value, t0.ast, operation.t1.ast)
-            end
-          end
-        }
+	<AST::TransformEquality>
       end
 
       rule equality_op
@@ -132,15 +84,7 @@ module ActiveFacts
 
       rule relational_texpr
         s t0:additive_texpr operation:(s op:relational_op s t1:additive_texpr)?
-        {
-          def ast
-            if operation.empty?
-              t0.ast
-            else
-              Compiler::Comparison.new(op.text_value, t0.ast, operation.t1.ast)
-            end
-          end
-        }
+	<AST::TransformComparison>
       end
 
       rule relational_op
@@ -149,18 +93,7 @@ module ActiveFacts
 
       rule additive_texpr
         s t0:multiplicative_texpr tail:(s op:additive_op s t1:multiplicative_texpr)*
-        {
-          def ast
-            if tail.elements.empty?
-              t0.ast
-            else
-              Compiler::Sum.new(
-                t0.ast,
-                *tail.elements.map{|e| e.op.text_value == '-' ? Compiler::Negate.new(e.t1.ast) : e.t1.ast}
-              )
-            end
-          end
-        }
+	<AST::TransformSum>
       end
 
       rule additive_op
@@ -169,18 +102,7 @@ module ActiveFacts
 
       rule multiplicative_texpr
         s t0:unary_texpr tail:(s op:multiplicative_op s t1:unary_texpr)*
-        {
-          def ast
-            if tail.elements.empty?
-              t0.ast
-            else
-              Compiler::Product.new(
-                t0.ast,
-                *tail.elements.map{|e| e.op.text_value == '/' ? Compiler::Reciprocal.new(e.t1.ast) : e.t1.ast}
-              )
-            end
-          end
-        }
+	<AST::TransformProduct>
       end
 
       rule multiplicative_op
@@ -189,15 +111,7 @@ module ActiveFacts
 
       rule unary_texpr
         s u:unary_op? s t:primary_texpr
-        {
-          def ast
-            if u.empty?
-              t.ast
-            else
-              u.text_value == '-' ? Compiler::Negate.new(t.ast) : Compiler::Negation.new(t.ast)
-            end
-          end
-        }
+	<AST::TransformUnary>
       end
 
       rule unary_op
@@ -206,17 +120,9 @@ module ActiveFacts
 
       rule primary_texpr
         tl:term_list
-          {
-            def ast
-              Compiler::ExpressionTermList.new(tl.ast)
-            end
-          }
+	<AST::TransformTermList>
         / l:literal
-          {
-            def ast
-              Compiler::Literal.new(l.value, nil)
-            end
-          }
+	<AST::TransformLiteral>
         # / '(' source_expr ')'
         # / id '(' source_expr (s ',' s source_expr) * ')'
       end

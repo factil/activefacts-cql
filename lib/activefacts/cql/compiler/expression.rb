@@ -4,7 +4,7 @@ module ActiveFacts
 
       # An Operation is a binary or ternary fact type involving an operator,
       # a result, and one or two operands.
-      # Viewed as a result, it behaves like a Reference with a nested Clause.
+      # Viewed as a result, it behaves like a NounPhrase with a nested Clause.
       # Viewed as a fact type, it behaves like a Clause.
       #
       # The only exception here is an equality comparison, where it may
@@ -12,11 +12,11 @@ module ActiveFacts
       # the Operation is dropped from the clauses and is replaced by the
       # projected operand.
       #
-      # Each operand may be a Literal, a Reference, or another Operation,
+      # Each operand may be a Literal, a NounPhrase, or another Operation,
       # so we need to recurse down the tree to build the query.
       #
       class Operation
-        # Reference (in)compatibility:
+        # NounPhrase (in)compatibility:
         [ :term, :leading_adjective, :trailing_adjective, :role_name, :quantifier,
           :value_constraint, :embedded_presence_constraint, :literal
         ].each do |s|
@@ -28,6 +28,7 @@ module ActiveFacts
         def trailing_adjective; nil; end
         def value_constraint; nil; end
         def literal; nil; end
+        def includes_literals; false; end
         def side_effects; nil; end
         attr_accessor :player     # What ObjectType does the Binding denote
         attr_accessor :binding    # What Binding for that ObjectType
@@ -46,7 +47,7 @@ module ActiveFacts
         end
         def conjunction; nil; end
         attr_reader :fact_type
-        def objectified_as; self; end   # The Reference which objectified this fact type
+        def objectified_as; self; end   # The NounPhrase which objectified this fact type
 
         def initialize
           @certainty = true       # Assume it's definite
@@ -58,7 +59,7 @@ module ActiveFacts
 
         def identify_players_with_role_name context
           # Just recurse, there's no way (yet: REVISIT?) to add a role name to the result of an expression
-          refs.each { |o|
+          nps.each { |o|
             o.identify_players_with_role_name(context)
           }
           # As yet, an operation cannot have a role name:
@@ -67,21 +68,21 @@ module ActiveFacts
 
         def identify_other_players context
           # Just recurse, there's no way (yet: REVISIT?) to add a role name to the result of an expression
-          refs.each { |o|
+          nps.each { |o|
             o.identify_other_players(context)
           }
           identify_player context
         end
 
         def bind context
-          refs.each do |o|
+          nps.each do |o|
             o.bind context
           end
           name = result_type_name(context)
           @player = result_value_type(context, name)
           key = "#{name} #{object_id}"  # Every Operation result is a unique Binding
           @binding = (context.bindings[key] ||= Binding.new(@player))
-          @binding.refs << self
+          @binding.nps << self
           @binding
         end
 
@@ -101,13 +102,13 @@ module ActiveFacts
         end
 
         def match_existing_fact_type context
-          opnds = refs
-          result_ref = Reference.new(@binding.player.name)
-          result_ref.player = @binding.player
-          result_ref.binding = @binding
-          @binding.refs << result_ref
+          opnds = nps
+          result_np = NounPhrase.new(@binding.player.name)
+          result_np.player = @binding.player
+          result_np.binding = @binding
+          @binding.nps << result_np
           clause_ast = Clause.new(
-            [result_ref, '='] +
+            [result_np, '='] +
               (opnds.size > 1 ? [opnds[0]] : []) +
               [operator, opnds[-1]]
           )
@@ -154,12 +155,12 @@ module ActiveFacts
           @operator, @e1, @e2, @certainty, @qualifiers = operator, e1, e2, certainty, []
         end
 
-        def refs
+        def nps
           [@e1, @e2]
         end
 
         def bind context
-          refs.each do |o|
+          nps.each do |o|
             o.bind context
           end
 
@@ -170,7 +171,7 @@ module ActiveFacts
           @player = result_value_type(context, name)
           key = "#{name} #{object_id}"  # Every Comparison result is a unique Binding
           @binding = (context.bindings[key] ||= Binding.new(@player))
-          @binding.refs << self
+          @binding.nps << self
           @binding
         end
 
@@ -231,7 +232,7 @@ module ActiveFacts
           @terms = terms
         end
 
-        def refs
+        def nps
           @terms
         end
 
@@ -286,7 +287,7 @@ module ActiveFacts
           @factors = factors
         end
 
-        def refs
+        def nps
           @factors
         end
 
@@ -344,7 +345,7 @@ module ActiveFacts
           '1/'
         end
 
-        def refs
+        def nps
           [@divisor]
         end
 
@@ -445,7 +446,7 @@ module ActiveFacts
           @factors = factors
         end
 
-        def refs
+        def nps
           @factors
         end
 
@@ -495,7 +496,7 @@ module ActiveFacts
           @factors = factors
         end
 
-        def refs
+        def nps
           @factors
         end
 
@@ -547,7 +548,7 @@ module ActiveFacts
           @false_value = false_value
         end
 
-        def refs
+        def nps
           [@condition, @true_value, @false_value]
         end
 
@@ -586,7 +587,7 @@ module ActiveFacts
           @aggregand = aggregand
         end
 
-        def refs
+        def nps
           [@operation, @aggregand]
         end
 
@@ -663,7 +664,7 @@ module ActiveFacts
           @binding || begin
             key = "#{@player.name} #{@literal}"
             @binding = (context.bindings[key] ||= Binding.new(@player))
-            @binding.refs << self
+            @binding.nps << self
           end
         end
 

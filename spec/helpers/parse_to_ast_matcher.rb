@@ -16,7 +16,7 @@ RSpec::Matchers.define :parse_to_ast do |*expected_asts|
   match do |actual|
     @parser = TestParser.new
     @parser.parse_all("schema test;", :definition)
-    @result = @parser.parse_all(actual, :definition)
+    @result = asts = @parser.parse_all(actual, :definition)
 
     # If the expected_asts is "false", treat this test as pending:
     if expected_asts == [false]
@@ -33,7 +33,7 @@ RSpec::Matchers.define :parse_to_ast do |*expected_asts|
     next false unless @result
 
     # Otherwise compare the canonical form of the AST
-    @canonical_form = @result.map{|d| canonicalise(d.ast)}
+    @canonical_form = @result.map{|ast| canonicalise(ast)}
 
     # If we weren't given an AST, this test is pending. Show what result we obtained:
     throw :pending_declared_in_example, actual.inspect+' should parse to ['+@canonical_form*', '+']' if expected_asts.empty?
@@ -69,7 +69,7 @@ RSpec::Matchers.define :fail_to_parse do |*error_regexp|
 
   failure_message do
     if @result
-      @canonical_form = @result.map{|d| canonicalise(d.ast)}
+      @canonical_form = @result.map{|ast| canonicalise(ast)}
       "Expected not to succeed in parsing #{actual.inspect}\nbut got #{@canonical_form.inspect}"
     else
       "Failed as expected in parsing #{actual.inspect}\n" +

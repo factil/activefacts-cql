@@ -34,7 +34,7 @@ module ActiveFacts
             @constellation.EntityType(@vocabulary, @name, :concept => :new)
           @entity_type.is_independent = true if @pragmas.delete('independent')
 
-          # REVISIT: CQL needs a way to indicate whether subtype migration can occur.
+          # CQL needs a way to indicate whether subtype migration can occur.
           # For example by saying "Xyz is a role of Abc".
           @supertypes.each_with_index do |supertype_name, i|
             add_supertype(supertype_name, @extant_entity_type || @identification || i > 0)
@@ -53,7 +53,7 @@ module ActiveFacts
           # Create the fact types that define the identifying roles:
           fact_types = create_identifying_fact_types context
 
-          # At this point, @identification is an array of References and/or Clauses (for unary fact types)
+          # At this point, @identification is an array of NounPhrases and/or Clauses (for unary fact types)
           # Have to do this after creating the necessary fact types
           complete_reference_mode_fact_type context, fact_types
 
@@ -80,7 +80,7 @@ module ActiveFacts
             if @identification.is_a? ReferenceMode
               make_entity_type_refmode_valuetypes(name, @identification.name, @identification.parameters)
               vt_name = @reference_mode_value_type.name
-              @identification = [Compiler::Reference.new(vt_name, nil, nil, nil, nil, nil, @identification.value_constraint, nil)]
+              @identification = [Compiler::NounPhrase.new(vt_name, nil, nil, nil, nil, nil, @identification.value_constraint, nil)]
             else
               context.allowed_forward_terms = legal_forward_references(@identification)
             end
@@ -90,16 +90,16 @@ module ActiveFacts
         # Names used in the identifying roles list may be forward referenced:
         def legal_forward_references(identification_phrases)
           identification_phrases.map do |phrase|
-            phrase.is_a?(Reference) ? phrase.term : nil
+            phrase.is_a?(NounPhrase) ? phrase.term : nil
           end.compact.uniq
         end
 
         def bind_identifying_roles context
           return unless @identification
           @identification.map do |id|
-            if id.is_a?(Reference)
+            if id.is_a?(NounPhrase)
               binding = id.binding
-              roles = binding.refs.map{|r|r.role || (rr=r.role_ref and rr.role)}.compact.uniq
+              roles = binding.nps.map{|r|r.role || (rr=r.role_ref and rr.role)}.compact.uniq
               raise "Looking for an occurrence of identifying role #{id.inspect}, but found #{roles.size == 0 ? "none" : roles.size}" if roles.size != 1
               roles[0]
             else
@@ -158,7 +158,7 @@ module ActiveFacts
           fact_types = []
           # Categorise the clauses into fact types according to the roles they play.
           @clauses.inject({}) do |hash, clause|
-            players_key = clause.refs.map{|vr| vr.key.compact}.sort
+            players_key = clause.nps.map{|vr| vr.key.compact}.sort
             (hash[players_key] ||= []) << clause
             hash
           end.each do |players_key, clauses|
@@ -182,7 +182,7 @@ module ActiveFacts
           any_matched = existing_clauses.size > 0
 
           operation = any_matched ? 'Objectifying' : 'Creating'
-          player_names = clauses[0].refs.map{|vr| vr.key.compact*'-'}
+          player_names = clauses[0].nps.map{|vr| vr.key.compact*'-'}
           trace :matching, "#{operation} fact type for #{clauses.size} clauses over (#{player_names*', '})" do
             if any_matched  # There's an existing fact type we must be objectifying
               fact_type = objectify_existing_fact_type(existing_clauses[0].fact_type)
@@ -283,7 +283,7 @@ module ActiveFacts
             begin
               @identification &&                              # There's an "identified by" clause
               @identification.size == 1 &&                    # With just one identifying role
-              (id = @identification[0]).is_a?(Reference) &&   # Which is a simple reference
+              (id = @identification[0]).is_a?(NounPhrase) &&   # Which is a simple noun phrase
               @clauses.size == 0 &&                           # No readings for this role
               id.binding.player                               # And the player is bound already
             end

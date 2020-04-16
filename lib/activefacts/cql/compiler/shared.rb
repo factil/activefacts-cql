@@ -2,17 +2,17 @@ module ActiveFacts
   module CQL
     class Compiler < ActiveFacts::CQL::Parser
 
-      # In a declaration, a Binding has one or more Reference's.
+      # In a declaration, a Binding has one or more NounPhrase's.
       # A Binding is for a single ObjectType, normally related to just one Role,
-      # and the references (References) to it will normally be the object_type name
+      # and the noun phrases that refer to it are normally the object_type name
       # with the same adjectives (modulo loose binding),
       # or a role name or subscript reference.
       #
-      # In some situations a Binding will have some References with the same adjectives,
-      # and one or more References with no adjectives - this is called "loose binding".
+      # In some situations a Binding will have some NounPhrases with the same adjectives,
+      # and one or more NounPhrases with no adjectives - this is called "loose binding".
       class Binding
         attr_reader :player             # The ObjectType (object type)
-        attr_reader :refs               # an array of the References
+        attr_reader :nps               # an array of the NounPhrases
         attr_accessor :role_name
         attr_accessor :rebound_to       # Loose binding may set this to another binding
         attr_reader :variable
@@ -21,7 +21,7 @@ module ActiveFacts
         def initialize player, role_name = nil
           @player = player
           @role_name = role_name
-          @refs = []
+          @nps = []
         end
 
         def inspect
@@ -40,13 +40,13 @@ module ActiveFacts
           @variable = v   # A place for a breakpoint :)
         end
 
-        def add_ref ref
-          @refs << ref
-          ref
+        def add_np np
+          @nps << np
+          np
         end
 
-        def delete_ref ref
-          @refs.delete ref
+        def delete_np np
+          @nps.delete np
         end
       end
 
@@ -84,7 +84,7 @@ module ActiveFacts
           player
         end
 
-        # Pass in an array of clauses or References for player identification and binding (creating the Bindings)
+        # Pass in an array of clauses or NounPhrases for player identification and binding (creating the Bindings)
         # It's necessary to identify all players that define a role name first,
         # so those names exist in the context for where they're used.
         def bind *clauses
@@ -120,7 +120,7 @@ module ActiveFacts
         end
       end
 
-      class Vocabulary < Definition
+      class Schema < Definition
         def initialize name, is_transform, version_number
           @name = name
           @is_transform = is_transform

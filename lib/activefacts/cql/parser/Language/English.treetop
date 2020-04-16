@@ -66,13 +66,16 @@ module ActiveFacts
       # External presence constraint syntax:
       rule each_occurs_in_clauses
         s 'each' s ('combination' S)? role_list s occurs s quantifier s 'time' 's'? s enforcement 'in' s
-          clauses_list s c:context_note? ';'
+          clauses_list s context:context_note? ';'
         {
           def role_list_ast
             role_list.ast
           end
-          def quantifier_ast
-            quantifier.ast
+          def quantifier_min
+            quantifier.min
+          end
+          def quantifier_max
+            quantifier.max
           end
           def clauses_ast
             clauses_list.ast
@@ -82,13 +85,16 @@ module ActiveFacts
 
       # Alternate external presence constraint syntax:
       rule either_or
-      s either? s r1:clauses s or s r2:clauses c:context_note? enforcement ';'
+      s either? s r1:clauses s or s r2:clauses context:context_note? enforcement ';'
       {
           def role_list_ast
             nil
           end
-          def quantifier_ast
-            Compiler::Quantifier.new(1, nil)
+          def quantifier_min
+            1
+          end
+          def quantifier_max
+            nil
           end
           def clauses_ast
             [r1.ast, r2.ast]
@@ -99,13 +105,16 @@ module ActiveFacts
       # Exclusion (at most one) and mandatory exclusion (exactly one) constraint syntax:
       rule for_each_how_many
         s 'for' s 'each' s role_list s quantifier s 'of' s 'these' s 'holds' s enforcement ':' s
-          clauses_list s c:context_note? ';'
+          clauses_list s context:context_note? ';'
         {
           def role_list_ast
             role_list.ast
           end
-          def quantifier_ast
-            quantifier.ast
+          def quantifier_min
+            quantifier.min
+          end
+          def quantifier_max
+            quantifier.max
           end
           def clauses_ast
             clauses_list.ast
@@ -115,13 +124,16 @@ module ActiveFacts
 
       # Alternate mandatory exclusion constraint syntax:
       rule either_or_not_both
-        s either? s r1:clauses s or s r2:clauses but s not s both s c:context_note? enforcement ';'
+        s either? s r1:clauses s or s r2:clauses but s not s both s context:context_note? enforcement ';'
         {
           def role_list_ast
             nil
           end
-          def quantifier_ast
-            Compiler::Quantifier.new(1, 1)
+          def quantifier_min
+            1
+          end
+          def quantifier_max
+            1
           end
           def clauses_ast
             [r1.ast, r2.ast]
@@ -131,7 +143,7 @@ module ActiveFacts
 
       # Subset constraint using "A only if B" syntax
       rule a_only_if_b
-        s clauses:query_clauses s only s if s r2:query_clauses s c:context_note? enforcement ';'
+        s subset:query_clauses s only s if s superset:query_clauses s context:context_note? enforcement ';'
       end
 
       rule only_if
@@ -140,13 +152,13 @@ module ActiveFacts
 
       # Subset constraint using "if A then B" syntax
       rule if_b_then_a
-        s if s clauses s then s r2:clauses s c:context_note? enforcement ';'
+        s if s subset:clauses s then s superset:clauses s context:context_note? enforcement ';'
       end
 
       # Equality constraint syntax:
       rule if_and_only_if
         s clauses s tail:( if s and s only s if s clauses s)+
-          c:context_note? enforcement ';'
+          context:context_note? enforcement ';'
       end
 
       # During the prescan we need to know where terms in a role list finish.
@@ -155,41 +167,36 @@ module ActiveFacts
         occurs s quantifier s 'time'
       end
 
-      # >>>>>>>>>>>>>>>>>>>> Quantifiers <<<<<<<<<<<<<<<<<<<<
       rule quantifier
-        quantifier1
-        {
-          def ast
-            v = value
-            Compiler::Quantifier.new(v[0], v[1])
-          end
-        }
+	quantifier1 <AST::Quantifier>
       end
 
+      # >>>>>>>>>>>>>>>>>>>> Quantifiers <<<<<<<<<<<<<<<<<<<<
       rule quantifier1
-          (some s                 { def value; nil; end })
-          # REVISIT: "Some" means that any prior occurrence of this role player is to be ignored; this is a new occurrence
-          # "that" on the other hand means that this role player was *previously* designated using "some".
-          # These distinctions are lost here
-        / (that s                 { def value; nil; end })
-        / (which s                { def value; nil; end })
-        / (one s                  { def value; [1, 1]; end })
-        / (no s                   { def value; [0, 0]; end })
-        / (exactly s quantity     { def value; q = quantity.value; [q, q]; end })
-        / (at s least s quantity most:( and s at s most s q:quantity )?
-                                  { def value;
-                                      [ quantity.value,
-                                        most.empty? ? nil : most.q.value
-                                      ]
-                                    end
-                                  }
-          )
-        / (at s most s quantity   { def value; [ nil, quantity.value ]; end })
-        / (from s numeric_range s { def value; numeric_range.value; end })
-      # / (either_all_or_none s   { def value; [ -1, 1 ]; end })
+	# REVISIT: "Some" means that any prior occurrence of this role player is to be ignored; this is a new occurrence
+	# "that" on the other hand means that this role player was *previously* designated using "some".
+	# These distinctions are lost here
+        some s
+	  { def min; nil; end; def max; nil; end }
+        / that s
+	  { def min; nil; end; def max; nil; end }
+        / which s
+	  { def min; nil; end; def max; nil; end }
+        / one s
+	  { def min; 1; end; def max; 1; end }
+        / no s
+	  { def min; 0; end; def max; 0; end }
+        / exactly s quantity
+	  { def min; quantity.value; end; def max; quantity.value; end }
+        / at s least s quantity most:( and s at s most s q:quantity )?
+	  { def min; quantity.value; end; def max; most.empty? ? nil : most.q.value; end }
+        / at s most s quantity
+	  { def min; nil; end; def max; quantity.value; end }
+        / from s numeric_range s
+	  { def min; numeric_range.min; end; def max; numeric_range.max; end; }
+#       / either_all_or_none s
+#	  { def value; [ -1, 1 ]; end }
       end
-
-      # rule either_all_or_none either s all s or s ( none / no ) end
 
       rule quantity
         one s                     { def value; 1; end }
@@ -220,7 +227,7 @@ module ActiveFacts
       end
 
       rule negative_prefix
-        s it s is s not s the s case s that s
+        s it s is s not s (the s case / true) s that s
       end
 
       rule agg_of of end

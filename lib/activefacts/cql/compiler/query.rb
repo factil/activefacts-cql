@@ -8,14 +8,14 @@ module ActiveFacts
             query = @constellation.Query(:new)
             all_bindings_in_clauses(clauses_list).
               each do |binding|
-                var_name = (r = binding.refs.select{|r| r.is_a?(Reference)}.first) ? r.var_name : nil
+                var_name = (r = binding.nps.select{|r| r.is_a?(NounPhrase)}.first) ? r.var_name : nil
                 trace :query, "Creating variable #{query.all_variable.size} for #{binding.inspect} with role_name #{var_name}"
                 binding.variable = @constellation.Variable(
                   query, query.all_variable.size, :object_type => binding.player, role_name: var_name
                 )
-                if literal = binding.refs.detect{|r| r.literal}
-                  if literal.kind_of?(ActiveFacts::CQL::Compiler::Reference)
-                    # REVISIT: Fix this crappy ad-hoc polymorphism hack
+                if literal = binding.nps.detect{|r| r.literal}
+                  if literal.kind_of?(ActiveFacts::CQL::Compiler::NounPhrase)
+                    # REVISIT: Fix this crappy ad-hoc polymorphism hack. ActiveFacts::CQL::Compiler::Literal should look like NounPhrase
                     literal = literal.literal
                   end
                   unit = @constellation.Unit.detect{|k, v| [v.name, v.plural_name].include? literal.unit} if literal.unit
@@ -37,7 +37,7 @@ module ActiveFacts
         end
 
         def build_step query, clause, roles_by_binding = {}, parent_variable = nil
-          return unless clause.refs.size > 0  # Empty clause... really?
+          return unless clause.nps.size > 0  # Empty clause... really?
 
           # A bare object type is a valid clause, but it contains no fact type hence no step
           if clause.fact_type
@@ -50,27 +50,27 @@ module ActiveFacts
               )
           end
 
-          trace :query, "Creating Plays for #{clause.inspect} with #{clause.refs.size} refs" do
+          trace :query, "Creating Plays for #{clause.inspect} with #{clause.nps.size} nps" do
             is_input = true
-            clause.refs.each do |ref|
-              # These refs are the Compiler::References, which have associated Metamodel::RoleRefs,
+            clause.nps.each do |np|
+              # These nps are the Compiler::NounPhrases, which have associated Metamodel::RoleRefs,
               # but we need to create Plays for those roles.
               # REVISIT: Plays may need to save residual_adjectives
-              binding = ref.binding
-              role = (ref && ref.role) || (ref.role_ref && ref.role_ref.role)
+              binding = np.binding
+              role = (np && np.role) || (np.role_ref && np.role_ref.role)
 
               objectification_step = nil
-              if ref.nested_clauses
-                ref.nested_clauses.each do |nested_clause|
+              if np.nested_clauses
+                np.nested_clauses.each do |nested_clause|
                   objectification_step = build_step(query, nested_clause, roles_by_binding)
-                  if ref.binding.player.is_a?(ActiveFacts::Metamodel::EntityType) and
-                      ref.binding.player.fact_type == nested_clause.fact_type
+                  if np.binding.player.is_a?(ActiveFacts::Metamodel::EntityType) and
+                      np.binding.player.fact_type == nested_clause.fact_type
                     objectification_step.objectification_variable = binding.variable
                   end
                 end
               end
               if clause.is_naked_object_type
-                raise "#{self} lacks a proper objectification" if clause.refs[0].nested_clauses and !objectification_step
+                raise "#{self} lacks a proper objectification" if clause.nps[0].nested_clauses and !objectification_step
                 return objectification_step
               end
 
@@ -84,7 +84,7 @@ module ActiveFacts
                 end
               end
 
-              trace :query, "Creating Play for #{ref.inspect}"
+              trace :query, "Creating Play for #{np.inspect}"
               play = @constellation.Play(:step => step, :role => role, :variable => binding.variable)
               play.is_input = is_input
               is_input = false
@@ -99,9 +99,9 @@ module ActiveFacts
         # Return the unique array of all bindings in these clauses, including in objectification steps
         def all_bindings_in_clauses clauses
           clauses.map do |clause|
-            clause.refs.map do |ref|
-              raise "Binding reference #{ref.inspect} is not bound to a binding" unless ref.binding
-              [ref.binding] + (ref.nested_clauses ? all_bindings_in_clauses(ref.nested_clauses) : [])
+            clause.nps.map do |np|
+              raise "Noun phrase #{np.inspect} must have a binding" unless np.binding
+              [np.binding] + (np.nested_clauses ? all_bindings_in_clauses(np.nested_clauses) : [])
             end
           end.
             flatten.

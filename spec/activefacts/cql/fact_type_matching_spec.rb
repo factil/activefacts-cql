@@ -290,6 +290,7 @@ describe "When matching a reading" do
       end
 
       it "should match using explicit adjectives" do
+        pending "We don't match separate adjectives with hyphenated adjectives"
         compile %q{
             Girl is going out with butt-- ugly Boy,
             butt-ugly Boy is going out with Girl;
@@ -301,6 +302,7 @@ describe "When matching a reading" do
       end
 
       it "should match using implicit adjectives" do
+        pending "We don't match separate adjectives with hyphenated adjectives"
         compile %q{
             Girl is going out with butt-- ugly Boy,
             butt-ugly Boy is going out with Girl;

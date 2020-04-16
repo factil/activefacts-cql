@@ -55,7 +55,7 @@ module ActiveFacts
 
           source_ot = nil
           source_query = nil
-          if @transform_query.is_a?(ActiveFacts::CQL::Compiler::Reference)
+          if @transform_query.is_a?(ActiveFacts::CQL::Compiler::NounPhrase)
             if (source_ot = constellation.ObjectType[[vocabulary_identifier, @transform_query.term]]).nil?
               raise "Invalid source object '#{@transform_query.term}' for '#{@targ_term.term}' transformation"
             end

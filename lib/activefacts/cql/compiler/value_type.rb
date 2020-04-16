@@ -16,13 +16,9 @@ module ActiveFacts
         def compile
           if (@numerator.to_f / @denominator.to_i != 1.0)
             coefficient = @constellation.Coefficient(
-                @numerator,
-                @denominator.to_i,
-                !@approximately
-                # REVISIT: activefacts-api is complaining at present. The following is better and should work:
-                # :numerator => @numerator,
-                # :denominator => @denominator.to_i,
-                # :is_precise => !@approximately
+                :numerator => @numerator,
+                :denominator => @denominator.to_i,
+                :is_precise => !@approximately
               )
           else
             coefficient = nil

@@ -18,17 +18,29 @@ module ActiveFacts
       rule numeric_range
         number s tail:( '..' s end:number? s )?
         {
+	  def min
+	    number.value
+	  end
+
+	  def max
+	    if tail.empty?
+	      min 
+	    elsif tail.end.empty?
+	      nil 
+	    else
+	      tail.end.value
+	    end
+	  end
+
           def value
-            if !tail.empty?
-              last = tail.end.value unless tail.end.empty?
-              [ number.value, last ]
-            else
-              number.value
-            end
+	    return min if tail.empty?
+	    [min, max]
           end
         }
         / '..' s number s
         {
+	  def min; nil; end
+	  def max; number.value; end
           def value
             [ nil, number.value ]
           end
@@ -146,10 +158,6 @@ module ActiveFacts
 
       rule octalnumber
         '0' [0-7]*
-      end
-
-      rule mul_op
-        '/' / '%' / '*'
       end
 
       rule id

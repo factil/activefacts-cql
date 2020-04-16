@@ -132,18 +132,18 @@ module ActiveFacts
       end
 
       # Find or create a Player to which we can add this role_ref
-      def player(ref)
-        existing_player = if ref.is_a?(ActiveFacts::Metamodel::Play)
-            @player_by_play[ref]
+      def player(np)
+        existing_player = if np.is_a?(ActiveFacts::Metamodel::Play)
+            @player_by_play[np]
           else
-            @player_by_role_ref[ref] or ref.play && @player_by_play[ref.play]
+            @player_by_role_ref[np] or np.play && @player_by_play[np.play]
           end
         if existing_player
-          trace :player, "Using existing player for #{ref.role.object_type.name} #{ref.respond_to?(:role_sequence) && ref.role_sequence.all_reading.size > 0 ? ' in reading' : ''}in '#{ref.role.fact_type.default_reading}'"
+          trace :player, "Using existing player for #{np.role.object_type.name} #{np.respond_to?(:role_sequence) && np.role_sequence.all_reading.size > 0 ? ' in reading' : ''}in '#{np.role.fact_type.default_reading}'"
           return existing_player
         else
-          trace :player, "Adding new player for #{ref.role.object_type.name} #{ref.respond_to?(:role_sequence) && ref.role_sequence.all_reading.size > 0 ? ' in reading' : ''}in '#{ref.role.fact_type.default_reading}'"
-          p = Player.new(ref.role.object_type)
+          trace :player, "Adding new player for #{np.role.object_type.name} #{np.respond_to?(:role_sequence) && np.role_sequence.all_reading.size > 0 ? ' in reading' : ''}in '#{np.role.fact_type.default_reading}'"
+          p = Player.new(np.role.object_type)
           @players.push(p)
           p
         end

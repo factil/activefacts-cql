@@ -11,8 +11,9 @@ require 'activefacts/cql/parser/Terms'
 require 'activefacts/cql/parser/ObjectTypes'
 require 'activefacts/cql/parser/ValueTypes'
 require 'activefacts/cql/parser/FactTypes'
+require 'activefacts/cql/parser/Constraints'
 require 'activefacts/cql/parser/TransformRules'
-require 'activefacts/cql/parser/Context'
+require 'activefacts/cql/parser/ContextNotes'
 
 module ActiveFacts
   module CQL
@@ -23,72 +24,56 @@ module ActiveFacts
       include ObjectTypes
       include ValueTypes
       include FactTypes
+      include Constraints
       include TransformRules
-      include Context
+      include ContextNotes
 
+      # We don't parse a whole file at a time, but pick off individual definitions instead.
+      # These first two rules are here for documentation purposes.
       rule cql_file
-        s seq:definition*
-        {
-          def definitions
-            seq.elements.map{|e|
-                e.value rescue $stderr.puts "Can't call value() on #{e.inspect}"
-              }
-          end
-        }
+        s definitions
+      end
+      
+      rule definitions
+	seq:definition* <AST::Definitions>
       end
 
-      # Each definition has an ast() method that returns an instance of a subclass of Compiler::Definition
       rule definition
-        definition_body s
-        {
-          def ast
-            definition_body.ast
-          end
-
-          def body
-            definition_body.text_value
-          end
-        }
+        definition_body s <AST::Definition>
       end
 
       rule definition_body
-        vocabulary_definition
+        schema_definition
+	/ transform_definition
         / import_definition
-       # Magic here to avoid a Treetop bug with sem-preds, which require a sequence (this doesn't need to make a sequence)
-        / '' &{|s| _nt_prescan; false }           # Always fails, but its side-effects are needed in the following
-        / constraint
-        / unit_definition   # REVISIT: Move this above the prescan?
+	/ prescan	    # Prescan the rest of the statement to identify local terms (always fails)
+	/ statement
+      end
+
+      rule statement
+	  subset_constraint
+        / equality_constraint
+        / set_constraint
+        / presence_constraint
+        # REVISIT: These are always defined inline at present: / value_constraint
+        / unit_definition
         / object_type
+        / fact_type
         / informal_description
         / query
         / transform_rule
-        / s ';' s { def ast; nil; end }
-      end
-
-      rule vocabulary_definition
-        schema_definition /
-        transform_definition
+	/ empty_statement
       end
 
       rule schema_definition
-        s ( schema / topic / vocabulary ) S vocabulary_name vn:version_number? s ';'
-        {
-          def ast
-            Compiler::Vocabulary.new(vocabulary_name.value, false, vn.empty? ? nil : vn.value)
-          end
-        }
+        s ( schema / topic / vocabulary ) S schema_name vn:version_number? s ';' <AST::Schema>
       end
 
       rule transform_definition
-        s transform S vocabulary_name vn:version_number? s ';'
-        {
-          def ast
-            Compiler::Vocabulary.new(vocabulary_name.value, true, vn.empty? ? nil : vn.value)
-          end
-        }
+        s transform S schema_name vn:version_number? s ';' <AST::Transform>
       end
 
-      rule vocabulary_name
+      rule schema_name
         id tail:(S !version id)*
         {
 	  def node_type; :vocabulary; end
@@ -99,32 +84,16 @@ module ActiveFacts
       end
 
       rule import_definition
-        s import i:import_role? S vocabulary_name vp:version_pattern? alias_list ';'
-        {
-          def ast
-            Compiler::Import.new(
-              import.input.parser, vocabulary_name.value, i.empty? ? "topic" : i.value, vp.empty? ? nil : vp.value, alias_list.value
-            )
-          end
-        }
+        s import i:import_role? S schema_name vp:version_pattern? alias_list ';'
+	<AST::Import>
       end
 
       rule version_number
-        S version S version_number_string
-        {
-          def value
-            version_number_string.text_value
-          end
-        }
+        S version S value:version_number_string
       end
 
       rule version_pattern
-        S version S version_pattern_string
-        {
-          def value
-            version_pattern_string.text_value
-          end
-        }
+        S version S pattern:version_pattern_string
       end
 
       rule version_number_string
@@ -161,23 +130,20 @@ module ActiveFacts
 
       rule informal_description
         informally s ',' s
-	  subject:informal_description_subject s
-          informal_description_body
-          informal_description_closer
-        {
-          def ast
-            kind = subject.signifier.text_value.to_sym
-            subject_name = (kind == :each ? subject.term.text_value : subject.reading.text_value)
-            phrases = subject.reading.elements.map(&:ast) if kind == :when
-            Compiler::InformalDefinition.new(kind, subject_name, phrases, informal_description_body.text_value)
-          end
-        }
+	subject:informal_description_subject s
+	informal_description_body
+	informal_description_closer
+	<AST::InformalDefinition>
+      end
+
+      rule empty_statement
+        s ';' s { def ast; nil; end }
       end
 
       rule informal_description_subject
 	signifier:each S term         # Informal definition of an object type
 	/
-	signifier:when S reading:phrase+ s ','       # or a fact type
+	signifier:when S reading:(simple_noun_phrase / linking_word)+ s ','       # or a fact type
       end
 
       rule informal_description_body
@@ -188,71 +154,6 @@ module ActiveFacts
       rule informal_description_closer
 	(!. / '.' [ \t\r]* "\n")
       end
-
-      rule constraint
-        subset_constraint /
-        equality_constraint /
-        set_constraint /
-        presence_constraint
-        # REVISIT: / value_constraint
-      end
-
-      # Adding enforcement to a constraint makes it deontic
-      rule enforcement
-        s '(' s
-          otherwise s
-          action:id s   # An enforcement action, like SMS, email, log, alarm, etc.
-          a:agent? s
-        ')' s
-          {
-            def ast; Compiler::Enforcement.new(action.text_value, a.empty? ? nil : a.text_value); end
-          }
-        /
-        ''
-          {
-            def ast; nil; end
-          }
-      end
-
-      # presence constraint:
-      rule presence_constraint
-        (each_occurs_in_clauses / either_or)
-        {
-          def ast
-            Compiler::PresenceConstraint.new c, enforcement.ast, clauses_ast, role_list_ast, quantifier_ast
-          end
-        }
-      end
-
-      # set (exclusion, mandatory exclusion, complex equality) constraint
-      rule set_constraint
-        (for_each_how_many / either_or_not_both)
-          {
-            def ast
-              Compiler::SetExclusionConstraint.new c, enforcement.ast, clauses_ast, role_list_ast, quantifier_ast
-            end
-          }
-      end
-
-      rule subset_constraint
-        (a_only_if_b / if_b_then_a)
-        {
-          def ast
-            Compiler::SubsetConstraint.new c, enforcement.ast, [clauses.ast, r2.ast]
-          end
-        }
-      end
-
-      rule equality_constraint
-        if_and_only_if
-        {
-          def ast
-            all_clauses = [clauses.ast, *tail.elements.map{|e| e.clauses.ast }]
-            Compiler::SetEqualityConstraint.new c, enforcement.ast, all_clauses
-          end
-        }
-      end
-
     end
   end
 end

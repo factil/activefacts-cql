@@ -1,0 +1,1409 @@
+<!DOCTYPE html>
+<link rel='stylesheet' href='railroad-diagrams.css'>
+<script src='railroad-diagrams.js'></script>
+<style>
+body {
+	background-color: hsl(30,20%, 95%);
+}
+h1 {
+	font-family: sans-serif;
+	font-size: 1em;
+}
+svg.railroad-diagram path,
+svg.railroad-diagram rect
+{
+	stroke-width: 2px;
+}
+.railroad-diagram .terminal text {
+	fill: #44F;
+}
+div svg.railroad-diagram {
+	width: 80%;  /* Scale to the width of the parent */
+	height: 100%;  /* Preserve the ratio. Could be related to https://bugs.webkit.org/show_bug.cgi?id=82489 */
+}
+</style>
+
+<body>
+<h1 id='cql_file'>cql_file</h1>
+<script>
+ComplexDiagram(
+  ZeroOrMore(NonTerminal('definition', {href: '#definition'}))
+).addTo();
+</script>
+
+<h1 id='definition'>definition</h1><a name='definition'/>
+<script>
+ComplexDiagram(
+  Choice(0,
+    NonTerminal('schema_definition', {href: '#schema_definition'}),
+    NonTerminal('import_definition', {href: '#import_definition'}),
+    NonTerminal('statement', {href: '#statement'})
+  )
+).addTo();
+</script>
+
+<h1 id='statement'>statement</h1><a name='statement'/>
+<script>
+ComplexDiagram(
+  HorizontalChoice(
+    Choice(0,
+      NonTerminal('subset_constraint', {href: '#subset_constraint'}),
+      NonTerminal('equality_constraint', {href: '#equality_constraint'}),
+      NonTerminal('set_constraint', {href: '#set_constraint'}),
+      NonTerminal('presence_constraint', {href: '#presence_constraint'})
+    ),
+    Choice(2,
+      NonTerminal('unit_definition', {href: '#unit_definition'}),
+      NonTerminal('object_type', {href: '#object_type'}),
+      NonTerminal('fact_type', {href: '#fact_type'}),
+      NonTerminal('informal_description', {href: '#informal_description'}),
+      NonTerminal('query', {href: '#query'}),
+      /* REVISIT: Define transform_rule */
+      NonTerminal('transform_rule', {href: '#transform_rule'}),
+      /* REVISIT: Define empty_statement */
+      NonTerminal('empty_statement', {href: '#empty_statement'})
+    )
+  )
+).addTo();
+</script>
+
+<h1 id='schema_definition'>schema_definition</h1><a name='schema_definition'/>
+<script>
+ComplexDiagram(
+  Sequence(
+    Choice(0, 'schema', 'topic', 'vocabulary', 'transform'),
+    NonTerminal('schema_name', {href: '#schema_name'}),
+    Optional(NonTerminal('version_number', {href: '#version_number'})),
+    ';'
+  )
+).addTo();
+</script>
+
+<h1 id='schema_name'>schema_name</h1><a name='schema_name'/>
+<script>
+ComplexDiagram(OneOrMore(NonTerminal('id'))).addTo();
+</script>
+
+<h1 id='version_number'>version_number</h1><a name='version_number'/>
+<script>
+ComplexDiagram(
+  Sequence(
+    'integer', '.', 'integer', '.', 'integer',
+    Optional(Sequence('-', 'integer', ZeroOrMore(Sequence('.', 'integer'))), 'skip')
+  )
+).addTo();
+</script>
+
+<h1 id='import_definition'>import_definition</h1><a name='import_definition'/>
+<script>
+ComplexDiagram(
+  Sequence(
+    'import',
+    NonTerminal('schema_name', {href: '#schema_name'}),
+    /* REVISIT: define 'import_role', */
+    Optional(NonTerminal('version_pattern', {href: '#version_pattern'})),
+    NonTerminal('alias_list', {href: '#alias_list'}),
+    ';'
+  )
+).addTo();
+</script>
+
+<h1 id='version_pattern'>version_pattern</h1><a name='version_pattern'/>
+<script>
+ComplexDiagram(
+  Sequence(
+    'integer',
+    Optional(Sequence('.', 'integer',
+      Optional(Sequence('.', 'integer',
+	Optional(Sequence('-', 'integer', ZeroOrMore(Sequence('.', 'integer'))))
+      ))
+    ))
+  )
+).addTo();
+</script>
+
+<h1 id='alias_list'>alias_list</h1><a name='alias_list'/>
+<script>
+ComplexDiagram(
+  ZeroOrMore(
+    Sequence(
+      ',', 'alias', NonTerminal('term', {href: '#term'}), 'as', NonTerminal('term', {href: '#term'})
+      /* REVISIT: Aliasing for fact type readings */
+    )
+  )
+).addTo();
+</script>
+
+<h1 id='informal_description'>informal_description</h1><a name='informal_description'/>
+<script>
+ComplexDiagram(
+  Sequence(
+    'informally', ',',
+    NonTerminal('informal_description_subject', {href: '#informal_description_subject'}),
+    NonTerminal('informal_description_body', {href: '#informal_description_body'})
+  )
+).addTo();
+</script>
+
+<h1 id='informal_description_subject'>informal_description_subject</h1><a name='informal_description_subject'/>
+<script>
+ComplexDiagram(
+  Choice(0,
+    Sequence('each', NonTerminal('term', {href: '#term'})),
+    Sequence(
+      'when',
+      OneOrMore(Choice(0,
+	  NonTerminal('simple_noun_phrase', {href: '#simple_noun_phrase'}),
+	  NonTerminal('linking_word', {href: '#linking_word'})
+      )),
+    ','),
+  )
+).addTo();
+</script>
+
+<h1 id='informal_description_body'>informal_description_body</h1><a name='informal_description_body'/>
+<script>
+ComplexDiagram(
+  Sequence('any text', NonTerminal('fullstop-at-end-of-line'))
+).addTo();
+</script>
+
+<h1 id='object_type'>object_type</h1><a name='object_type'/>
+<script>
+ComplexDiagram(
+  Choice(0,
+    NonTerminal('value_type', {href: '#value_type'}),
+    NonTerminal('entity_type', {href: '#entity_type'})
+  )
+).addTo();
+</script>
+
+<h1 id='value_type'>value_type</h1><a name='value_type'/>
+<script>
+ComplexDiagram(
+  Stack(
+    Sequence(
+      Choice(0, 'each', Skip()),
+      NonTerminal('term', {href: '#term'})
+    ),
+    Sequence(
+      Optional(NonTerminal('mapping_pragmas', {href: '#mapping_pragmas'}), 'skip'),
+      'is', 'written', 'as',
+      Choice(1, Skip(), 'a', 'an'),
+      NonTerminal('term', {href: '#term'})
+    ),
+    Sequence(
+      NonTerminal('value_type_parameters', {href: '#value_type_parameters'}),
+      Optional(Sequence('in', NonTerminal('units', {href: '#units'})))
+    ),
+    Sequence(
+      Optional(NonTerminal('auto_assignment', {href: '#auto_assignment'})),
+      Optional(NonTerminal('context_note', {href: '#context_note'}), 'skip')
+    ),
+    Sequence(
+      Optional(Sequence(
+	NonTerminal('value_constraint', {href: '#value_constraint'}),
+	NonTerminal('enforcement', {href: '#enforcement'})
+      ))
+    ),
+    Sequence(
+      Optional(NonTerminal('mapping_pragmas', {href: '#mapping_pragmas'}), 'skip'),
+      Optional(NonTerminal('context_note', {href: '#context_note'}), 'skip')
+    )
+  )
+).addTo();
+</script>
+
+<h1 id='value_type_parameters'>value_type_parameters</h1><a name='value_type_parameters'/>
+<script>
+ComplexDiagram(
+  Optional(Sequence(
+    '(',
+    NonTerminal('parameter', {href: '#parameter'}),
+    ZeroOrMore(Sequence(
+      ',', NonTerminal('parameter', {href: '#parameter'})
+    )),
+    ')'
+  ))
+).addTo();
+</script>
+
+<h1 id='parameter'>parameter</h1><a name='parameter'/>
+<script>
+ComplexDiagram(
+  Choice(1,
+    NonTerminal('number', {href: '#number'}),
+    NonTerminal('named_parameter', {href: '#named_parameter'})
+  )
+).addTo();
+</script>
+
+<h1 id='named_parameter'>named_parameter</h1><a name='named_parameter'/>
+<script>
+ComplexDiagram(
+  Choice(0,
+    Sequence(
+      Comment('setting a parameter'),
+      Choice(0,
+	Sequence(
+	  'with',
+	  NonTerminal('parameter_name', {href: '#id'}),
+	  'as',
+	  NonTerminal('parameter_literal', {href: '#parameter_literal'})
+	),
+	Sequence(
+	  NonTerminal('parameter_name', {href: '#id'}),
+	  ':',
+	  NonTerminal('parameter_literal', {href: '#parameter_literal'})
+	)
+      )
+    ),
+    Stack(
+      Sequence(
+	'accepts',
+	NonTerminal('parameter_name', {href: '#id'}),
+	'as',
+	NonTerminal('value_type_name', {href: '#term'})
+      ),
+      Sequence(
+	Optional(Sequence(
+	  'restricted', 'to',
+	  NonTerminal('parameter_restriction', {href: '#parameter_restriction'})
+	), 'skip')
+      )
+    ),
+    Sequence(
+      'restricts',
+      NonTerminal('parameter_name', {href: '#id'}),
+      'to',
+      NonTerminal('parameter_restriction', {href: '#parameter_restriction'})
+    )
+  )
+).addTo();
+</script>
+
+<h1 id='parameter_literal'>parameter_literal</h1><a name='parameter_literal'/>
+<script>
+ComplexDiagram(
+  Choice(0,
+    NonTerminal('number', {href: '#number'}),
+    NonTerminal('string', {href: '#string'})
+  )
+).addTo();
+</script>
+
+<h1 id='parameter_restriction'>parameter_restriction</h1><a name='parameter_restriction'/>
+<script>
+ComplexDiagram(
+  Choice(0,
+    NonTerminal('range_list', {href: '#range_list'}),
+    Sequence(
+      NonTerminal('parameter_literal', {href: '#parameter_literal'}),
+      Choice(0, Skip(), 'min', 'max')
+    )
+  )
+).addTo();
+</script>
+
+<h1 id='auto_assignment'>auto_assignment</h1><a name='auto_assignment'/>
+<script>
+ComplexDiagram(
+  Sequence('auto-assigned', 'at', Choice(0, 'assert', 'commit'))
+).addTo();
+</script>
+
+<h1 id='unit_definition'>unit_definition</h1><a name='unit_definition'/>
+<script>
+ComplexDiagram(
+  Sequence(
+    Choice(0,
+      Sequence(
+	Optional(NonTerminal('unit_coefficient', {href: '#unit_coefficient'})),
+	Optional(NonTerminal('units', {href: '#units'})),
+	Optional(NonTerminal('unit_offset', {href: '#unit_offset'})),
+	'converts', 'to',
+	NonTerminal('unit_name', {href: '#id'}),
+	Optional(Sequence(
+	  '/', NonTerminal('unit_name', {href: '#id'})
+	))
+      ),
+      Sequence(
+	NonTerminal('unit_name', {href: '#id'}),
+	Optional(Sequence(
+	  '/', NonTerminal('unit_name', {href: '#id'})
+	)),
+	'converts', 'to',
+	Optional(NonTerminal('unit_coefficient', {href: '#unit_coefficient'})),
+	Optional(NonTerminal('units', {href: '#units'})),
+	Optional(NonTerminal('unit_offset', {href: '#unit_offset'}))
+      )
+    ),
+    Choice(0,
+      Skip(),
+      'approximately',
+      Sequence('ephemera', NonTerminal('url', {href: '#url'}))
+    )
+  )
+).addTo();
+</script>
+
+<h1 id='unit_coefficient'>unit_coefficient</h1><a name='unit_coefficient'/>
+<script>
+ComplexDiagram(
+  Sequence(
+    NonTerminal('numerator', {href: '#number'}),
+    Optional(Sequence('/', NonTerminal('denominator', {href: 'number'})), 'skip')
+  )
+).addTo();
+</script>
+
+<h1 id='unit_offset'>unit_offset</h1><a name='unit_offset'/>
+<script>
+ComplexDiagram(
+  Sequence(
+    Choice(0, '+', '-'),
+    NonTerminal('number', {href: '#number'}),
+  )
+).addTo();
+</script>
+
+<h1 id='units'>units</h1><a name='units'/>
+<script>
+ComplexDiagram(
+  Sequence(
+    OneOrMore(Sequence(
+      NonTerminal('unit_name', {href: '#unit_name'}),
+      Optional(Sequence('^', NonTerminal('number', {href: '#number'})), 'skip')
+    )),
+    Optional(Sequence(
+      '/',
+      OneOrMore(Sequence(
+	NonTerminal('unit_name', {href: '#unit_name'}),
+	Optional(Sequence('^', NonTerminal('number', {href: '#number'})), 'skip')
+      ))
+    ), 'skip')
+  )
+).addTo();
+</script>
+
+<h1 id='entity_type'>entity_type</h1><a name='entity_type'/>
+<script>
+ComplexDiagram(
+  Stack(
+    Sequence(
+      Choice(0, 'each', Skip()),
+      NonTerminal('term', {href: '#term'}),
+      Optional(NonTerminal('mapping_pragmas', {href: '#mapping_pragmas'}), 'skip'),
+      Optional(NonTerminal('context_note', {href: '#context_note'}), 'skip')
+    ),
+    Sequence(
+      Choice(0,
+	Sequence('is', Optional('independent'), NonTerminal('identification', {href: '#identification'})),
+	Sequence(
+	  'is', 'a', 'kind', 'of',
+	  Optional('independent', 'skip'),
+	  NonTerminal('supertype_list', {href: '#supertype_list'})
+	)
+      )
+    ),
+    Sequence(
+      Optional(NonTerminal('mapping_pragmas', {href: '#mapping_pragmas'}), 'skip'),
+      Optional(NonTerminal('context_note', {href: '#context_note'}), 'skip'),
+      Optional(Sequence('where', NonTerminal('query_clauses', {href: '#query_clauses'})), 'skip'),
+      ';'
+    )
+  )
+).addTo();
+</script>
+
+<h1 id='supertype_list'>supertype_list</h1><a name='supertype_list'/>
+<script>
+ComplexDiagram(
+  Sequence(
+    NonTerminal('term', {href: '#term'}),
+    ZeroOrMore(Sequence(
+      Choice(0, ',', 'and'),
+      NonTerminal('term', {href: '#term'})
+    )),
+    Optional(NonTerminal('identification', {href: '#identification'}), 'skip')
+  )
+).addTo();
+</script>
+
+<h1 id='identification'>identification</h1><a name='identification'/>
+<script>
+ComplexDiagram(
+  Sequence(
+    'identified', 'by',
+    Choice(0,
+      Sequence(
+	'its',
+	Choice(0,
+	  NonTerminal('term', {href: '#term'}),
+	  NonTerminal('implicit_value_type_name', {href: '#term'})
+	),
+	NonTerminal('value_type_parameters', {href: '#value_type_parameters'})
+      ),
+      NonTerminal('role_list', {href: '#role_list'})
+    )
+  )
+).addTo();
+</script>
+
+<h1 id='role_list'>role_list</h1><a name='role_list'/>
+<script>
+ComplexDiagram(
+  Sequence(
+    Choice(0, Skip(), 'a', 'one'),
+    NonTerminal('term_or_unary', {href: '#term_or_unary'}),
+    ZeroOrMore(Sequence(
+	Choice(1, ',', 'and'),
+	Choice(0, Skip(), 'a', 'one'),
+	NonTerminal('term_or_unary', {href: '#term_or_unary'})
+    ))
+  )
+).addTo();
+</script>
+
+<h1 id='term_or_unary'>term_or_unary</h1><a name='term_or_unary'/>
+<script>
+ComplexDiagram(
+  Choice(0,
+    NonTerminal('term', {href: '#term'}),
+    Sequence(
+      OneOrMore(NonTerminal('linking_word', {href: '#linking_word'})),
+      NonTerminal('term', {href: '#term'}),
+      ZeroOrMore(NonTerminal('linking_word', {href: '#linking_word'}))
+    ),
+    Sequence(
+      ZeroOrMore(NonTerminal('linking_word', {href: '#linking_word'})),
+      NonTerminal('term', {href: '#term'}),
+      OneOrMore(NonTerminal('linking_word', {href: '#linking_word'}))
+    )
+  )
+).addTo();
+</script>
+
+<h1 id='mapping_pragmas'>mapping_pragmas</h1><a name='mapping_pragmas'/>
+<script>
+ComplexDiagram(
+  Optional(
+    Sequence(
+      '[',
+      NonTerminal('mapping_pragma', {href: '#mapping_pragma'}),
+      ZeroOrMore(Sequence(
+	',',
+	NonTerminal('mapping_pragma', {href: '#mapping_pragma'})
+      )),
+      ']'
+    ),
+    'skip'
+  )
+).addTo();
+</script>
+
+<h1 id='mapping_pragma'>mapping_pragma</h1><a name='mapping_pragma'/>
+<script>
+ComplexDiagram(
+  Choice(1,
+    Sequence('was', NonTerminal('term', {href: '#term'})),
+    OneOrMore(NonTerminal('id', {href: '#id'}))
+  )
+).addTo();
+</script>
+
+
+<h1 id='query'>query</h1><a name='query'/>
+<script>
+ComplexDiagram(
+  Sequence(
+    NonTerminal('query_clauses', {href: '#query_clauses'}),
+    Optional(NonTerminal('returning_clause', {href: '#returning_clause'}), 'skip'),
+    '?'
+  )
+).addTo();
+</script>
+
+<h1 id='fact_type'>fact_type</h1><a name='fact_type'/>
+<script>
+ComplexDiagram(
+  Sequence(
+    Optional(Sequence(
+      Choice(0, 'each', Skip()),
+      NonTerminal('term', {href: '#term'}),
+      Optional(NonTerminal('mapping_pragmas', {href: '#mapping_pragmas'}), 'skip'),
+      'is', 'where'
+    )),
+    NonTerminal('anonymous_fact_type', {href: '#anonymous_fact_type'})
+  )
+).addTo();
+</script>
+
+<h1 id='anonymous_fact_type'>anonymous_fact_type</h1><a name='anonymous_fact_type'/>
+<script>
+ComplexDiagram(
+  Sequence(
+    NonTerminal('query_clauses', {href: '#query_clauses'}),
+    Optional(Sequence(
+      'where',
+      NonTerminal('query_clauses', {href: '#query_clauses'}),
+      Choice(0, Skip(), NonTerminal('returning_clause', {href: '#returning_clause'})),
+    ), 'skip'),
+    ';'
+  )
+).addTo();
+</script>
+
+<h1 id='query_clauses'>query_clauses</h1><a name='query_clauses'/>
+<script>
+ComplexDiagram(
+  Sequence(
+    NonTerminal('qualified_clauses', {href: '#qualified_clauses'}),
+    ZeroOrMore(Sequence(
+      Choice(0, ',', 'and', 'or'),
+      NonTerminal('qualified_clauses', {href: '#qualified_clauses'})
+    ))
+  )
+).addTo();
+</script>
+
+<h1 id='returning_clause'>returning_clause</h1><a name='returning_clause'/>
+<script>
+ComplexDiagram(
+  Sequence(
+    'returning',
+    Optional(NonTerminal('ordering_prefix', {href: '#ordering_prefix'}), 'skip'),
+    NonTerminal('noun_phrase', {href: '#noun_phrase'}),
+    ZeroOrMore(Sequence(
+      ',',
+      Optional(NonTerminal('ordering_prefix', {href: '#ordering_prefix'}), 'skip'),
+      NonTerminal('noun_phrase', {href: '#noun_phrase'})
+    ))
+  )
+).addTo();
+</script>
+
+<h1 id='ordering_prefix'>ordering_prefix</h1><a name='ordering_prefix'/>
+<script>
+ComplexDiagram(
+  Choice(0, 'ascending', 'descending')
+).addTo();
+</script>
+
+<h1 id='qualified_clauses'>qualified_clauses</h1><a name='qualified_clauses'/>
+<script>
+ComplexDiagram(
+  Sequence(
+    Optional(NonTerminal('certainty', {href: '#certainty'}), 'skip'),
+    NonTerminal('contracted_clauses', {href: '#contracted_clauses'}),
+    Optional(NonTerminal('post_qualifiers', {href: '#post_qualifiers'}), 'skip'),
+    Optional(NonTerminal('context_note', {href: '#context_note'}), 'skip')
+  )
+).addTo();
+</script>
+
+<h1 id='certainty'>certainty</h1><a name='certainty'/>
+<script>
+ComplexDiagram(
+  Choice(0,
+    Skip(),
+    Sequence('it', 'is', 'not', Choice(0, 'true', Sequence('the', 'case')), 'that'),
+    'definitely',
+    'maybe'
+  )
+).addTo();
+</script>
+
+<h1 id='post_qualifiers'>post_qualifiers</h1><a name='post_qualifiers'/>
+<script>
+ComplexDiagram(
+  Sequence(
+    '[',
+    NonTerminal('post_qualifier', {href: '#post_qualifier'}),
+    ZeroOrMore(Sequence(
+      ',',
+      NonTerminal('post_qualifier', {href: '#post_qualifier'})
+    ))
+  )
+).addTo();
+</script>
+
+<h1 id='post_qualifier'>post_qualifier</h1><a name='post_qualifier'/>
+<script>
+ComplexDiagram(
+  Choice(0,
+    'static',
+    'transient',
+    'intransitive',
+    Sequence('strongly', 'intransitive'),
+    'transitive',
+    'acyclic',
+    'symmetric',
+    'asymmetric',
+    'antisymmetric',
+    'reflexive',
+    'irreflexive'
+  )
+).addTo();
+</script>
+
+<h1 id='clauses_list'>clauses_list</h1><a name='clauses_list'/>
+<script>
+ComplexDiagram(
+  Sequence(
+    NonTerminal('clauses', {href: '#clauses'}),
+    ZeroOrMore(Sequence(
+      ',',
+      NonTerminal('clauses', {href: '#clauses'}),
+    ))
+  )
+).addTo();
+</script>
+
+<h1 id='clauses'>clauses</h1><a name='clauses'/>
+<script>
+ComplexDiagram(
+  Sequence(
+    NonTerminal('contracted_clauses', {href: '#contracted_clauses'}),
+    ZeroOrMore(Sequence(
+      Choice(0, 'and', 'or'),
+      NonTerminal('contracted_clauses', {href: '#contracted_clauses'}),
+    ))
+  )
+).addTo();
+</script>
+
+<h1 id='contracted_clauses'>contracted_clauses</h1><a name='contracted_clauses'/>
+<script>
+ComplexDiagram(
+  Choice(1,
+    NonTerminal('comparison', {href: '#comparison'}),
+    OneOrMore(Choice(1,
+      NonTerminal('contraction', {href: '#contraction'}),
+      NonTerminal('noun_phrase', {href: '#noun_phrase'}),
+      NonTerminal('linking_word', {href: '#linking_word'})
+    ))
+  )
+).addTo();
+</script>
+
+<h1 id='contraction'>contraction</h1><a name='contraction'/>
+<script>
+ComplexDiagram(
+  Choice(0,
+    NonTerminal('reading_contraction', {href: '#reading_contraction'}),
+    NonTerminal('comparison_contraction', {href: '#comparison_contraction'})
+  )
+).addTo();
+</script>
+
+<h1 id='reading_contraction'>reading_contraction</h1><a name='reading_contraction'/>
+<script>
+ComplexDiagram(
+  Sequence(
+    NonTerminal('noun_phrase', {href: '#noun_phrase'}),
+    Optional(NonTerminal('post_qualifiers', {href: '#post_qualifiers'}), 'skip'),
+    Choice(0, 'that', 'who'),
+    Optional(NonTerminal('certainty', {href: '#certainty'}), 'skip'),
+    NonTerminal('contracted_clauses', {href: '#contracted_clauses'})
+  )
+).addTo();
+</script>
+
+<h1 id='comparison_contraction'>comparison_contraction</h1><a name='comparison_contraction'/>
+<script>
+ComplexDiagram(
+  Sequence(
+    NonTerminal('noun_phrase', {href: '#noun_phrase'}),
+    Optional(NonTerminal('post_qualifiers', {href: '#post_qualifiers'}), 'skip'),
+    Optional(NonTerminal('certainty', {href: '#certainty'}), 'skip'),
+    NonTerminal('comparator', {href: '#comparator'}),
+    NonTerminal('expression', {href: '#expression'})
+  )
+).addTo();
+</script>
+
+<h1 id='comparator'>comparator</h1><a name='comparator'/>
+<script>
+ComplexDiagram(
+  Choice(3, '<=', '<>', '<', '=', '>=', '>', '!=')
+).addTo();
+</script>
+
+<h1 id='comparison'>comparison</h1><a name='comparison'/>
+<script>
+ComplexDiagram(
+  Sequence(
+    NonTerminal('expression', {href: '#expression'}),
+    Optional(NonTerminal('certainty', {href: '#certainty'}), 'skip'),
+    NonTerminal('comparator', {href: '#comparator'}),
+    NonTerminal('contraction', {href: '#contraction'}),
+    Optional(NonTerminal('post_qualifiers', {href: '#post_qualifiers'}), 'skip')
+  )
+).addTo();
+</script>
+
+<h1 id='linking_word'>linking_word</h1><a name='linking_word'/>
+<script>
+ComplexDiagram(
+  Choice(1,
+    Sequence(NonTerminal('id'), OneOrMore(Sequence('-', NonTerminal('id')))),
+    'id excluding non-phrase words'
+  )
+).addTo();
+</script>
+
+<h1 id='noun_phrase'>noun_phrase</h1><a name='noun_phrase'/>
+<script>
+ComplexDiagram(
+  Choice(1,
+    NonTerminal('aggregate', {href: '#aggregate'}),
+    NonTerminal('simple_noun_phrase', {href: '#simple_noun_phrase'}),
+  )
+).addTo();
+</script>
+
+<h1 id='aggregate'>aggregate</h1><a name='aggregate'/>
+<script>
+ComplexDiagram(
+  Sequence(
+    NonTerminal('aggregate_operation', {href: '#aggregate_operation'}),
+    'of',
+    NonTerminal('term_or_unary', {href: '#term_or_unary'}),
+    'in', '(',
+    NonTerminal('qualified_clauses', {href: '#qualified_clauses'}),
+    ')'
+  )
+).addTo();
+</script>
+
+<h1 id='aggregate_operation'>aggregate_operation</h1><a name='aggregate_operation'/>
+<script>
+ComplexDiagram(
+  NonTerminal('id'),
+).addTo();
+</script>
+
+<h1 id='simple_noun_phrase'>simple_noun_phrase</h1><a name='simple_noun_phrase'/>
+<script>
+ComplexDiagram(
+  Sequence(
+    Optional(NonTerminal('role_quantifier', {href: '#role_quantifier'}), 'skip'),
+    NonTerminal('variable', {href: '#variable'}),
+    Choice(0,
+      Skip(),
+      Sequence(
+	NonTerminal('literal', {href: '#literal'}),
+	Optional(NonTerminal('unit', {href: '#unit'}), 'skip')
+      ),
+      Sequence(
+	NonTerminal('value_constraint', {href: '#value_constraint'}),
+	NonTerminal('enforcement', {href: '#enforcement'})
+      )
+    ),
+    Optional(NonTerminal('objectification_step', {href: '#objectification_step'}), 'skip')
+  )
+).addTo();
+</script>
+
+<h1 id='role_quantifier'>role_quantifier</h1><a name='role_quantifier'/>
+<script>
+ComplexDiagram(
+  Sequence(
+    NonTerminal('quantifier', {href: '#quantifier'}),
+    Optional(NonTerminal('mapping_pragmas', {href: '#mapping_pragmas'}), 'skip'),
+    NonTerminal('enforcement', {href: '#enforcement'}),
+    Optional(NonTerminal('context_note', {href: '#context_note'}), 'skip')
+  )
+).addTo();
+</script>
+
+<h1 id='objectification_step'>objectification_step</h1><a name='objectification_step'/>
+<script>
+ComplexDiagram(
+  Sequence(
+    '(', 'in', 'which',
+    NonTerminal('query_clauses', {href: '#query_clauses'}),
+    ')'
+  )
+).addTo();
+</script>
+
+<h1 id='role_name'>role_name</h1><a name='role_name'/>
+<script>
+ComplexDiagram(
+  Sequence(
+    '(', 'as',
+    NonTerminal('term', {href: '#term'}),
+    ')'
+  )
+).addTo();
+</script>
+
+<h1 id='subscript'>subscript</h1><a name='subscript'/>
+<script>
+ComplexDiagram(
+  Sequence(
+    '(',
+    OneOrMore(NonTerminal('digit', {href: '#digit'})),
+    ')'
+  )
+).addTo();
+</script>
+
+<h1 id='quantifier'>quantifier</h1><a name='quantifier'/>
+<script>
+ComplexDiagram(
+  Choice(3,
+    'some',   /* existential quantifier */
+    'that',   /* reference to previous existential */
+    'which',  /* Used to project a variable from a query */
+    'one',
+    'no',
+    Sequence('exactly', NonTerminal('quantity', {href: '#quantity'})),
+    Sequence(
+      'at', 'least', NonTerminal('quantity', {href: '#quantity'}),
+      Optional(Sequence(
+	'and', 'at', 'most', NonTerminal('quantity', {href: '#quantity'})
+      ), 'skip')
+    ),
+    Sequence(
+      'at', 'most', NonTerminal('quantity', {href: '#quantity'})
+    ),
+    Sequence(
+      'from', NonTerminal('numeric_range', {href: '#numeric_range'})
+    )
+  )
+).addTo();
+</script>
+
+<h1 id='quantity'>quantity</h1><a name='quantity'/>
+<script>
+ComplexDiagram(
+  Choice(1,
+    'one',
+    NonTerminal('number', {href: '#number'})
+  )
+).addTo();
+</script>
+
+<h1 id='expression'>expression</h1><a name='expression'/>
+<script>
+ComplexDiagram(
+  NonTerminal('sum', {href: '#sum'})
+).addTo();
+</script>
+
+<h1 id='sum'>sum</h1><a name='sum'/>
+<script>
+ComplexDiagram(
+  Sequence(
+    NonTerminal('product', {href: '#product'}),
+    ZeroOrMore(Sequence(
+      Choice(0, '+', '-'),
+      NonTerminal('product', {href: '#product'})
+    ))
+  )
+).addTo();
+</script>
+
+<h1 id='product'>product</h1><a name='product'/>
+<script>
+ComplexDiagram(
+  Sequence(
+    NonTerminal('factor', {href: '#factor'}),
+    ZeroOrMore(Sequence(
+      Choice(1, '*', '/', '%'),
+      NonTerminal('factor', {href: '#factor'})
+    ))
+  )
+).addTo();
+</script>
+
+<h1 id='factor'>factor</h1><a name='factor'/>
+<script>
+ComplexDiagram(
+  Choice(1,
+    Sequence(NonTerminal('literal', {href: '#literal'}), Optional(NonTerminal('unit_name', {href: '#id'}), 'skip')),
+    NonTerminal('variable', {href: '#variable'}),
+    Sequence('(', NonTerminal('expression', {href: '#expression'}), ')')
+  )
+).addTo();
+</script>
+
+<h1 id='variable'>variable</h1><a name='variable'/>
+<script>
+ComplexDiagram(
+  Sequence(
+    NonTerminal('term', {href: '#term'}),
+    Choice(0, Skip(), 
+      NonTerminal('role_name', {href: '#role_name'}),
+      NonTerminal('subscript', {href: '#subscript'})
+    )
+  )
+).addTo();
+</script>
+
+<h1 id='value_constraint'>value_constraint</h1><a name='value_constraint'/>
+<script>
+ComplexDiagram(
+  Sequence(
+    'restricted', 'to',
+    Choice(0,
+      Sequence(
+	NonTerminal('range_list', {href: '#range_list'}),
+	NonTerminal('units', {href: '#units'})
+      ),
+      NonTerminal('regular_expression', {href: '#regular_expression'})
+    ),
+    Optional(NonTerminal('context_note', {href: '#context_note'}), 'skip')
+  )
+).addTo();
+</script>
+
+<h1 id='range_list'>range_list</h1><a name='range_list'/>
+<script>
+ComplexDiagram(
+  Sequence(
+    '{',
+    NonTerminal('range', {href: '#range'}),
+    ZeroOrMore(Sequence(
+      ',', NonTerminal('range', {href: '#range'}),
+    )),
+    '}'
+  )
+).addTo();
+</script>
+
+<h1 id='presence_constraint'>presence_constraint</h1><a name='presence_constraint'/>
+<script>
+ComplexDiagram(
+  Choice(0,
+    NonTerminal('each_occurs_in_clauses', {href: '#each_occurs_in_clauses'}),
+    NonTerminal('either_or', {href: '#either_or'})
+  )
+).addTo();
+</script>
+
+<h1 id='each_occurs_in_clauses'>each_occurs_in_clauses</h1><a name='each_occurs_in_clauses'/>
+<script>
+ComplexDiagram(
+  Sequence(
+    'each', Optional('combination'),
+    NonTerminal('role_list', {href: '#role_list'}),
+    'occurs', NonTerminal('quantifier', {href: '#quantifier'}), Choice(0, 'time', 'times'),
+    NonTerminal('enforcement', {href: '#enforcement'}),
+    'in',
+    NonTerminal('clauses_list', {href: '#clauses_list'}),
+    ';'
+  )
+).addTo();
+</script>
+
+<h1 id='either_or'>either_or</h1><a name='either_or'/>
+<script>
+ComplexDiagram(
+  Sequence(
+    'either',
+    NonTerminal('clauses', {href: '#clauses'}),
+    'or',
+    NonTerminal('clauses', {href: '#clauses'}),
+    Optional(NonTerminal('context_note', {href: '#context_note'}), 'skip'),
+    NonTerminal('enforcement', {href: '#enforcement'}),
+    ';'
+  )
+).addTo();
+</script>
+
+<h1 id='set_constraint'>set_constraint</h1><a name='set_constraint'/>
+<script>
+ComplexDiagram(
+  Choice(0,
+    NonTerminal('for_each_how_many', {href: '#for_each_how_many'}),
+    NonTerminal('either_or_not_both', {href: '#either_or_not_both'})
+  )
+).addTo();
+</script>
+
+<h1 id='for_each_how_many'>for_each_how_many</h1><a name='for_each_how_many'/>
+<script>
+ComplexDiagram(
+  Sequence(
+    'for', 'each',
+    NonTerminal('role_list', {href: '#role_list'}),
+    NonTerminal('quantifier', {href: '#quantifier'}),
+    'of', 'these', 'holds',
+    NonTerminal('enforcement', {href: '#enforcement'}),
+    ':',
+    NonTerminal('clauses_list', {href: '#clauses_list'}),
+    Optional(NonTerminal('context_note', {href: '#context_note'}), 'skip'),
+    ';'
+  )
+).addTo();
+</script>
+
+<h1 id='either_or_not_both'>either_or_not_both</h1><a name='either_or_not_both'/>
+<script>
+ComplexDiagram(
+  Sequence(
+    'either',
+    NonTerminal('clauses', {href: '#clauses'}),
+    'or',
+    NonTerminal('clauses', {href: '#clauses'}),
+    Optional(NonTerminal('context_note', {href: '#context_note'}), 'skip'),
+    NonTerminal('enforcement', {href: '#enforcement'}),
+    'but', 'not', 'both',
+    ';'
+  )
+).addTo();
+</script>
+
+<h1 id='subset_constraint'>subset_constraint</h1><a name='subset_constraint'/>
+<script>
+ComplexDiagram(
+  Choice(0,
+    NonTerminal('a_only_if_b', {href: '#a_only_if_b'}),
+    NonTerminal('if_b_then_a', {href: '#if_b_then_a'})
+  )
+).addTo();
+</script>
+
+<h1 id='a_only_if_b'>a_only_if_b</h1><a name='a_only_if_b'/>
+<script>
+ComplexDiagram(
+  Sequence(
+    NonTerminal('query_clauses', {href: '#query_clauses'}),
+    'only', 'if',
+    NonTerminal('query_clauses', {href: '#query_clauses'}),
+    Optional(NonTerminal('context_note', {href: '#context_note'}), 'skip'),
+    NonTerminal('enforcement', {href: '#enforcement'}),
+    ';'
+  )
+).addTo();
+</script>
+
+<h1 id='if_b_then_a'>if_b_then_a</h1><a name='if_b_then_a'/>
+<script>
+ComplexDiagram(
+  Sequence(
+    'if',
+    NonTerminal('clauses', {href: '#clauses'}),
+    'then',
+    NonTerminal('clauses', {href: '#clauses'}),
+    Optional(NonTerminal('context_note', {href: '#context_note'}), 'skip'),
+    NonTerminal('enforcement', {href: '#enforcement'}),
+    ';'
+  )
+).addTo();
+</script>
+
+<h1 id='equality_constraint'>equality_constraint</h1><a name='equality_constraint'/>
+<script>
+ComplexDiagram(
+        'if_and_only_if'
+).addTo();
+</script>
+
+<h1 id='if_and_only_if'>if_and_only_if</h1><a name='if_and_only_if'/>
+<script>
+ComplexDiagram(
+  Sequence(
+    NonTerminal('clauses', {href: '#clauses'}),
+    'if', 'and', 'only', 'if',
+    NonTerminal('clauses', {href: '#clauses'}),
+    Optional(NonTerminal('context_note', {href: '#context_note'}), 'skip'),
+    NonTerminal('enforcement', {href: '#enforcement'}),
+    ';'
+  )
+).addTo();
+</script>
+
+<h1 id='enforcement'>enforcement</h1><a name='enforcement'/>
+<script>
+ComplexDiagram(
+  Optional(Sequence('(', 'otherwise', NonTerminal('id'), Optional(NonTerminal('agent', {href: '#id'})), ')'))
+).addTo();
+</script>
+
+<h1 id='context_note'>context_note</h1><a name='context_note'/>
+<script>
+ComplexDiagram(
+  Sequence(
+    '(',
+    Optional(Sequence('according', 'to', NonTerminal('agents', {href: '#agents'})), 'skip'),
+    Choice(0,
+      'because',
+      Sequence('as', 'opposed', 'to'),
+      Sequence('so', 'that'),
+      Sequence('to', 'avoid')
+    ),
+    NonTerminal('description', {href: '#description'}),
+    Optional(Sequence(',', NonTerminal('as_agreed_by', {href: '#as_agreed_by'})), 'skip'),
+    ')'
+  )
+).addTo();
+</script>
+
+<h1 id='agents'>agents</h1><a name='agents'/>
+<script>
+ComplexDiagram(
+  OneOrMore(NonTerminal('agent', {href: '#id'}))
+).addTo();
+</script>
+
+<h1 id='description'>description</h1><a name='description'/>
+<script>
+ComplexDiagram(
+  Choice(1,
+    Sequence('(', NonTerminal('description', {href: '#description'}), ')'),
+    ZeroOrMore('not ) or as_agreed_by')
+  )
+).addTo();
+</script>
+
+<h1 id='as_agreed_by'>as_agreed_by</h1><a name='as_agreed_by'/>
+<script>
+ComplexDiagram(
+  Sequence('as', 'agreed',
+    Optional(Sequence('on', NonTerminal('date', {href: '#date'})), 'skip'),
+    'by',
+    NonTerminal('agents', {href: '#agents'})
+  )
+).addTo();
+</script>
+
+
+<h1 id='term'>term</h1><a name='term'/>
+<p>An object type name is one or more words (ids) which may not contain a hyphen.
+</p><p>
+A term also allows zero or more leading adjectives and/or trailing adjectives.
+Leading adjectives are indicated by a hyphen after the first adjective,
+and trailing adjectives are indicated by a hyphen before the last adjective.
+This makes it complicated because (like a linking word) an adjective may be hyphenated.
+If adjectives are introduced by a hyphenated word, the hyphen is doubled instead of being adjacent.
+Accordingly, there are very precise rules about where spaces and hyphens are allowed inside terms.</p>
+<script>
+ComplexDiagram(
+  Stack(
+    Sequence(
+      Comment('leading adjective'),
+      Choice(0,
+	Skip(),
+	Sequence(
+	  NonTerminal('id', {href: '#id'}),
+	  '-',
+	  Optional(Sequence(
+	    NonTerminal('space', {href: '#space'}),
+	    ZeroOrMore(NonTerminal('hyphenated_adj', {href: '#hyphenated_adj'}))
+	  ), 'skip')
+	),
+	Sequence(
+	  NonTerminal('id', {href: '#id'}),
+	  '--',
+	  NonTerminal('space', {href: '#space'}),
+	  NonTerminal('id', {href: '#id'}),
+	  ZeroOrMore(
+	    NonTerminal('hyphenated_adj', {href: '#hyphenated_adj'}),
+	  )
+	)
+      ),
+    ),
+    Sequence(
+      Comment('the object type name'),
+      OneOrMore(NonTerminal('id', {href: '#id'})),
+    ),
+    Sequence(
+      Comment('trailing adjective'),
+      Choice(0,
+	Skip(),
+	Sequence(
+	  Optional(Sequence(
+	    ZeroOrMore(NonTerminal('hyphenated_adj', {href: '#hyphenated_adj'})),
+	    NonTerminal('space', {href: '#space'})
+	  ), 'skip'),
+	  '-',
+	  NonTerminal('id', {href: '#id'})
+	),
+	Sequence(
+	  Optional(Sequence(
+	    ZeroOrMore(NonTerminal('hyphenated_adj', {href: '#hyphenated_adj'})),
+	    NonTerminal('space', {href: '#space'})
+	  ), 'skip'),
+	  NonTerminal('id', {href: '#id'}),
+	  NonTerminal('space', {href: '#space'}),
+	  '--',
+	  NonTerminal('id', {href: '#id'})
+	)
+      )
+    )
+  )
+).addTo();
+</script>
+
+<h1 id='hyphenated_adj'>hyphenated_adj</h1><a name='hyphenated_adj'/>
+<script>
+ComplexDiagram(
+  Sequence(
+    Comment('A hyphenated id may not contain any space'),
+    NonTerminal('id', {href: '#id'}), Optional(Sequence('-', NonTerminal('id', {href: '#id'})), 'skip')
+  )
+).addTo();
+</script>
+
+<h1 id='range'>range</h1><a name='range'/>
+<script>
+ComplexDiagram(
+  Choice(0,
+    NonTerminal('numeric_range', {href: '#numeric_range'}),
+    NonTerminal('string_range', {href: '#string_range'})
+  )
+).addTo();
+</script>
+
+<h1 id='numeric_range'>numeric_range</h1><a name='numeric_range'/>
+<script>
+ComplexDiagram(
+  Choice(0,
+    Sequence(
+      NonTerminal('number', {href: '#number'}),
+      Optional(Sequence('..', Optional(NonTerminal('number', {href: '#number'}), 'skip')), 'skip')
+    )
+  )
+).addTo();
+</script>
+
+<h1 id='string_range'>string_range</h1><a name='string_range'/>
+<script>
+ComplexDiagram(
+  Choice(0,
+    Sequence(
+      NonTerminal('string', {href: '#string'}),
+      Optional(Sequence('..', Optional(NonTerminal('string', {href: '#string'}), 'skip')), 'skip')
+    )
+  )
+).addTo();
+</script>
+
+<h1 id='literal'>literal</h1><a name='literal'/>
+<script>
+ComplexDiagram(
+  Choice(0,
+    NonTerminal('boolean_literal', {href: '#boolean_literal'}),
+    NonTerminal('string', {href: '#string'}),
+    NonTerminal('number', {href: '#number'})
+  )
+).addTo();
+</script>
+
+<h1 id='boolean_literal'>boolean_literal</h1><a name='boolean_literal'/>
+<script>
+ComplexDiagram(
+  Choice(0, 'false', 'true')
+).addTo();
+</script>
+
+<h1 id='string'>string</h1><a name='string'/>
+<script>
+ComplexDiagram(
+  Sequence(
+    '\'',
+    ZeroOrMore(NonTerminal('string_char', {href: '#string_char'})),
+    '\''
+  )
+).addTo();
+</script>
+
+<h1 id='string_char'>string_char</h1><a name='string_char'/>
+<script>
+ComplexDiagram(
+  Choice(0,
+    Sequence(Comment('standard escape'), '\\', '[befntr\\\']'),
+    Sequence(Comment('octal char'), '\\', '[0-7]', '[0-7]', '[0-7]'),
+    Sequence(Comment('escaped newline'), '\\', Sequence(ZeroOrMore('\\r'), '\\n', ZeroOrMore('\\r'))),
+    Sequence(Comment('nul character'), '\\0'),
+    Sequence(Comment('hexadecimal char'), '\\x', '[0-9A-Fa-f]', '[0-9A-Fa-f]'),
+    Sequence(Comment('unicode char'), '\\u', '[0-9A-Fa-f]', '[0-9A-Fa-f]', '[0-9A-Fa-f]', '[0-9A-Fa-f]'),
+    Sequence(Comment('other char'), '[^\'\\\\0-\\x07\\x0A-\\x1F]')
+  )
+).addTo();
+</script>
+
+<h1 id='number'>number</h1><a name='number'/>
+<script>
+ComplexDiagram(
+  Choice(0,
+    NonTerminal('real', {href: '#real'}),
+    NonTerminal('fractional_real', {href: '#fractional_real'}),
+    NonTerminal('hexnumber', {href: '#hexnumber'}),
+    NonTerminal('octalnumber', {href: '#octalnumber'})
+  )
+).addTo();
+</script>
+
+<h1 id='real'>real</h1><a name='real'/>
+<script>
+ComplexDiagram(
+  Sequence(
+    Choice(1, '-', Skip(), '+'),
+    '[1-9]',
+    ZeroOrMore('[0-9]'),
+    Optional(NonTerminal('fraction', {href: '#fraction'}), 'skip'),
+    Optional(NonTerminal('exponent', {href: '#exponent'}), 'skip')
+  )
+).addTo();
+</script>
+
+<h1 id='fractional_real'>fractional_real</h1><a name='fractional_real'/>
+<script>
+ComplexDiagram(
+  Sequence(
+    Choice(1, '-', Skip(), '+'),
+    '0',
+    NonTerminal('fraction', {href: '#fraction'}),
+    Optional(NonTerminal('exponent', {href: '#exponent'}), 'skip')
+  )
+).addTo();
+</script>
+
+<h1 id='fraction'>fraction</h1><a name='fraction'/>
+<script>
+ComplexDiagram(
+  Sequence(
+    '.',
+    OneOrMore('[0-9]')
+  )
+).addTo();
+</script>
+
+<h1 id='exponent'>exponent</h1><a name='exponent'/>
+<script>
+ComplexDiagram(
+  Sequence(
+    '[Ee]',
+    Choice(1, '-', Skip(), '+'),
+    OneOrMore('[0-9]')
+  )
+).addTo();
+</script>
+
+<h1 id='hexnumber'>hexnumber</h1><a name='hexnumber'/>
+<script>
+ComplexDiagram(
+  Sequence(
+    '0x',
+    OneOrMore('[0-9A-Fa-F]')
+  )
+).addTo();
+</script>
+
+<h1 id='octalnumber'>octalnumber</h1><a name='octalnumber'/>
+<script>
+ComplexDiagram(
+  Sequence(
+    '0',
+    OneOrMore('[0-7]')
+  )
+).addTo();
+</script>
+
+<!-- REVISIT: Define regular expression syntax -->

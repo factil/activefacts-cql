@@ -68,13 +68,16 @@ module ActiveFacts
       rule each_occurs_in_clauses
         s chaque s ('combinaison' S)? role_list s existe s quantifier 'fois' S
           'parmis' S ce S 'qui' S 'suit' s ':' s
-          clauses_list s c:context_note? ';'
+          clauses_list s context:context_note? ';'
         {
           def role_list_ast
             role_list.ast
           end
-          def quantifier_ast
-            quantifier.ast
+          def quantifier_min
+            quantifier.min
+          end
+          def quantifier_max
+            quantifier.max
           end
           def clauses_ast
             clauses_list.ast
@@ -84,13 +87,16 @@ module ActiveFacts
 
       rule either_or
       s soit s r1:clauses s 'ou' S r2:clauses
-        s c:context_note? enforcement ';'
+        s context:context_note? enforcement ';'
       {
           def role_list_ast
             nil
           end
-          def quantifier_ast
-            Compiler::Quantifier.new(1, nil)
+          def quantifier_min
+            1
+          end
+          def quantifier_max
+            nil
           end
           def clauses_ast
             [r1.ast, r2.ast]
@@ -102,13 +108,16 @@ module ActiveFacts
       rule for_each_how_many
         'pour' S 'chaque' S role_list s
           quantifier s 'des' S 'suivants' S 's\'applique' s ':' s
-          clauses_list s c:context_note? ';'
+          clauses_list s context:context_note? ';'
         {
           def role_list_ast
             role_list.ast
           end
-          def quantifier_ast
-            quantifier.ast
+          def quantifier_min
+            quantifier.min
+          end
+          def quantifier_max
+            quantifier.max
           end
           def clauses_ast
             clauses_list.ast
@@ -118,13 +127,16 @@ module ActiveFacts
 
       rule either_or_not_both
         s soit s r1:clauses s 'ou' S r2:clauses 'mais' S 'pas' S 'les' S 'deux'
-          s c:context_note? enforcement ';'
+          s context:context_note? enforcement ';'
         {
           def role_list_ast
             nil
           end
-          def quantifier_ast
-            Compiler::Quantifier.new(1, 1)
+          def quantifier_min
+            1
+          end
+          def quantifier_max
+            1
           end
           def clauses_ast
             [r1.ast, r2.ast]
@@ -133,7 +145,7 @@ module ActiveFacts
       end
 
       rule a_only_if_b
-        s clauses s only_if r2:clauses s c:context_note? enforcement ';'
+        s subset:clauses s only_if superset:clauses s context:context_note? enforcement ';'
       end
 
       rule only_if
@@ -141,12 +153,12 @@ module ActiveFacts
       end
 
       rule if_b_then_a
-        s 'si' S clauses s 'puis' S r2:clauses s c:context_note? enforcement ';'
+        s 'si' S subset:clauses s 'puis' S superset:clauses s context:context_note? enforcement ';'
       end
 
       rule if_and_only_if
         s clauses s tail:( 'si' S 'et' S ('seulement'/'uniquement'/'que') S 'si' S clauses s)+
-          c:context_note? enforcement ';'
+          context:context_note? enforcement ';'
       end
 
       # During the prescan we need to know where terms in a role list finish.
@@ -156,35 +168,33 @@ module ActiveFacts
       end
 
       # >>>>>>>>>>>>>>>>>>>> Quantifiers <<<<<<<<<<<<<<<<<<<<
+
       rule quantifier
+	quantifier1
+	<AST::Quantifier>
+      end
+
+      rule quantifier1
         (
-          ( chaque s                                    # "each"
-            { def value; [1, nil]; end }
-          / un s 'certain' 'e'? ) s                     # "some"
-            { def value; nil; end }
+            un s 'certain' 'e'? s                       # "some"
+            { def min; nil; end; def max; nil; end }
           / ce s                                        # "that"
-            { def value; nil; end }
+            { def min; nil; end; def max; nil; end }
           / un s                                        # "one"; masculine or feminine
-            { def value; [1, 1]; end }
+            { def min; 1; end; def max; 1; end }
           / 'pas' s 'de' s                              # REVISIT: Example: "Personne n'a pas de Casier-judiciaire"
-            { def value; [0, 0]; end }
+            { def min; 0; end; def max; 0; end }
           / exactement s quantity
-            { def value; q = quantity.value; [q, q]; end }
+            { def min; quantity.value; end; def max; quantity.value; end }
           / au s moins s quantity most:( et s au s plus q:quantity )? # At least (or at most)
-            { def value; [ quantity.value, most.empty? ? nil : most.q.value ]; end }
+            { def min; quantity.value; end; def max; most.empty? ? nil : most.q.value; end }
           / au s plus s quantity                        # At most
-            { def value; [ nil, quantity.value ]; end }
+            { def min; nil; end; def max; quantity.value; end }
           / entre s numeric_range s                     # within numeric_range
-            { def value; numeric_range.value; end }
-          / soit s tous s soit s aucun                  # either all or none
-            { def value; [ -1, 1 ]; end }
+	    { def min; numeric_range.min; end; def max; numeric_range.max; end; }
+#          / soit s tous s soit s aucun                  # either all or none
+#            { def value; [ -1, 1 ]; end }
         )
-        {
-          def ast
-            v = value
-            Compiler::Quantifier.new(v[0], v[1])
-          end
-        }
       end
 
       rule quantity
@@ -243,6 +253,8 @@ module ActiveFacts
       rule existe 'existe' !alphanumeric end
       rule from 'à partir de' !alphanumeric end         # REVISIT: google translate
       rule includes 'comprend' !alphanumeric end
+      rule in 'dans' !alphanumeric end
+      rule informally [Dd] e S 'façon' S 'informelle' !alphanumeric end
       rule matches 'matches' !alphanumeric end
       rule moins 'moins' !alphanumeric end
       rule none 'aucun' !alphanumeric end
@@ -322,4 +334,3 @@ module ActiveFacts
     end
   end
 end
-# vi:encoding=utf-8

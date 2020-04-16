@@ -1,0 +1,53 @@
+#
+#       ActiveFacts CQL Parser.
+#       Parse rules for Constraints
+#	The detailed verbalisations for constraints are language-specific.
+#
+# Copyright (c) 2018 Clifford Heath. Read the LICENSE file.
+#
+module ActiveFacts
+  module CQL
+    grammar Constraints
+      # Adding enforcement to a constraint makes it deontic
+      rule enforcement
+        s '(' s
+          otherwise s
+          action:id s   # An enforcement action, like SMS, email, log, alarm, etc.
+          agent:agent? s
+        ')' s
+	<AST::Enforcement>
+        /
+	null_enforcement
+      end
+
+      rule null_enforcement
+        ''
+          {
+            def ast; nil; end
+          }
+      end
+
+      # presence constraint:
+      rule presence_constraint
+        (each_occurs_in_clauses / either_or)
+	<AST::PresenceConstraint>
+      end
+
+      # set (exclusion, mandatory exclusion, complex equality) constraint
+      rule set_constraint
+        (for_each_how_many / either_or_not_both)
+	<AST::SetConstraint>
+      end
+
+      rule subset_constraint
+        (a_only_if_b / if_b_then_a)
+	<AST::SubsetConstraint>
+      end
+
+      rule equality_constraint
+        if_and_only_if
+	<AST::SetEqualityConstraint>
+      end
+    end
+  end
+end

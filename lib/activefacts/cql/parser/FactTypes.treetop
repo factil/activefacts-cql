@@ -9,71 +9,24 @@ module ActiveFacts
     grammar FactTypes
       rule query
         s query_clauses r:returning_clause? '?'
-        {
-          def ast
-            Compiler::FactType.new nil, [], query_clauses.ast, (r.empty? ? nil : r)
-          end
-        }
+	<AST::Query>
       end
 
       rule fact_type
-        s each:(each)?	    # Chew the "each" or it will get accepted as a quantifier
-	name:(s term_definition_name mapping_pragmas is_where)?	  # Name of objectifying entity type
+	name:(
+	  s each?	    # Chew the "each" or it will get accepted as a quantifier
+	  s term mapping_pragmas is_where s
+	)?	  # Name of objectifying entity type
         anonymous_fact_type
-        {
-          def ast
-            ft = anonymous_fact_type.ast
-	    if !name.empty?
-	      # "each" is often used, and doesn't imply uniqueness
-	      ft.name = name.term_definition_name.value
-	      pragmas = name.mapping_pragmas.value
-	      pragmas << 'independent' if name.is_where.independent
-	      ft.pragmas = pragmas
-	    elsif !each.empty?
-	      # Handle the implied mandatory constraint on the appropriate role
-	      first_reading = ft.clauses[0]
-	      refs = first_reading.refs
-	      raise "Ambiguous 'each' implies mandatory on fact type of arity #{refs.size}" unless refs.size == 2
-	      q = refs[-1].quantifier
-	      if q
-		q.min = 1  # Make the existing quantifier mandatory
-	      else
-		refs[-1].quantifier = q = Compiler::Quantifier.new(1, nil)
-	      end
-	    end
-            ft
-          end
-        }
+	<AST::FactType>
       end
 
       rule anonymous_fact_type
-        query_clauses
-          ctail:( (':' / where) s a:query_clauses s)?
-          returning_clause?
-        s ';'
-        {
-          def ast
-            clauses_ast = query_clauses.ast
-            conditions = !ctail.empty? ? ctail.a.ast : []
-            returning = respond_to?(:returning_clause) ? returning_clause.ast : nil
-            value_derivation = clauses_ast.detect{|r| r.is_equality_comparison}
-            if !value_derivation and
-                conditions.empty? and
-                clauses_ast.detect{|r| r.includes_literals}
-              raise "Fact instances may not contain conditions" unless conditions.empty? && !returning
-              Compiler::Fact.new clauses_ast
-            elsif (clauses_ast.size == 1 &&
-              clauses_ast[0].phrases.size == 1 &&
-              (popname = clauses_ast[0].phrases[0]) &&
-              !popname.is_a?(Compiler::Reference) &&
-              conditions.detect{|r| r.includes_literals}
-            )
-              Compiler::Fact.new conditions, popname
-            else
-              Compiler::FactType.new nil, clauses_ast, conditions, returning
-            end
-          end
-        }
+        reading_clauses
+	  conditions:((':' / where) s a:query_clauses s
+	    returning_clause?
+	  )?
+        s ';' <AST::AnonymousFactType>
       end
 
       rule query_clauses
@@ -81,17 +34,7 @@ module ActiveFacts
           # REVISIT: This creates no precedence between and/or, which could cause confusion.
           # Should disallow mixed conjunctions - using a sempred?
           ftail:( conjunction:(',' / and / or ) s qualified_clauses s )*
-        {
-          def ast
-            clauses_ast = qualified_clauses.ast
-            ftail.elements.each{|e|
-              conjunction = e.conjunction.text_value
-              # conjunction = 'and' if conjunction == ','   # ',' means AND, but disallows left-contractions
-              clauses_ast += e.qualified_clauses.ast(conjunction)
-            }
-            clauses_ast
-          end
-        }
+	  <AST::QueryClauses>
       end
 
       rule returning_clause
@@ -99,23 +42,12 @@ module ActiveFacts
       end
 
       rule return
-        ordering_prefix? phrase+
+        ordering_prefix? noun_phrase
       end
 
       rule qualified_clauses
-        s certainty s contracted_clauses s p:post_qualifiers? s c:context_note?
-        {
-          def ast(conjunction = nil)
-            r = contracted_clauses.ast  # An array of clause asts
-            r[0].conjunction = conjunction
-            # pre-qualifiers apply to the first clause, post_qualifiers and context_note to the last
-            # REVISIT: This may be incorrect where the last is a nested clause
-            r[0].certainty = certainty.value
-            r[-1].qualifiers += p.list unless p.empty?
-            r[-1].context_note = c.ast unless c.empty?
-            r
-          end
-        }
+        s certainty s contracted_clauses s pq:post_qualifiers? s context:context_note?
+	  <AST::QualifiedClauses>
       end
 
       rule certainty
@@ -139,6 +71,10 @@ module ActiveFacts
 
       rule post_qualifier
         static / transient /
+	ring_qualifier
+      end
+
+      rule ring_qualifier
         intransitive / stronglyintransitive / transitive / acyclic / symmetric / asymmetric / antisymmetric / reflexive / irreflexive
       end
 
@@ -152,14 +88,30 @@ module ActiveFacts
       end
 
       rule clauses
+	# REVISIT: We cannot contract on "or" as well, as this is used in either/or constraints
         contracted_clauses s tail:( and s contracted_clauses s )*
         {
           def ast
-            clauses = contracted_clauses.ast
-            tail.elements.map{|e| clauses += e.contracted_clauses.ast }
-            clauses
+            contracted_clauses.ast + tail.elements.flat_map{|e| e.contracted_clauses.ast }
           end
         }
+      end
+
+      rule reading_clauses
+	reading_clause
+	tail:(',' s reading_clause)*
+	{
+	  def ast
+	    reading_clause.ast + tail.elements.flat_map{|e| e.reading_clause.ast(',') }
+	  end
+	}
+      end
+
+      rule reading_clause
+	phrases:(!contraction phrase:(noun_phrase / linking_word))+
+	pq:post_qualifiers? s context:context_note?
+	contraction:reading_contraction?
+	<AST::ReadingClause>
       end
 
       rule contracted_clauses
@@ -168,183 +120,105 @@ module ActiveFacts
         (
           contraction     # A contraction will terminate this repetition by eating to the end
           /
-          phrase
-        )+
-        {
-          def ast
-            asts = elements.map{ |r| r.ast }
-            contracted_clauses = []
-            qualifiers = []
-            if asts[-1].is_a?(Array)        # A contraction (Array of [role, qualifiers, *clauses])
-              contracted_clauses = asts.pop         # Pull off the contracted_clauses
-              contracted_role = contracted_clauses.shift
-              qualifiers = contracted_clauses.shift
-              asts.push(contracted_role)  # And replace it by the role removed from the contracted_clauses
-            end
-            clause_ast = Compiler::Clause.new(asts, qualifiers)
-            [clause_ast] + contracted_clauses
-          end
-        }
+	  noun_phrase     # A role reference containing a term, perhaps with attached paraphernalia
+	  /
+	  linking_word	  # A word that is part of a fact type reading
+        )+ <AST::ContractedClauses>
       end
 
       rule contraction
         reading_contraction /
-        condition_contraction
+        comparison_contraction
       end
 
       rule reading_contraction
-        role p:post_qualifiers? conjunction:(that/who) s certainty s contracted_clauses s
+        noun_phrase p:post_qualifiers? conjunction:(that/who) s certainty s contracted_clauses s
         {
           def ast
             # contracted_clauses.ast will return an array of Clauses, but the first clause is special. We must:
-            # * prepend a new role (we get the Role to build *two* ast nodes)
+            # * prepend a new noun_phrase (we get the Role to build *two* ast nodes)
             # * attach the qualifiers
             clauses_ast = contracted_clauses.ast
             clauses_ast[0].conjunction = conjunction.text_value
-            clauses_ast[0].phrases.unshift(role.ast)
+            clauses_ast[0].prepend_np(noun_phrase.ast)
             clauses_ast[0].certainty = certainty.value
 
             # A contraction returns an array containing:
-            # * a role AST
+            # * a noun_phrase AST
             # * a qualifiers array
             # * an array of Clauses
-            [role.ast, p.empty? ? [] : p.list] + clauses_ast
+            [noun_phrase.ast, p.empty? ? [] : p.list] + clauses_ast
           end
         }
       end
 
-      rule condition_contraction
-        role pq:post_qualifiers? certainty s comparator s e2:expression
-          !phrase         # The contracted_clauses must not continue here!
-        {
-          def ast
-            c = Compiler::Comparison.new(comparator.text_value, role.ast, e2.ast, certainty.value)
-            c.conjunction = comparator.text_value
-            [ role.ast, pq.empty? ? [] : pq.list, c ]
-          end
-        }
+      rule comparison_contraction
+        noun_phrase pq:post_qualifiers? certainty s comparator s e2:expression
+          !(noun_phrase / linking_word)	# The contracted_clauses must not continue here!
+	<AST::ComparisonContraction>
       end
 
       rule comparison
         e1:expression s certainty s comparator s contraction p:post_qualifiers?
-        {
-          def ast
-            role, qualifiers, *clauses_ast = *contraction.ast
-            clauses_ast[0].qualifiers += p.list unless p.empty? # apply post_qualifiers to the contracted clause
-            # clauses_ast[0].conjunction = 'and' # AND is implicit for a contraction
-            c = Compiler::Comparison.new(comparator.text_value, e1.ast, role, certainty.value)
-            [c] + clauses_ast
-          end
-        }
+	<AST::ExpressionClauseContraction>
         /
         certainty e1:expression s comparator s e2:expression # comparisons have no post-qualifiers: p:post_qualifiers?
-        {
-          def ast
-            c = Compiler::Comparison.new(comparator.text_value, e1.ast, e2.ast, certainty.value)
-            [c]
-          end
-        }
+	<AST::ExpressionExpressionContraction>
       end
 
       rule comparator
         '<=' / '<>' / '<' / '=' / '>=' / '>' / '!='
       end
 
-      rule phrase
-        role    # A role reference containing a term, perhaps with attached paraphernalia
-        /       # A hyphenated non-term. Important: no embedded spaces
-        id tail:('-' !term id)+ s
-          {
-            def ast
-              [id.value, *tail.elements.map{|e| e.id.value}]*"-"
-            end
-            def node_type; :linking; end
-          }
-        /       # A normal non-term
-        !non_phrase id s
-          {
-            def ast
-              id.value
-            end
-            def node_type; :linking; end
-          }
+      rule linking_word
+	(
+	  id tail:('-' !term id)+ s       # A hyphenated non-term. Important: no embedded spaces
+	    {
+	      def ast
+		[id.value, *tail.elements.map{|e| e.id.value}]*"-"
+	      end
+	    }
+	  /       # A normal non-term
+	  !non_phrase id s
+	    {
+	      def ast
+		id.value
+	      end
+	    }
+	)
+	{
+	  def node_type; :linking; end
+	}
       end
 
-      rule role
+      rule noun_phrase
         aggregate
         /
-        simple_role
+        simple_noun_phrase
       end
 
       rule aggregate
-        aggregate:id s
-        agg_of s term_or_unary s agg_in s    # REVISIT: this term may need to pre-scanned in the qualified_clauses
-        '(' qualified_clauses s ')' # REVISIT: Need to test to verify this is the right level (not query_clauses, etc)
-        {
-          def ast
-            raise "Not implemented: AST for '#{aggregate.text_value} of #{term_or_unary.text_value}'"
-            # This returns just the role with the nested clauses, which doesn't even work:
-            term.ast(
-              nil,      # No quantifier
-              nil,      # No function call
-              nil,      # No role_name
-              nil,      # No value_constraint
-              nil,      # No literal
-              qualified_clauses.ast
-            )
-          end
-        }
+        aggregate_operation s agg_of s term_or_unary s agg_in s '(' qualified_clauses s ')' <AST::Aggregate>
+	# REVISIT: Need examples to verify that qualified_clauses is the right level (not query_clauses, etc)
+      end
+
+      rule aggregate_operation
+	id
+      end
+
+      rule simple_noun_phrase
+        q:role_quantifier?		  # e.g. "at most one"
+        player:variable		          # e.g. "Height"
+        lr:(
+	  literal u:unit?		  # e.g. "27 inches"
+	  / value_constraint		  # e.g. "restricted to {1..4}"
+	)?
+        oj:objectification_step?	  # "(in which <sub-expression>)"
+        <AST::SimpleNounPhrase>
       end
 
       rule role_quantifier
-        quantifier mapping_pragmas enforcement cn:context_note?
-        {
-          def ast
-            Compiler::Quantifier.new(
-              quantifier.value[0],
-              quantifier.value[1],
-              enforcement.ast,
-              cn.empty? ? nil : cn.ast,
-              mapping_pragmas.value
-            )
-          end
-        }
-      end
-
-      # This is the rule that causes most back-tracking. I think you can see why.
-      rule simple_role
-        q:role_quantifier?
-        player:derived_variable
-        lr:(
-          literal u:unit?
-          /
-          value_constraint enforcement
-        )?
-        oj:objectification_step?
-        {
-          def ast
-            if !q.empty? && q.quantifier.value
-              quantifier = q.ast
-            end
-            if !lr.empty?
-              if lr.respond_to?(:literal)
-                literal = Compiler::Literal.new(lr.literal.value, lr.u.empty? ? nil : lr.u.text_value)
-              end
-              value_constraint = Compiler::ValueConstraint.new(lr.value_constraint.ast, lr.enforcement.ast) if lr.respond_to?(:value_constraint)
-              raise "It is not permitted to provide both a literal value and a value constraint" if value_constraint and literal
-            end
-
-            nested_clauses =
-              if oj.empty?
-                nil
-              else
-                ast = oj.ast
-                ast[0].conjunction = 'where'
-                ast
-              end
-            player.ast(quantifier, value_constraint, literal, nested_clauses)
-          end
-        }
+        quantifier mapping_pragmas enforcement context:context_note? <AST::RoleQuantifier>
       end
 
       rule objectification_step

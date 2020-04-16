@@ -23,8 +23,9 @@ Gem::Specification.new do |spec|
   spec.require_paths = ["lib"]
 
   spec.add_development_dependency "bundler", ">= 1.10"
-  spec.add_development_dependency "rake", "> 10"
+  spec.add_development_dependency "rake", ">= 10"
   spec.add_development_dependency "rspec", "~> 3.3"
+  spec.add_development_dependency "byebug"
 
   spec.add_runtime_dependency "activefacts-metamodel", "~> 1", ">= 1.9.22"
   spec.add_runtime_dependency "treetop", ["~> 1.6", ">= 1.6.9"]
