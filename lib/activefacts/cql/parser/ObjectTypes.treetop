@@ -22,7 +22,7 @@ module ActiveFacts
         context2:context_note?
         ec:(where s reading_clauses)?
         ';'
-	<AST::EntityType>
+        <AST::EntityType>
       end
 
       rule basetype
@@ -55,14 +55,14 @@ module ActiveFacts
       end
 
       rule identification
-        identified_by its s		# Reference Mode
-	term value_type_parameters
+        identified_by its s                # Reference Mode
+        term value_type_parameters
         vc:value_constraint?
-	<AST::ReferenceMode>
+        <AST::ReferenceMode>
         /
         identified_by role_list
-	  &{|s| allow_forward_terms_in s[-1].ast; true }
-	<AST::IdentificationList>
+          &{|s| allow_forward_terms_in s[-1].ast; true }
+        <AST::IdentificationList>
       end
 
       # Identified by roles... also used for constraints, beware
@@ -83,10 +83,10 @@ module ActiveFacts
 
       rule term_or_unary
         pre_text:unary_text s term post_text:unary_text s ss:subscript?
-	<AST::UnaryTerm>
+        <AST::UnaryTerm>
         /
         s !non_phrase id s &non_phrase s ss:subscript?
-	<AST::ForwardTerm>
+        <AST::ForwardTerm>
       end
 
       rule unary_text

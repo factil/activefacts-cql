@@ -34,16 +34,16 @@ module ActiveFacts
         super()
         if @constellation = options[:constellation]
           @vocabulary = @constellation.Vocabulary.values[0]
+          # Initialise term lookup with existing object types
           @constellation.ValueType.values.each do |object_type|
-            context.object_type(object_type.name, "value type")
+            new_object_type_name(object_type.name, 'value type')
           end
           @constellation.EntityType.values.each do |object_type|
-            context.object_type(object_type.name, "entity type")
+            new_object_type_name(object_type.name, 'entity type')
           end
         else
           @constellation = ActiveFacts::API::Constellation.new(ActiveFacts::Metamodel)
         end
-        @constellation = options[:constellation] || ActiveFacts::API::Constellation.new(ActiveFacts::Metamodel)
         @constellation.loggers << proc{|*k| trace :apilog, k.inspect} if trace(:apilog)
         @language = nil
         @pending_import_topic = nil

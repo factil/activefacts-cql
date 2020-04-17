@@ -11,7 +11,7 @@ module ActiveFacts
         '('
         s w:who_says? s context_type description agreed:(',' a:as_agreed_by)? s
         ')' s
-	<AST::ContextNote>
+        <AST::ContextNote>
       end
 
       rule who_says

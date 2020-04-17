@@ -20,9 +20,9 @@ module ActiveFacts
       end
 
       rule factor
-	literal_factor
+        literal_factor
         / variable
-	/ parenthesised_expression
+        / parenthesised_expression
       end
 
       rule literal_factor
@@ -31,14 +31,14 @@ module ActiveFacts
 
       rule parenthesised_expression
         !context_note '(' s sum s ')' s
-	{ def ast; sum.ast; end }
+        { def ast; sum.ast; end }
       end
 
       rule variable
-	# REVISIT: Need to be able to include some/that here
+        # REVISIT: Need to be able to include some/that here
         derived:term
-	s role_id:(role_name / subscript)? s
-	<AST::Variable>
+        s role_id:(role_name / subscript)? s
+        <AST::Variable>
       end
 
     end

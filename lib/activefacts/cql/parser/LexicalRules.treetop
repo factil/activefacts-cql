@@ -18,29 +18,29 @@ module ActiveFacts
       rule numeric_range
         number s tail:( '..' s end:number? s )?
         {
-	  def min
-	    number.value
-	  end
+          def min
+            number.value
+          end
 
-	  def max
-	    if tail.empty?
-	      min 
-	    elsif tail.end.empty?
-	      nil 
-	    else
-	      tail.end.value
-	    end
-	  end
+          def max
+            if tail.empty?
+              min 
+            elsif tail.end.empty?
+              nil 
+            else
+              tail.end.value
+            end
+          end
 
           def value
-	    return min if tail.empty?
-	    [min, max]
+            return min if tail.empty?
+            [min, max]
           end
         }
         / '..' s number s
         {
-	  def min; nil; end
-	  def max; number.value; end
+          def min; nil; end
+          def max; number.value; end
           def value
             [ nil, number.value ]
           end

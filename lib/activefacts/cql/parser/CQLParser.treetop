@@ -35,7 +35,7 @@ module ActiveFacts
       end
       
       rule definitions
-	seq:definition* <AST::Definitions>
+        seq:definition* <AST::Definitions>
       end
 
       rule definition
@@ -44,14 +44,14 @@ module ActiveFacts
 
       rule definition_body
         schema_definition
-	/ transform_definition
+        / transform_definition
         / import_definition
-	/ prescan	    # Prescan the rest of the statement to identify local terms (always fails)
-	/ statement
+        / prescan            # Prescan the rest of the statement to identify local terms (always fails)
+        / statement
       end
 
       rule statement
-	  subset_constraint
+          subset_constraint
         / equality_constraint
         / set_constraint
         / presence_constraint
@@ -62,7 +62,7 @@ module ActiveFacts
         / informal_description
         / query
         / transform_rule
-	/ empty_statement
+        / empty_statement
       end
 
       rule schema_definition
@@ -76,16 +76,16 @@ module ActiveFacts
       rule schema_name
         id tail:(S !version id)*
         {
-	  def node_type; :vocabulary; end
-	  def value
+          def node_type; :vocabulary; end
+          def value
             [id.value, *tail.elements.map{|e| e.id.value }].join(' ')
-	  end
-	}
+          end
+        }
       end
 
       rule import_definition
         s import i:import_role? S schema_name vp:version_pattern? alias_list ';'
-	<AST::Import>
+        <AST::Import>
       end
 
       rule version_number
@@ -130,10 +130,10 @@ module ActiveFacts
 
       rule informal_description
         informally s ',' s
-	subject:informal_description_subject s
-	informal_description_body
-	informal_description_closer
-	<AST::InformalDefinition>
+        subject:informal_description_subject s
+        informal_description_body
+        informal_description_closer
+        <AST::InformalDefinition>
       end
 
       rule empty_statement
@@ -141,18 +141,18 @@ module ActiveFacts
       end
 
       rule informal_description_subject
-	signifier:each S term         # Informal definition of an object type
-	/
-	signifier:when S reading:(simple_noun_phrase / linking_word)+ s ','       # or a fact type
+        signifier:each S term         # Informal definition of an object type
+        /
+        signifier:when S reading:(simple_noun_phrase / linking_word)+ s ','       # or a fact type
       end
 
       rule informal_description_body
-	(!informal_description_closer (string / .))*  # Allow . inside a string
+        (!informal_description_closer (string / .))*  # Allow . inside a string
       end
 
       # The description terminates in a fullstop at the end of a line, or EOF
       rule informal_description_closer
-	(!. / '.' [ \t\r]* "\n")
+        (!. / '.' [ \t\r]* "\n")
       end
     end
   end

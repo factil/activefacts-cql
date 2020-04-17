@@ -23,7 +23,7 @@ module ActiveFacts
         m2:mapping_pragmas
         context2:context_note?
         s ';' s
-	<AST::ValueType>
+        <AST::ValueType>
       end
 
       rule in_units
@@ -39,15 +39,15 @@ module ActiveFacts
 
       rule type_parameter_list
         head:parameter s tail:( ',' s parameter s)*
-	{
+        {
           def values
             [head.value, *tail.elements.map{|i| i.parameter.value}]
           end
-	}
+        }
       end
 
       rule parameter
-	ordered_parameter / named_parameter
+        ordered_parameter / named_parameter
       end
 
       rule ordered_parameter
@@ -55,17 +55,17 @@ module ActiveFacts
       end
 
       rule named_parameter
-        (	# Set the value for a parameter
+        ( # Set the value for a parameter
           with s parameter_name as s literal:parameter_literal
           /
           parameter_name ':' s literal:parameter_literal
         ) <AST::ValueTypeParameterSetting>
-        /	# Define a new parameter
+        / # Define a new parameter
         accepts s parameter_name as value_type:term s vr:(restricted s to s parameter_restriction)?
-	  <AST::ValueTypeParameterDefinition>
-        /	# Restrict values for a parameter
+          <AST::ValueTypeParameterDefinition>
+        / # Restrict values for a parameter
         restricts s parameter_name to s parameter_restriction
-	  <AST::ValueTypeParameterRestriction>
+          <AST::ValueTypeParameterRestriction>
       end
 
       rule parameter_name
@@ -74,17 +74,17 @@ module ActiveFacts
       end
 
       rule parameter_literal
-	number
-	/   # We need the text_value of a string here, not the result of parsing it
-	string { def value; text_value; end }
+        number
+        /   # We need the text_value of a string here, not the result of parsing it
+        string { def value; text_value; end }
       end
 
       rule parameter_restriction
-	range_list s
-	  { def values; range_list.ranges; end}
-	/
-	parameter_literal s direction:(min / max)? s
-	  { def values; [:value, parameter_literal.value, direction.text_value]; end}
+        range_list s
+          { def values; range_list.ranges; end}
+        /
+        parameter_literal s direction:(min / max)? s
+          { def values; [:value, parameter_literal.value, direction.text_value]; end}
       end
 
       rule unit_definition
@@ -99,7 +99,7 @@ module ActiveFacts
         )
         q:(approximately '' / ephemera s url )? s
         ';'
-	<AST::UnitDefinition>
+        <AST::UnitDefinition>
       end
 
       rule unit_name
@@ -131,9 +131,9 @@ module ActiveFacts
 
       # In a unit definition, we may use undefined base units; this is the only way to get fundamental units
       rule units
-	unit_numerator div:unit_denominator?
+        unit_numerator div:unit_denominator?
         { def value
-	    unit_numerator.value + (div.text_value.empty? ? [] : div.value)
+            unit_numerator.value + (div.text_value.empty? ? [] : div.value)
           end
         }
       end
@@ -142,16 +142,16 @@ module ActiveFacts
         !non_unit maybe_unit s tail:(!non_unit maybe_unit s)*
         { def value
             tail.elements.inject([maybe_unit.value]) { |a, e| a << e.maybe_unit.value }
-	  end
-	}
+          end
+        }
       end
 
       rule unit_denominator
         '/' s maybe_unit s tail:(!non_unit maybe_unit s)*
-	{ def value
-	    tail.elements.inject([maybe_unit.inverse]) { |a, e| a << e.maybe_unit.inverse }
-	  end
-	}
+        { def value
+            tail.elements.inject([maybe_unit.inverse]) { |a, e| a << e.maybe_unit.inverse }
+          end
+        }
       end
 
       rule non_unit
@@ -177,7 +177,7 @@ module ActiveFacts
 
       rule value_constraint
         restricted_to restricted_values context:context_note? enforcement
-	<AST::ValueConstraint>
+        <AST::ValueConstraint>
         # REVISIT: "where the possible value/s of that <Term> is/are value (, ...)"
       end
 

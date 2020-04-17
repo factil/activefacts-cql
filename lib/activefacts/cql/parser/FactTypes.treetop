@@ -9,23 +9,23 @@ module ActiveFacts
     grammar FactTypes
       rule query
         s query_clauses r:returning_clause? '?'
-	<AST::Query>
+        <AST::Query>
       end
 
       rule fact_type
-	name:(
-	  s each?	    # Chew the "each" or it will get accepted as a quantifier
-	  s term mapping_pragmas is_where s
-	)?	  # Name of objectifying entity type
+        name:(
+          s each?            # Chew the "each" or it will get accepted as a quantifier
+          s term mapping_pragmas is_where s
+        )?          # Name of objectifying entity type
         anonymous_fact_type
-	<AST::FactType>
+        <AST::FactType>
       end
 
       rule anonymous_fact_type
         reading_clauses
-	  conditions:((':' / where) s a:query_clauses s
-	    returning_clause?
-	  )?
+          conditions:((':' / where) s a:query_clauses s
+            returning_clause?
+          )?
         s ';' <AST::AnonymousFactType>
       end
 
@@ -34,7 +34,7 @@ module ActiveFacts
           # REVISIT: This creates no precedence between and/or, which could cause confusion.
           # Should disallow mixed conjunctions - using a sempred?
           ftail:( conjunction:(',' / and / or ) s qualified_clauses s )*
-	  <AST::QueryClauses>
+          <AST::QueryClauses>
       end
 
       rule returning_clause
@@ -47,7 +47,7 @@ module ActiveFacts
 
       rule qualified_clauses
         s certainty s contracted_clauses s pq:post_qualifiers? s context:context_note?
-	  <AST::QualifiedClauses>
+          <AST::QualifiedClauses>
       end
 
       rule certainty
@@ -71,7 +71,7 @@ module ActiveFacts
 
       rule post_qualifier
         static / transient /
-	ring_qualifier
+        ring_qualifier
       end
 
       rule ring_qualifier
@@ -88,7 +88,7 @@ module ActiveFacts
       end
 
       rule clauses
-	# REVISIT: We cannot contract on "or" as well, as this is used in either/or constraints
+        # REVISIT: We cannot contract on "or" as well, as this is used in either/or constraints
         contracted_clauses s tail:( and s contracted_clauses s )*
         {
           def ast
@@ -98,20 +98,20 @@ module ActiveFacts
       end
 
       rule reading_clauses
-	reading_clause
-	tail:(',' s reading_clause)*
-	{
-	  def ast
-	    reading_clause.ast + tail.elements.flat_map{|e| e.reading_clause.ast(',') }
-	  end
-	}
+        reading_clause
+        tail:(',' s reading_clause)*
+        {
+          def ast
+            reading_clause.ast + tail.elements.flat_map{|e| e.reading_clause.ast(',') }
+          end
+        }
       end
 
       rule reading_clause
-	phrases:(!contraction phrase:(noun_phrase / linking_word))+
-	pq:post_qualifiers? s context:context_note?
-	contraction:reading_contraction?
-	<AST::ReadingClause>
+        phrases:(!contraction phrase:(noun_phrase / linking_word))+
+        pq:post_qualifiers? s context:context_note?
+        contraction:reading_contraction?
+        <AST::ReadingClause>
       end
 
       rule contracted_clauses
@@ -120,9 +120,9 @@ module ActiveFacts
         (
           contraction     # A contraction will terminate this repetition by eating to the end
           /
-	  noun_phrase     # A role reference containing a term, perhaps with attached paraphernalia
-	  /
-	  linking_word	  # A word that is part of a fact type reading
+          noun_phrase     # A role reference containing a term, perhaps with attached paraphernalia
+          /
+          linking_word          # A word that is part of a fact type reading
         )+ <AST::ContractedClauses>
       end
 
@@ -154,16 +154,16 @@ module ActiveFacts
 
       rule comparison_contraction
         noun_phrase pq:post_qualifiers? certainty s comparator s e2:expression
-          !(noun_phrase / linking_word)	# The contracted_clauses must not continue here!
-	<AST::ComparisonContraction>
+          !(noun_phrase / linking_word)        # The contracted_clauses must not continue here!
+        <AST::ComparisonContraction>
       end
 
       rule comparison
         e1:expression s certainty s comparator s contraction p:post_qualifiers?
-	<AST::ExpressionClauseContraction>
+        <AST::ExpressionClauseContraction>
         /
         certainty e1:expression s comparator s e2:expression # comparisons have no post-qualifiers: p:post_qualifiers?
-	<AST::ExpressionExpressionContraction>
+        <AST::ExpressionExpressionContraction>
       end
 
       rule comparator
@@ -171,24 +171,24 @@ module ActiveFacts
       end
 
       rule linking_word
-	(
-	  id tail:('-' !term id)+ s       # A hyphenated non-term. Important: no embedded spaces
-	    {
-	      def ast
-		[id.value, *tail.elements.map{|e| e.id.value}]*"-"
-	      end
-	    }
-	  /       # A normal non-term
-	  !non_phrase id s
-	    {
-	      def ast
-		id.value
-	      end
-	    }
-	)
-	{
-	  def node_type; :linking; end
-	}
+        (
+          id tail:('-' !term id)+ s       # A hyphenated non-term. Important: no embedded spaces
+            {
+              def ast
+                [id.value, *tail.elements.map{|e| e.id.value}]*"-"
+              end
+            }
+          /       # A normal non-term
+          !non_phrase id s
+            {
+              def ast
+                id.value
+              end
+            }
+        )
+        {
+          def node_type; :linking; end
+        }
       end
 
       rule noun_phrase
@@ -199,21 +199,21 @@ module ActiveFacts
 
       rule aggregate
         aggregate_operation s agg_of s term_or_unary s agg_in s '(' qualified_clauses s ')' <AST::Aggregate>
-	# REVISIT: Need examples to verify that qualified_clauses is the right level (not query_clauses, etc)
+        # REVISIT: Need examples to verify that qualified_clauses is the right level (not query_clauses, etc)
       end
 
       rule aggregate_operation
-	id
+        id
       end
 
       rule simple_noun_phrase
-        q:role_quantifier?		  # e.g. "at most one"
-        player:variable		          # e.g. "Height"
+        q:role_quantifier?                  # e.g. "at most one"
+        player:variable                          # e.g. "Height"
         lr:(
-	  literal u:unit?		  # e.g. "27 inches"
-	  / value_constraint		  # e.g. "restricted to {1..4}"
-	)?
-        oj:objectification_step?	  # "(in which <sub-expression>)"
+          literal u:unit?                  # e.g. "27 inches"
+          / value_constraint                  # e.g. "restricted to {1..4}"
+        )?
+        oj:objectification_step?          # "(in which <sub-expression>)"
         <AST::SimpleNounPhrase>
       end
 
